@@ -1,42 +1,36 @@
-# sv
+# Claybo100: Game Station
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A premium game collection platform built with Svelte 5, featuring a high-fidelity glassmorphic interface and smooth micro-interactions.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Game Selection Hub:** A central menu to discover and launch different gaming experiences.
+- **Sliding Tiles Game:** A classical 15-puzzle with modern physics, shimmer effects, and guaranteed solvability.
+- **Anagrams Game:** A high-speed word hunt using Scrabble letter distribution and a 60-second timer.
+- **Premium UX:** Seamless transitions (fade/fly), glassmorphism, and responsive design.
+- **Style Compliance:** Adheres to a strict "no translates on hover" design policy.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Tech Stack
 
-To recreate this project with the same configuration:
+- **Framework:** Svelte 5 (Runes)
+- **Build Tool:** Vite
+- **Styling:** Vanilla CSS
+- **Typography:** Outfit (Google Fonts)
 
-```sh
-# recreate this project
-npx sv@0.15.1 create --template minimal --types ts --install npm claybo100
-```
+## Games
 
-## Developing
+### 1. Sliding Tiles
+Arrange the tiles in numerical order (1-15) by sliding them into the empty space.
+- **Logic:** Legal-move shuffling ensures every puzzle is solvable.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### 2. Anagrams
+Find as many words as possible from 7 randomly drawn letters in one minute.
+- **Letter Odds:** Based on standard Scrabble distribution for a realistic challenge.
+- **Scoring:** Progressive points based on word length.
+- **Validation:** Automatic check to ensure words use the provided letter set.
 
-```sh
-npm run dev
+## Getting Started
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+### Installation
+1. `npm install`
+2. `npm run dev`
