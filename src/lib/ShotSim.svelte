@@ -13,20 +13,32 @@
 
 	let ballX = $state(0);
 	let ballY = $state(0);
-	let trajectory = $state<{x: number, y: number}[]>([]);
+	let trajectory = $state<{x: number, y: number, x_m: number, y_m: number}[]>([]);
+	let peakHeight = $state(0);
+	let totalDistance = $state(0);
+	let totalTime = $state(0);
+	let hasScored = $state(false);
+	let showTelemetry = $state(true);
 
 	let animationId: number | null = null;
 	const GRAVITY = 9.8; // m/s^2
 	
 	// World scale constants (in meters)
 	const WORLD_WIDTH = 20; 
-	const WORLD_HEIGHT = 12;
+	const WORLD_HEIGHT = 20; 
 	const CANNON_X_M = 18;
 	const CANNON_Y_M = 1;
+	
+	// Hoop Physics Geometry
 	const HOOP_X_M = 3;
-	const HOOP_Y_M = 3.05;
+	const HOOP_Y_M = 5.0; 
+	const BB_THICKNESS = 0.2;
+	const BB_HEIGHT = 2.0;
+	const RIM_BACK = HOOP_X_M + BB_THICKNESS;
+	const RIM_FRONT = RIM_BACK + 1.0; // 1.0m diameter rim for easier scoring
+	const BALL_R = 0.25; // 25cm physics radius
 
-	// Map meters to percentages
+	// Map meters to percentages for rendering
 	const toX = (m: number) => (m / WORLD_WIDTH) * 100;
 	const toY = (m: number) => (m / WORLD_HEIGHT) * 100;
 
@@ -35,60 +47,117 @@
 		isShooting = true;
 		attempts++;
 		feedback = null;
+		peakHeight = 0;
+		totalDistance = 0;
+		totalTime = 0;
+		hasScored = false;
 
 		const rad = (angle * Math.PI) / 180;
 		const v0 = power;
-		// Standard physics: vx = v0*cos(theta), vy = v0*sin(theta)
-		// But cannon is on the right shooting left, so vx is negative
 		let vx = -v0 * Math.cos(rad);
 		let vy = v0 * Math.sin(rad);
 		
 		let t = 0;
 		const dt = 0.02;
 
-		const barrelLen_m = 2.6; // 12vmin in world meters
-		// Start point is at the tip of the barrel
+		const barrelLen_m = 2.6;
 		let curX_m = CANNON_X_M - barrelLen_m * Math.cos(rad);
 		let curY_m = (CANNON_Y_M + 0.55) + barrelLen_m * Math.sin(rad);
+		const startX_m = curX_m;
 
 		ballX = toX(curX_m);
 		ballY = toY(curY_m);
-		trajectory = [{x: ballX, y: ballY}];
+		trajectory = [{x: ballX, y: ballY, x_m: curX_m, y_m: curY_m}];
 
 		function animate() {
-			t += dt;
-			
-			// Physics
-			curX_m += vx * dt;
-			vy -= GRAVITY * dt;
-			curY_m += vy * dt;
+			const substeps = 5;
+			const sdt = dt / substeps;
 
+			for (let step = 0; step < substeps; step++) {
+				t += sdt;
+				totalTime = t;
+				
+				let prevX = curX_m;
+				let prevY = curY_m;
+
+				// Physics Step
+				curX_m += vx * sdt;
+				vy -= GRAVITY * sdt;
+				curY_m += vy * sdt;
+
+				// Track Stats
+				if (curY_m > peakHeight) peakHeight = curY_m;
+				totalDistance = Math.abs(curX_m - startX_m);
+
+				// 1. Backboard Collision (vertical plane)
+				if (curX_m - BALL_R <= HOOP_X_M + BB_THICKNESS && prevX - BALL_R > HOOP_X_M + BB_THICKNESS) {
+					if (curY_m >= HOOP_Y_M && curY_m <= HOOP_Y_M + BB_HEIGHT) {
+						curX_m = HOOP_X_M + BB_THICKNESS + BALL_R;
+						vx = -vx * 0.6; // Dampen horizontal velocity
+					}
+				}
+
+				// 2. Rim Front Collision (point)
+				let distFront = Math.hypot(curX_m - RIM_FRONT, curY_m - HOOP_Y_M);
+				if (distFront < BALL_R) {
+					let nx = (curX_m - RIM_FRONT) / distFront;
+					let ny = (curY_m - HOOP_Y_M) / distFront;
+					let dot = vx * nx + vy * ny;
+					if (dot < 0) {
+						vx = vx - 2 * dot * nx * 0.7;
+						vy = vy - 2 * dot * ny * 0.7;
+					}
+					// Position correction to prevent sticking
+					curX_m = RIM_FRONT + nx * BALL_R;
+					curY_m = HOOP_Y_M + ny * BALL_R;
+				}
+
+				// 3. Rim Back Collision (point)
+				let distBack = Math.hypot(curX_m - RIM_BACK, curY_m - HOOP_Y_M);
+				if (distBack < BALL_R) {
+					let nx = (curX_m - RIM_BACK) / distBack;
+					let ny = (curY_m - HOOP_Y_M) / distBack;
+					let dot = vx * nx + vy * ny;
+					if (dot < 0) {
+						vx = vx - 2 * dot * nx * 0.7;
+						vy = vy - 2 * dot * ny * 0.7;
+					}
+					// Position correction to prevent sticking
+					curX_m = RIM_BACK + nx * BALL_R;
+					curY_m = HOOP_Y_M + ny * BALL_R;
+				}
+
+				// 4. Score Detection (Area-based net detection)
+				if (!hasScored && curY_m < HOOP_Y_M && curY_m > HOOP_Y_M - 0.5 && vy < 0) {
+					let safeMargin = BALL_R * 0.6; 
+					if (curX_m > RIM_BACK + safeMargin && curX_m < RIM_FRONT - safeMargin) {
+						hasScored = true;
+						score++;
+						feedback = "HIT";
+					}
+				}
+
+				// Out of bounds (Floor or Screen Edges)
+				if (curY_m < 0 || curX_m < -2 || curX_m > WORLD_WIDTH + 2) {
+					if (!hasScored) {
+						feedback = "MISS";
+					}
+					
+					// Update visual state one last time before stopping
+					ballX = toX(curX_m);
+					ballY = toY(curY_m);
+					if (!hasScored && curY_m > 0) trajectory = [...trajectory, { x: ballX, y: ballY, x_m: curX_m, y_m: curY_m }];
+					
+					endShot();
+					return;
+				}
+			}
+
+			// Update visual state once per frame
 			ballX = toX(curX_m);
 			ballY = toY(curY_m);
-			trajectory = [...trajectory, { x: ballX, y: ballY }];
-
-			// Backboard bounce
-			if (curX_m <= HOOP_X_M && curX_m >= HOOP_X_M - 0.3 && curY_m >= HOOP_Y_M && curY_m <= HOOP_Y_M + 1.2 && vx < 0) {
-				vx = -vx * 0.4;
-				feedback = "BOUNCE!";
-			}
-
-			// Rim check
-			const dx = Math.abs(curX_m - (HOOP_X_M + 0.4));
-			const dy = Math.abs(curY_m - HOOP_Y_M);
-
-			if (dx < 0.5 && dy < 0.4 && vy < 0) {
-				score++;
-				feedback = feedback === "BOUNCE!" ? "BANK SHOT!" : "SWISH!";
-				endShot();
-				return;
-			}
-
-			// Out of bounds
-			if (curY_m < 0 || curX_m < 0 || curX_m > WORLD_WIDTH) {
-				if (!feedback) feedback = curX_m < HOOP_X_M ? "TOO FAR!" : "SHORT!";
-				endShot();
-				return;
+			if (!hasScored && curY_m > 0) {
+				trajectory = [...trajectory, { x: ballX, y: ballY, x_m: curX_m, y_m: curY_m }];
 			}
 
 			animationId = requestAnimationFrame(animate);
@@ -104,7 +173,6 @@
 			if (!isShooting) {
 				ballX = 0;
 				ballY = 0;
-				trajectory = [];
 				feedback = null;
 			}
 		}, 2000);
@@ -128,6 +196,12 @@
 <div class="shotsim-container">
 	<div class="nav-row">
 		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+		
+		<label class="telemetry-toggle">
+			<input type="checkbox" bind:checked={showTelemetry} />
+			SHOW TELEMETRY
+		</label>
+
 		<button class="restart-btn" onclick={restart}>RESET</button>
 	</div>
 
@@ -157,27 +231,51 @@
 					stroke-dasharray="1 1"
 					opacity="0.6"
 				/>
-				<text 
-					x={toX(CANNON_X_M - 2)} 
-					y={100 - toY(CANNON_Y_M + 2.5)} 
-					fill="var(--color-golden)" 
-					font-size="4" 
-					font-weight="bold"
-				>
-					{angle}°
-				</text>
 			{/if}
 		</svg>
 
-		<!-- Hoop -->
-		<div class="hoop" style="left: {toX(HOOP_X_M)}%; bottom: {toY(HOOP_Y_M)}%">
-			<div class="backboard"></div>
-			<div class="rim"></div>
-			<div class="net"></div>
+		<!-- Telemetry Overlays (HTML-based to prevent SVG squishing) -->
+		{#if showTelemetry && trajectory.length > 1}
+			<!-- Initial Conditions Label -->
+			<div class="telemetry-label initial-label" style="left: {toX(CANNON_X_M)}%; bottom: {toY(CANNON_Y_M + 7.0)}%;">
+				<span>v₀ = {power.toFixed(1)} m/s</span>
+				<span>θ₀ = {angle}°</span>
+			</div>
+
+			<!-- Peak Height Label -->
+			{#if peakHeight > 0}
+				<div class="telemetry-label peak-label" style="left: {toX(trajectory.reduce((max, p) => p.y_m > max.y_m ? p : max, trajectory[0]).x_m)}%; bottom: {toY(peakHeight + 2.5)}%;">
+					yₘₐₓ = {peakHeight.toFixed(2)} m
+				</div>
+			{/if}
+
+			<!-- Total Distance & Time Label -->
+			{#if totalDistance > 2}
+				<div class="telemetry-label dist-label" style="left: {toX(trajectory[trajectory.length-1].x_m)}%; bottom: {toY(trajectory[trajectory.length-1].y_m + 3.5)}%;">
+					<span>Δx = {totalDistance.toFixed(2)} m</span>
+					<span>t = {totalTime.toFixed(2)} s</span>
+				</div>
+			{/if}
+		{/if}
+
+		<!-- Distance Label -->
+		<div class="distance-label" style="left: {toX(HOOP_X_M)}%; width: {toX(CANNON_X_M - HOOP_X_M)}%">
+			<div class="dist-line"></div>
+			<span>{ (CANNON_X_M - HOOP_X_M).toFixed(1) }m</span>
 		</div>
 
+		<!-- Hoop Elements (Visually aligned to Physics) -->
+		<!-- Backboard -->
+		<div class="backboard" style="left: {toX(HOOP_X_M)}%; bottom: {toY(HOOP_Y_M)}%; width: {toX(BB_THICKNESS)}%; height: {toY(BB_HEIGHT)}%;"></div>
+		
+		<!-- Rim -->
+		<div class="rim" style="left: {toX(RIM_BACK)}%; bottom: {toY(HOOP_Y_M)}%; width: {toX(RIM_FRONT - RIM_BACK)}%; height: 0.8vmin;"></div>
+		
+		<!-- Net -->
+		<div class="net" style="left: {toX(RIM_BACK + 0.1)}%; bottom: {toY(HOOP_Y_M - 1.0)}%; width: {toX(RIM_FRONT - RIM_BACK - 0.2)}%; height: {toY(1.0)}%;"></div>
+
 		<!-- Cannon -->
-		<div class="cannon-container" style="left: {toX(CANNON_X_M)}%; bottom: {toY(CANNON_Y_M)}%">
+		<div class="cannon-container" style="left: calc({toX(CANNON_X_M)}% - 5vmin); bottom: {toY(CANNON_Y_M)}%">
 			<div class="cannon-base"></div>
 			<div class="cannon-barrel" style="transform: rotate({angle}deg)">
 				<div class="barrel-stats">
@@ -200,13 +298,25 @@
 
 	<div class="controls">
 		<div class="control-group">
-			<label for="angle">ANGLE: {angle}°</label>
+			<label for="angle">ANGLE</label>
+			<div class="input-stepper">
+				<button onclick={() => angle = Math.max(0, angle - 1)} disabled={isShooting}>-</button>
+				<input type="number" id="angle-input" bind:value={angle} min="0" max="90" disabled={isShooting} />
+				<button onclick={() => angle = Math.min(90, angle + 1)} disabled={isShooting}>+</button>
+			</div>
 			<input type="range" id="angle" min="0" max="90" bind:value={angle} disabled={isShooting} />
 		</div>
+
 		<div class="control-group">
-			<label for="power">VELOCITY: {power} m/s</label>
+			<label for="power">VELOCITY</label>
+			<div class="input-stepper">
+				<button onclick={() => power = Math.max(5, power - 0.5)} disabled={isShooting}>-</button>
+				<input type="number" id="power-input" bind:value={power} min="5" max="25" step="0.5" disabled={isShooting} />
+				<button onclick={() => power = Math.min(25, power + 0.5)} disabled={isShooting}>+</button>
+			</div>
 			<input type="range" id="power" min="5" max="25" step="0.5" bind:value={power} disabled={isShooting} />
 		</div>
+
 		<button class="shoot-btn" onclick={shoot} disabled={isShooting}>SHOOT</button>
 	</div>
 </div>
@@ -226,7 +336,32 @@
 		padding: 3vmin;
 		display: flex;
 		justify-content: space-between;
+		align-items: center;
 		z-index: 10;
+	}
+
+	.telemetry-toggle {
+		display: flex;
+		align-items: center;
+		gap: 1vmin;
+		color: rgba(255,255,255,0.6);
+		font-weight: 800;
+		font-size: 1.4vmin;
+		cursor: pointer;
+		background: rgba(255, 255, 255, 0.05);
+		padding: 1vmin 2vmin;
+		border-radius: 1vmin;
+		border: 1px solid rgba(255,255,255,0.1);
+	}
+
+	.telemetry-toggle:hover {
+		color: white;
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	.telemetry-toggle input {
+		cursor: pointer;
+		accent-color: var(--color-golden);
 	}
 
 	.back-btn, .restart-btn {
@@ -282,6 +417,39 @@
 		overflow: hidden;
 	}
 
+	/* Telemetry HTML Labels */
+	.telemetry-label {
+		position: absolute;
+		display: flex;
+		flex-direction: column;
+		font-weight: 600; /* Less bold/thick as requested */
+		font-size: 1.8vmin;
+		line-height: 1.2;
+		white-space: nowrap;
+		z-index: 5;
+		pointer-events: none;
+		width: 20vmin;
+	}
+
+	/* Use margin-left to offset by exactly half the width (10vmin) to center without translates */
+	.initial-label { 
+		color: var(--color-golden); 
+		align-items: center; 
+		margin-left: -10vmin; 
+	}
+	
+	.peak-label { 
+		color: var(--color-apple); 
+		align-items: center;
+		margin-left: -10vmin; 
+	}
+	
+	.dist-label { 
+		color: var(--color-illusion); 
+		align-items: center;
+		margin-left: -10vmin; 
+	}
+
 	/* Cannon */
 	.cannon-container {
 		position: absolute;
@@ -302,7 +470,7 @@
 	.cannon-barrel {
 		position: absolute;
 		bottom: 2.5vmin;
-		right: 50%; /* Pivot at the center of the base, barrel extends left */
+		right: 50%;
 		width: 12vmin;
 		height: 5vmin;
 		background: #444;
@@ -323,43 +491,26 @@
 		color: var(--color-golden);
 	}
 
-	/* Hoop */
-	.hoop {
-		position: absolute;
-		bottom: 60%;
-		width: 8vmin;
-		height: 10vmin;
-		left: calc(20% - 8vmin);
-	}
-
+	/* Hoop Physics Visuals */
 	.backboard {
 		position: absolute;
-		top: 0;
-		left: 0;
-		width: 1vmin;
-		height: 8vmin;
 		background: rgba(255,255,255,0.8);
 		border-radius: 0.2vmin;
 	}
 
 	.rim {
 		position: absolute;
-		top: 5vmin;
-		left: 1vmin;
-		width: 4vmin;
-		height: 0.5vmin;
 		background: var(--color-bittersweet);
 		border-radius: 0.2vmin;
+		z-index: 2;
 	}
 
 	.net {
 		position: absolute;
-		top: 5.5vmin;
-		left: 1vmin;
-		width: 4vmin;
-		height: 4vmin;
 		background: rgba(255,255,255,0.1);
 		border-radius: 0 0 1vmin 1vmin;
+		border: 1px dashed rgba(255,255,255,0.2);
+		z-index: 1;
 	}
 
 	/* Ball */
@@ -395,6 +546,24 @@
 		text-shadow: 0 4px 20px rgba(0,0,0,0.8);
 	}
 
+	.distance-label {
+		position: absolute;
+		bottom: 2vmin;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		color: rgba(255,255,255,0.3);
+		font-size: 1.4vmin;
+		font-weight: 800;
+	}
+
+	.dist-line {
+		width: 100%;
+		height: 1px;
+		border-top: 1px dashed rgba(255,255,255,0.2);
+		margin-bottom: 0.5vmin;
+	}
+
 	.controls {
 		padding: 2vmin 4vmin 4vmin;
 		display: flex;
@@ -407,7 +576,73 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1vmin;
-		width: 20vmin;
+		width: 25vmin;
+	}
+
+	.input-stepper {
+		display: flex;
+		align-items: center;
+		gap: 1vmin;
+		background: rgba(255,255,255,0.05);
+		padding: 0.5vmin;
+		border-radius: 1vmin;
+		border: 1px solid rgba(255,255,255,0.1);
+	}
+
+	.input-stepper button {
+		background: rgba(255,255,255,0.1);
+		border: none;
+		color: white;
+		width: 4vmin;
+		height: 4vmin;
+		border-radius: 0.5vmin;
+		cursor: pointer;
+		font-weight: 800;
+		font-size: 2vmin;
+		transition: background 0.2s;
+	}
+
+	.input-stepper {
+		display: flex;
+		align-items: center;
+		gap: 0.5vmin;
+		background: rgba(255,255,255,0.05);
+		padding: 0.5vmin;
+		border-radius: 1vmin;
+		border: 1px solid rgba(255,255,255,0.1);
+	}
+
+	.input-stepper button {
+		background: rgba(255,255,255,0.1);
+		border: none;
+		color: white;
+		width: 6vmin; /* Bigger buttons as requested */
+		height: 6vmin;
+		border-radius: 0.5vmin;
+		cursor: pointer;
+		font-weight: 800;
+		font-size: 3vmin;
+		transition: all 0.2s;
+	}
+
+	.input-stepper button:hover:not(:disabled) {
+		background: rgba(255,255,255,0.2);
+		color: var(--color-illusion);
+	}
+
+	.input-stepper input {
+		flex: 1;
+		background: transparent;
+		border: none;
+		color: white;
+		text-align: center;
+		font-size: 2.5vmin;
+		font-weight: 800;
+		width: 0;
+	}
+
+	.input-stepper input::-webkit-inner-spin-button {
+		display: none;
 	}
 
 	label { font-size: 1.4vmin; font-weight: 800; color: rgba(255,255,255,0.4); }
@@ -435,6 +670,7 @@
 		color: white;
 		border: none;
 		padding: 1.5vmin 6vmin;
+		height: 8vmin;
 		font-size: 2.5vmin;
 		font-weight: 800;
 		border-radius: 1.5vmin;
@@ -445,7 +681,7 @@
 
 	.shoot-btn:hover:not(:disabled) {
 		background: var(--color-illusion);
-		transform: translateY(-2px);
+		scale: 1.05;
 	}
 
 	.shoot-btn:disabled {
