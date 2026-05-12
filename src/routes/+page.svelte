@@ -2,9 +2,10 @@
 	import SlidingTiles from '$lib/SlidingTiles.svelte';
 	import Pegboard from '$lib/Pegboard.svelte';
 	import Hanoi from '$lib/Hanoi.svelte';
+	import ShotSim from '$lib/ShotSim.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim';
 	let currentView = $state<View>('menu');
 
 	function setView(view: View) {
@@ -13,14 +14,14 @@
 </script>
 
 <svelte:head>
-	<title>Claybo100 | Game Station</title>
+	<title>Math Museum | Game Station</title>
 </svelte:head>
 
 <main id="main-view" class="main-container">
 	{#if currentView === 'menu'}
 		<div id="menu-screen" class="menu-screen" in:fade={{ duration: 400 }}>
-			<header id="app-header" class="header" in:fly={{ y: -30, duration: 800 }}>
-				<h1 id="app-title">CLAYBO<span class="highlight">100</span></h1>
+			<header id="app-header" class="header" in:fade={{ duration: 800 }}>
+				<h1 id="app-title">MATH <span class="highlight">MUSEUM</span></h1>
 				<p id="app-subtitle" class="app-subtitle">SELECT YOUR EXPERIENCE</p>
 			</header>
 
@@ -29,42 +30,56 @@
 					id="select-sliding-tiles-btn"
 					class="game-card sliding" 
 					onclick={() => setView('sliding-tiles')}
-					in:fly={{ y: 20, duration: 800, delay: 200 }}
+					in:fade={{ duration: 800, delay: 200 }}
 				>
-					<div class="card-icon">🧩</div>
+					<div class="card-icon">GRID</div>
 					<div class="card-content">
 						<h2>Sliding Tiles</h2>
 						<p>Classical 15-puzzle with a modern twist.</p>
 					</div>
-					<div class="card-arrow">→</div>
+					<div class="card-arrow">GO</div>
 				</button>
 
 				<button 
 					id="select-pegboard-btn"
 					class="game-card pegboard-card" 
 					onclick={() => setView('pegboard')}
-					in:fly={{ y: 20, duration: 800, delay: 600 }}
+					in:fade={{ duration: 800, delay: 600 }}
 				>
-					<div class="card-icon">🔵</div>
+					<div class="card-icon">DOTS</div>
 					<div class="card-content">
 						<h2>Pegboard</h2>
 						<p>English peg solitaire. Leave only one.</p>
 					</div>
-					<div class="card-arrow">→</div>
+					<div class="card-arrow">GO</div>
 				</button>
 
 				<button 
 					id="select-hanoi-btn"
 					class="game-card hanoi-card" 
 					onclick={() => setView('hanoi')}
-					in:fly={{ y: 20, duration: 800, delay: 800 }}
+					in:fade={{ duration: 800, delay: 800 }}
 				>
-					<div class="card-icon">🗼</div>
+					<div class="card-icon">RODS</div>
 					<div class="card-content">
 						<h2>Hanoi</h2>
 						<p>Classic tower puzzle. 3 to 8 discs.</p>
 					</div>
-					<div class="card-arrow">→</div>
+					<div class="card-arrow">GO</div>
+				</button>
+
+				<button 
+					id="select-shotsim-btn"
+					class="game-card shotsim-card" 
+					onclick={() => setView('shotsim')}
+					in:fade={{ duration: 800, delay: 1000 }}
+				>
+					<div class="card-icon">ARC</div>
+					<div class="card-content">
+						<h2>ShotSim</h2>
+						<p>Cannon physics simulator. Hit the hoop.</p>
+					</div>
+					<div class="card-arrow">GO</div>
 				</button>
 			</div>
 		</div>
@@ -76,6 +91,8 @@
 				<Pegboard onBack={() => setView('menu')} />
 			{:else if currentView === 'hanoi'}
 				<Hanoi onBack={() => setView('menu')} />
+			{:else if currentView === 'shotsim'}
+				<ShotSim onBack={() => setView('menu')} />
 			{/if}
 		</div>
 	{/if}
@@ -85,7 +102,7 @@
 	.main-container {
 		width: 100vw;
 		height: 100vh;
-		background: radial-gradient(circle at top right, #1a1528, #09090b 70%);
+		background: #09090b;
 		display: flex;
 		align-items: center;
 		justify-content: center;

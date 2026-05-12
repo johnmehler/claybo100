@@ -61,7 +61,7 @@
 
 <div id="sliding-tiles-game" class="game-inner">
 	<button id="back-to-menu-sliding" class="back-btn" onclick={onBack}>
-		← MENU
+		BACK TO MENU
 	</button>
 
 	{#if isWon}

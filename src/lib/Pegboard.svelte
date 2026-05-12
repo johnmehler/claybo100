@@ -138,9 +138,9 @@
 
 <div class="pegboard-container">
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>← MENU</button>
+		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
 		{#if gameState === 'playing' || gameState === 'won' || gameState === 'lost'}
-			<button class="restart-btn" onclick={restart} in:fade>↻ RESTART</button>
+			<button class="restart-btn" onclick={restart} in:fade>RESTART</button>
 		{/if}
 	</div>
 
@@ -264,9 +264,7 @@
 	.title {
 		font-size: 8vmin;
 		margin: 0;
-		background: linear-gradient(135deg, #fff, #888);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: white;
 		font-weight: 900;
 		letter-spacing: -2px;
 	}
@@ -293,7 +291,7 @@
 
 	.cta-btn:hover {
 		background: var(--color-illusion);
-		transform: translateY(-2px);
+		scale: 1.05;
 	}
 
 	.game-area {
@@ -382,14 +380,14 @@
 		width: 5vmin;
 		height: 5vmin;
 		border-radius: 50%;
-		background: radial-gradient(circle at 30% 30%, var(--color-golden), #8a6a00);
+		background: var(--color-golden);
 		box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 		transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 	}
 
 	.selected .peg {
-		background: radial-gradient(circle at 30% 30%, #fff, var(--color-golden));
-		transform: scale(1.1);
+		background: white;
+		scale: 1.1;
 	}
 
 	.game-over-overlay {

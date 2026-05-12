@@ -111,9 +111,9 @@
 
 <div class="hanoi-container">
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>← MENU</button>
+		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
 		{#if gameState !== 'start'}
-			<button class="restart-btn" onclick={restart} in:fade>↻ RESTART</button>
+			<button class="restart-btn" onclick={restart} in:fade>RESTART</button>
 		{/if}
 	</div>
 
@@ -226,9 +226,7 @@
 	.title {
 		font-size: 8vmin;
 		margin: 0;
-		background: linear-gradient(135deg, #fff, #888);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: white;
 		font-weight: 900;
 		letter-spacing: -2px;
 	}
@@ -282,7 +280,7 @@
 
 	.cta-btn:hover {
 		background: var(--color-illusion);
-		transform: translateY(-2px);
+		scale: 1.05;
 	}
 
 	.game-area {
