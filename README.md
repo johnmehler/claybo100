@@ -6,14 +6,12 @@
 3. Pegboard
 4. ShotSim
 5. Sliding Tiles
+6. Nim
+7. Knight's tour
+8. Hex
+9. Krypto
+10. Set
+11. Dots and Boxes
 
 ## Todo
-6. Velo
-7. Nim
-8. Knight's tour
-9. Hex
-10. Krypto
-11. Set
-
-## Cards - TODO
-1. Egyptian Ratscrew
+1. Velo

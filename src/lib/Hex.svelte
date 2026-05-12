@@ -1,5 +1,7 @@
 <script lang="ts">
+	import Instructions from './Instructions.svelte';
 	let { onBack } = $props();
+	let instructions: any;
 	const SIZE = 11;
 	let board = $state(Array(SIZE * SIZE).fill(0));
 	let currentTurn = $state(1); // 1 = Red, 2 = Blue
@@ -51,8 +53,16 @@
 </script>
 
 <div class="game-container">
+	<Instructions bind:this={instructions} gameId="hex" title="Hex">
+		<p><strong>Goal:</strong> Form a connected path of your color bridging your two opposing sides of the board.</p>
+		<p>Take turns placing a single piece on any empty hex. The first player to complete their unbroken chain wins!</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		<div class="turn">
 			{#if winner === 0}
 				<span style="color: {currentTurn === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
@@ -90,8 +100,9 @@
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; }
 	.nav-row { padding: 3vmin; display: flex; justify-content: space-between; align-items: center; }
-	.back-btn, .restart-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
-	.back-btn:hover, .restart-btn:hover { color: white; border-color: var(--color-illusion); }
+	.nav-group { display: flex; gap: 1vmin; }
+	.back-btn, .restart-btn, .help-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
+	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 	.turn { font-size: 3vmin; font-weight: 900; letter-spacing: 2px; }
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; }
 	

@@ -9,9 +9,10 @@
 	import Hex from '$lib/Hex.svelte';
 	import Krypto from '$lib/Krypto.svelte';
 	import SetGame from '$lib/SetGame.svelte';
+	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'rushhour' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'rushhour' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes';
 	let currentView = $state<View>('menu');
 
 	function setView(view: View) {
@@ -58,6 +59,10 @@
 						<button class="game-card set-card" onclick={() => setView('set')}>
 							<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></div>
 							<div class="card-content"><h2>Set</h2><p>Find combinations of matching or unique attributes.</p></div>
+						</button>
+						<button class="game-card dots-card" onclick={() => setView('dotsandboxes')}>
+							<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="1"></circle><circle cx="18" cy="6" r="1"></circle><circle cx="6" cy="18" r="1"></circle><circle cx="18" cy="18" r="1"></circle><rect x="6" y="6" width="12" height="12" stroke-dasharray="2 2"></rect></svg></div>
+							<div class="card-content"><h2>Dots & Boxes</h2><p>Connect dots to capture squares against AI.</p></div>
 						</button>
 					</div>
 				</div>
@@ -113,6 +118,8 @@
 				<Krypto onBack={() => setView('menu')} />
 			{:else if currentView === 'set'}
 				<SetGame onBack={() => setView('menu')} />
+			{:else if currentView === 'dotsandboxes'}
+				<DotsAndBoxes onBack={() => setView('menu')} />
 			{/if}
 		</div>
 	{/if}

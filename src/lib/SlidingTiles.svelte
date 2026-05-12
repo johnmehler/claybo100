@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { flip } from 'svelte/animate';
 	import { quintOut } from 'svelte/easing';
+	import Instructions from './Instructions.svelte';
 
 	let { onBack } = $props();
+	let instructions: any;
 
 	const SIZE = 4;
 	let tiles = $state<number[]>([]);
@@ -60,9 +62,17 @@
 </script>
 
 <div id="sliding-tiles-game" class="game-inner">
-	<button id="back-to-menu-sliding" class="back-btn" onclick={onBack}>
-		BACK TO MENU
-	</button>
+	<Instructions bind:this={instructions} gameId="sliding_tiles" title="Sliding Tiles">
+		<p><strong>Goal:</strong> Order the numbered tiles from 1 to 15.</p>
+		<p>Click a tile adjacent to the empty space to slide it into the empty space. Arrange them in numerical order with the empty space at the bottom right.</p>
+	</Instructions>
+
+	<div class="nav-group">
+		<button id="back-to-menu-sliding" class="back-btn" onclick={onBack}>
+			BACK TO MENU
+		</button>
+		<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+	</div>
 
 	{#if isWon}
 		<div id="sliding-win-msg" class="win-message">EXCELLENT!</div>
@@ -104,10 +114,15 @@
 		position: relative;
 	}
 
-	.back-btn {
+	.nav-group {
 		position: absolute;
 		top: 4vmin;
 		left: 4vmin;
+		display: flex;
+		gap: 1vmin;
+	}
+
+	.back-btn, .help-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		color: rgba(255, 255, 255, 0.6);
@@ -117,7 +132,7 @@
 		font-weight: 600;
 		transition: all 0.2s;
 	}
-	.back-btn:hover {
+	.back-btn:hover, .help-btn:hover {
 		background: rgba(255, 255, 255, 0.1);
 		border-color: var(--color-indigo);
 		color: white;

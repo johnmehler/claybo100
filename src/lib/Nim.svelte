@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import Instructions from './Instructions.svelte';
 	let { onBack } = $props();
+	let instructions: any;
 	let heaps = $state([3, 5, 7]);
 	let selectedHeap = $state<number | null>(null);
 	let selectedCount = $state(0);
@@ -70,8 +72,16 @@
 </script>
 
 <div class="game-container">
+	<Instructions bind:this={instructions} gameId="nim" title="Nim">
+		<p><strong>Goal:</strong> Force the AI to take the very last object.</p>
+		<p>On your turn, you may remove any number of objects from a single row. Think mathematically: use XOR-sums to calculate the winning strategy!</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		<div class="turn-indicator" style="color: {winner ? 'var(--color-golden)' : (isPlayerTurn ? 'var(--color-apple)' : 'var(--color-bittersweet)')}">
 			{winner ? winner + ' WINS!' : (isPlayerTurn ? 'YOUR TURN' : 'AI THINKING...')}
 		</div>
@@ -109,8 +119,9 @@
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; }
 	.nav-row { padding: 3vmin; display: flex; justify-content: space-between; align-items: center; }
-	.back-btn, .restart-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
-	.back-btn:hover, .restart-btn:hover { color: white; border-color: var(--color-illusion); }
+	.nav-group { display: flex; gap: 1vmin; }
+	.back-btn, .restart-btn, .help-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
+	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 	.turn-indicator { font-size: 3vmin; font-weight: 900; letter-spacing: 2px; }
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; }
 	.heaps { display: flex; gap: 8vmin; align-items: flex-end; height: 50vmin; }

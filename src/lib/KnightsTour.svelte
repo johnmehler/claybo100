@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import Instructions from './Instructions.svelte';
 	let { onBack } = $props();
+	let instructions: any;
 	const SIZE = 8;
 	let board = $state(Array(SIZE * SIZE).fill(false));
 	let pos = $state(-1);
@@ -45,8 +47,16 @@
 </script>
 
 <div class="game-container">
+	<Instructions bind:this={instructions} gameId="knightstour" title="Knight's Tour">
+		<p><strong>Goal:</strong> Visit every single square on the chessboard exactly once.</p>
+		<p>You move like a Knight in chess: two squares in one direction, and one square perpendicular (an "L" shape). Plan ahead so you don't get trapped!</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		<div class="score">MOVES: <span style="color: var(--color-illusion)">{moves}</span> / {SIZE*SIZE}</div>
 		<button class="restart-btn" onclick={reset}>RESTART</button>
 	</div>
@@ -85,8 +95,9 @@
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; }
 	.nav-row { padding: 3vmin; display: flex; justify-content: space-between; align-items: center; }
-	.back-btn, .restart-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
-	.back-btn:hover, .restart-btn:hover { color: white; border-color: var(--color-illusion); }
+	.nav-group { display: flex; gap: 1vmin; }
+	.back-btn, .restart-btn, .help-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
+	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 	.score { font-size: 3vmin; font-weight: 900; }
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
 	.grid { display: grid; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 1.5vmin; border-radius: 1.5vmin; border: 1px solid rgba(255,255,255,0.1); }

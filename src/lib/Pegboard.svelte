@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { fade, fly, scale } from 'svelte/transition';
+	import Instructions from './Instructions.svelte';
 
 	let { onBack } = $props();
+	let instructions: any;
 
 	type CellState = -1 | 0 | 1; // -1: invalid, 0: empty, 1: peg
 
@@ -9,7 +11,7 @@
 	let selectedIdx = $state<number | null>(null);
 	let possibleMoves = $state<number[]>([]);
 	let movesCount = $state(0);
-	let gameState = $state<'start' | 'playing' | 'won' | 'lost'>('start');
+	let gameState = $state<'playing' | 'won' | 'lost'>('playing');
 	let pegsRemaining = $derived(board.filter(cell => cell === 1).length);
 
 	const SIZE = 7;
@@ -37,6 +39,7 @@
 		possibleMoves = [];
 		gameState = 'playing';
 	}
+	initBoard();
 
 	function getCoord(idx: number) {
 		return { r: Math.floor(idx / SIZE), c: idx % SIZE };
@@ -137,22 +140,22 @@
 </script>
 
 <div class="pegboard-container">
+	<Instructions bind:this={instructions} gameId="pegboard" title="Pegboard">
+		<p><strong>Goal:</strong> Leave only one peg remaining on the board.</p>
+		<p>Click a peg, then click an empty hole to jump over an adjacent peg. The jumped peg is removed. You can only jump horizontally or vertically.</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		{#if gameState === 'playing' || gameState === 'won' || gameState === 'lost'}
 			<button class="restart-btn" onclick={restart} in:fade>RESTART</button>
 		{/if}
 	</div>
 
-	{#if gameState === 'start'}
-		<div class="overlay" in:fade>
-			<h1 class="title">PEGBOARD</h1>
-			<p>English Peg Solitaire</p>
-			<p class="description">Jump pegs to remove them. Goal: Leave only one peg.</p>
-			<button class="cta-btn" onclick={initBoard}>START GAME</button>
-		</div>
-	{:else}
-		<div class="game-area">
+	<div class="game-area">
 			<div class="stats">
 				<div class="stat">
 					<span class="label">PEGS</span>
@@ -194,7 +197,7 @@
 				</div>
 			{/if}
 		</div>
-	{/if}
+		</div>
 </div>
 
 <style>
@@ -215,7 +218,12 @@
 		align-items: center;
 	}
 
-	.back-btn {
+	.nav-group {
+		display: flex;
+		gap: 1vmin;
+	}
+
+	.back-btn, .help-btn {
 		background: transparent;
 		border: 1px solid rgba(255,255,255,0.1);
 		color: rgba(255,255,255,0.4);
@@ -227,7 +235,7 @@
 		transition: all 0.2s;
 	}
 
-	.back-btn:hover {
+	.back-btn:hover, .help-btn:hover {
 		color: white;
 		border-color: var(--color-illusion);
 		background: rgba(255,255,255,0.05);

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
+	import Instructions from './Instructions.svelte';
 
 	let { onBack } = $props();
+	let instructions: any;
 
 	const GRID_SIZE = 6;
 	const CELL_PCT = 100 / GRID_SIZE;
@@ -300,8 +302,16 @@
 </script>
 
 <div class="rushhour-container">
+	<Instructions bind:this={instructions} gameId="rushhour" title="Rush Hour">
+		<p><strong>Goal:</strong> Maneuver the red car out the exit on the right.</p>
+		<p>Click and drag cars to slide them forward or backward along their tracks. Cars cannot move sideways or jump over each other.</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		<div class="level-select">
 			{#each levels as _, i}
 				<button class="lvl-btn" class:active={currentLevel === i} class:completed={completedLevels[i]} onclick={() => loadLevel(i)}>
@@ -425,7 +435,12 @@
 		height: 1.2vmin;
 	}
 
-	.back-btn, .restart-btn {
+	.nav-group {
+		display: flex;
+		gap: 1vmin;
+	}
+
+	.back-btn, .restart-btn, .help-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255,255,255,0.1);
 		color: rgba(255,255,255,0.4);
@@ -437,7 +452,7 @@
 		transition: all 0.2s;
 	}
 
-	.back-btn:hover, .restart-btn:hover { color: white; border-color: var(--color-illusion); }
+	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 
 	.game-header {
 		text-align: center;

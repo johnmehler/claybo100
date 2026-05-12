@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { fade, fly, scale } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
+	import Instructions from './Instructions.svelte';
 
 	let { onBack } = $props();
+	let instructions: any;
 
 	let numDiscs = $state(4);
 	let towers = $state<number[][]>([[], [], []]);
@@ -110,8 +112,16 @@
 </script>
 
 <div class="hanoi-container">
+	<Instructions bind:this={instructions} gameId="hanoi" title="Tower of Hanoi">
+		<p><strong>Goal:</strong> Move the entire stack to another rod.</p>
+		<p>Click a rod to select the top disc, then click another rod to place it there. You can only move one disc at a time, and you cannot place a larger disc onto a smaller one.</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		{#if gameState !== 'start'}
 			<button class="restart-btn" onclick={restart} in:fade>RESTART</button>
 		{/if}
@@ -198,7 +208,12 @@
 		align-items: center;
 	}
 
-	.back-btn, .restart-btn {
+	.nav-group {
+		display: flex;
+		gap: 1vmin;
+	}
+
+	.back-btn, .restart-btn, .help-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255,255,255,0.1);
 		color: rgba(255,255,255,0.4);
@@ -210,7 +225,7 @@
 		transition: all 0.2s;
 	}
 
-	.back-btn:hover { color: white; border-color: var(--color-illusion); background: rgba(255,255,255,0.08); }
+	.back-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); background: rgba(255,255,255,0.08); }
 	.restart-btn:hover { color: white; border-color: var(--color-indigo); background: rgba(255,255,255,0.08); }
 
 	.overlay {

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
+	import Instructions from './Instructions.svelte';
 
 	let { onBack } = $props();
+	let instructions: any;
 
 	let angle = $state(90); // degrees, 90 is straight up
 	let power = $state(15); // initial velocity in m/s
@@ -194,8 +196,16 @@
 </script>
 
 <div class="shotsim-container">
+	<Instructions bind:this={instructions} gameId="shotsim" title="ShotSim">
+		<p><strong>Goal:</strong> Land the projectile perfectly in the target hoop.</p>
+		<p>Adjust the cannon's angle and firing power using the sliders. Watch how gravity and velocity affect the parabolic trajectory!</p>
+	</Instructions>
+
 	<div class="nav-row">
-		<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+		<div class="nav-group">
+			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
+			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
+		</div>
 		
 		<label class="telemetry-toggle">
 			<input type="checkbox" bind:checked={showTelemetry} />
@@ -364,7 +374,12 @@
 		accent-color: var(--color-golden);
 	}
 
-	.back-btn, .restart-btn {
+	.nav-group {
+		display: flex;
+		gap: 1vmin;
+	}
+
+	.back-btn, .restart-btn, .help-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255,255,255,0.1);
 		color: rgba(255,255,255,0.4);
@@ -376,7 +391,8 @@
 		transition: all 0.2s;
 	}
 
-	.back-btn:hover { color: white; border-color: var(--color-illusion); }
+	.back-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
+	.restart-btn:hover { color: white; border-color: var(--color-golden); }
 
 	.game-header {
 		text-align: center;
