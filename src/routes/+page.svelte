@@ -1,9 +1,10 @@
 <script lang="ts">
 	import SlidingTiles from '$lib/SlidingTiles.svelte';
-	import Anagrams from '$lib/Anagrams.svelte';
+	import Pegboard from '$lib/Pegboard.svelte';
+	import Hanoi from '$lib/Hanoi.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'anagrams';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi';
 	let currentView = $state<View>('menu');
 
 	function setView(view: View) {
@@ -39,15 +40,29 @@
 				</button>
 
 				<button 
-					id="select-anagrams-btn"
-					class="game-card anagrams-card" 
-					onclick={() => setView('anagrams')}
-					in:fly={{ y: 20, duration: 800, delay: 400 }}
+					id="select-pegboard-btn"
+					class="game-card pegboard-card" 
+					onclick={() => setView('pegboard')}
+					in:fly={{ y: 20, duration: 800, delay: 600 }}
 				>
-					<div class="card-icon">🔠</div>
+					<div class="card-icon">🔵</div>
 					<div class="card-content">
-						<h2>Anagrams</h2>
-						<p>Quick-fire word hunt from 7 letters.</p>
+						<h2>Pegboard</h2>
+						<p>English peg solitaire. Leave only one.</p>
+					</div>
+					<div class="card-arrow">→</div>
+				</button>
+
+				<button 
+					id="select-hanoi-btn"
+					class="game-card hanoi-card" 
+					onclick={() => setView('hanoi')}
+					in:fly={{ y: 20, duration: 800, delay: 800 }}
+				>
+					<div class="card-icon">🗼</div>
+					<div class="card-content">
+						<h2>Hanoi</h2>
+						<p>Classic tower puzzle. 3 to 8 discs.</p>
 					</div>
 					<div class="card-arrow">→</div>
 				</button>
@@ -57,8 +72,10 @@
 		<div id="game-viewport" class="game-frame" in:fade={{ duration: 300 }}>
 			{#if currentView === 'sliding-tiles'}
 				<SlidingTiles onBack={() => setView('menu')} />
-			{:else if currentView === 'anagrams'}
-				<Anagrams onBack={() => setView('menu')} />
+			{:else if currentView === 'pegboard'}
+				<Pegboard onBack={() => setView('menu')} />
+			{:else if currentView === 'hanoi'}
+				<Hanoi onBack={() => setView('menu')} />
 			{/if}
 		</div>
 	{/if}
@@ -111,10 +128,10 @@
 
 	.game-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 4vmin;
+		grid-template-columns: repeat(auto-fit, minmax(30vmin, 1fr));
+		gap: 3vmin;
 		width: 100%;
-		max-width: 100vmin;
+		max-width: 120vmin;
 	}
 
 	.game-card {
