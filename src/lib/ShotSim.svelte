@@ -4,7 +4,7 @@
 
 	let { onBack } = $props();
 
-	let angle = $state(45); // degrees
+	let angle = $state(90); // degrees, 90 is straight up
 	let power = $state(15); // initial velocity in m/s
 	let isShooting = $state(false);
 	let score = $state(0);
@@ -38,6 +38,8 @@
 
 		const rad = (angle * Math.PI) / 180;
 		const v0 = power;
+		// Standard physics: vx = v0*cos(theta), vy = v0*sin(theta)
+		// But cannon is on the right shooting left, so vx is negative
 		let vx = -v0 * Math.cos(rad);
 		let vy = v0 * Math.sin(rad);
 		
@@ -45,6 +47,7 @@
 		const dt = 0.02;
 
 		const barrelLen_m = 2.6; // 12vmin in world meters
+		// Start point is at the tip of the barrel
 		let curX_m = CANNON_X_M - barrelLen_m * Math.cos(rad);
 		let curY_m = (CANNON_Y_M + 0.55) + barrelLen_m * Math.sin(rad);
 
@@ -176,7 +179,7 @@
 		<!-- Cannon -->
 		<div class="cannon-container" style="left: {toX(CANNON_X_M)}%; bottom: {toY(CANNON_Y_M)}%">
 			<div class="cannon-base"></div>
-			<div class="cannon-barrel" style="transform: rotate({-angle}deg)">
+			<div class="cannon-barrel" style="transform: rotate({angle}deg)">
 				<div class="barrel-stats">
 					<span>{angle}°</span>
 					<span>{power}m/s</span>
@@ -198,7 +201,7 @@
 	<div class="controls">
 		<div class="control-group">
 			<label for="angle">ANGLE: {angle}°</label>
-			<input type="range" id="angle" min="10" max="85" bind:value={angle} disabled={isShooting} />
+			<input type="range" id="angle" min="0" max="90" bind:value={angle} disabled={isShooting} />
 		</div>
 		<div class="control-group">
 			<label for="power">VELOCITY: {power} m/s</label>
