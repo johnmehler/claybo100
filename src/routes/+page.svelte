@@ -33,17 +33,95 @@
 
 	let isGamesOpen = $state(true);
 
-	const games = [
-		{ id: 'sliding-tiles', label: 'Sliding Tiles', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>` },
-		{ id: 'pegboard', label: 'Peg Solitaire', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="4" cy="19" r="2"></circle><circle cx="12" cy="19" r="2"></circle><circle cx="20" cy="19" r="2"></circle></svg>` },
-		{ id: 'hanoi', label: 'Hanoi', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line><rect x="8" y="16" width="8" height="4" rx="1"></rect><rect x="9" y="12" width="6" height="4" rx="1"></rect><rect x="10" y="8" width="4" height="4" rx="1"></rect></svg>` },
-		{ id: 'knights-tour', label: 'Knight\'s Tour', icon: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5,2A1.5,1.5 0 0,1 19,3.5V10A1.5,1.5 0 0,1 17.5,11.5H16.5L13.82,14.18C13.56,14.44 13.25,14.62 12.89,14.71L9.12,15.54C9.56,16.34 10.35,17 11.5,17H17V19H7V17L8.68,14.18L6.4,11.39C5.54,10.32 5,8.96 5,7.5A5.5,5.5 0 0,1 10.5,2H17.5M10.5,4A3.5,3.5 0 0,0 7,7.5C7,8.65 7.42,9.66 8.08,10.45L10.33,13.26L13.3,12.6C13.43,12.57 13.55,12.5 13.63,12.42L15.5,10.54V4H10.5M17.5,4V10H19V4H17.5M13,6A1,1 0 0,1 14,7A1,1 0 0,1 13,8A1,1 0 0,1 12,7A1,1 0 0,1 13,6Z"/></svg>` },
-		{ id: 'set', label: 'Set', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>` },
-		{ id: 'dotsandboxes', label: 'Dots & Boxes', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="1"></circle><circle cx="18" cy="6" r="1"></circle><circle cx="6" cy="18" r="1"></circle><circle cx="18" cy="18" r="1"></circle><rect x="6" y="6" width="12" height="12" stroke-dasharray="2 2"></rect></svg>` },
-		{ id: 'nim', label: 'Nim', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/></svg>` },
-		{ id: 'hex', label: 'Hex', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg>` },
-		{ id: 'krypto', label: 'Krypto', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>` },
-		{ id: 'shotsim', label: 'ShotSim', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21 Q 12 3, 21 12"></path><circle cx="21" cy="12" r="2"></circle><circle cx="3" cy="21" r="1.5"></circle></svg>` },
+	const gameCategories = [
+		{
+			name: 'Logic & Puzzles',
+			delay: 200,
+			games: [
+				{ 
+					id: 'sliding-tiles', 
+					label: 'Sliding Tiles', 
+					description: 'Classical 15-puzzle with a modern twist.',
+					cardClass: 'sliding',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>` 
+				},
+				{ 
+					id: 'pegboard', 
+					label: 'Peg Solitaire', 
+					description: 'English peg solitaire. Leave only one.',
+					cardClass: 'pegboard-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="4" cy="19" r="2"></circle><circle cx="12" cy="19" r="2"></circle><circle cx="20" cy="19" r="2"></circle></svg>` 
+				},
+				{ 
+					id: 'hanoi', 
+					label: 'Hanoi', 
+					description: 'Classic tower puzzle. 3 to 8 discs.',
+					cardClass: 'hanoi-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line><rect x="8" y="16" width="8" height="4" rx="1"></rect><rect x="9" y="12" width="6" height="4" rx="1"></rect><rect x="10" y="8" width="4" height="4" rx="1"></rect></svg>` 
+				},
+				{ 
+					id: 'knights-tour', 
+					label: "Knight's Tour", 
+					description: 'Visit every square on the board exactly once.',
+					cardClass: 'knights-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M16.5 18c1-2 2.5-5 2.5-9a7 7 0 0 0-7-7H6.635a1 1 0 0 0-.768 1.64L7 5l-2.32 5.802a2 2 0 0 0 .95 2.526l2.87 1.456"/><path d="m15 5 1.425-1.425"/><path d="m17 8 1.53-1.53"/><path d="M9.713 12.185 7 18"/></svg>` 
+				},
+				{ 
+					id: 'set', 
+					label: 'Set', 
+					description: 'Find combinations of matching or unique attributes.',
+					cardClass: 'set-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>` 
+				},
+				{ 
+					id: 'dotsandboxes', 
+					label: 'Dots & Boxes', 
+					description: 'Connect dots to capture squares against AI.',
+					cardClass: 'dots-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="1"></circle><circle cx="18" cy="6" r="1"></circle><circle cx="6" cy="18" r="1"></circle><circle cx="18" cy="18" r="1"></circle><rect x="6" y="6" width="12" height="12" stroke-dasharray="2 2"></rect></svg>` 
+				}
+			]
+		},
+		{
+			name: 'Math & Strategy',
+			delay: 400,
+			games: [
+				{ 
+					id: 'nim', 
+					label: 'Nim', 
+					description: 'Mathematical strategy game of removing objects.',
+					cardClass: 'nim-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/></svg>` 
+				},
+				{ 
+					id: 'hex', 
+					label: 'Hex', 
+					description: 'Connect your sides on a hexagonal grid.',
+					cardClass: 'hex-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg>` 
+				},
+				{ 
+					id: 'krypto', 
+					label: 'Krypto', 
+					description: 'Use math operators to reach the target number.',
+					cardClass: 'krypto-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>` 
+				}
+			]
+		},
+		{
+			name: 'Physics & Simulation',
+			delay: 600,
+			games: [
+				{ 
+					id: 'shotsim', 
+					label: 'ShotSim', 
+					description: 'Cannon physics simulator. Hit the hoop.',
+					cardClass: 'shotsim-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21 Q 12 3, 21 12"></path><circle cx="21" cy="12" r="2"></circle><circle cx="3" cy="21" r="1.5"></circle></svg>` 
+				}
+			]
+		}
 	];
 </script>
 
@@ -104,18 +182,23 @@
 					
 					{#if isGamesOpen}
 						<div class="nav-list" transition:fade={{ duration: 200 }}>
-							{#each games as game}
-								<button 
-									class="nav-button" 
-									class:active={currentView === game.id}
-									onclick={() => setView(game.id as View)}
-								>
-									<div class="nav-icon">{@html game.icon}</div>
-									<span class="nav-label-text">{game.label}</span>
-									{#if currentView === game.id}
-										<div class="active-indicator"></div>
-									{/if}
-								</button>
+							{#each gameCategories as category}
+								<div class="sidebar-category">
+									<p class="sidebar-category-label">{category.name}</p>
+									{#each category.games as game}
+										<button 
+											class="nav-button" 
+											class:active={currentView === game.id}
+											onclick={() => setView(game.id as View)}
+										>
+											<div class="nav-icon">{@html game.icon}</div>
+											<span class="nav-label-text">{game.label}</span>
+											{#if currentView === game.id}
+												<div class="active-indicator"></div>
+											{/if}
+										</button>
+									{/each}
+								</div>
 							{/each}
 						</div>
 					{/if}
@@ -140,64 +223,22 @@
 				</header>
 
 				<div id="game-list" class="game-catalog">
-					<div class="category" in:fade={{ duration: 800, delay: 200 }}>
-						<h2 class="category-title">Logic & Puzzles</h2>
-						<div class="game-grid">
-							<button id="select-sliding-tiles-btn" class="game-card sliding" onclick={() => setView('sliding-tiles')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg></div>
-								<div class="card-content"><h2>Sliding Tiles</h2><p>Classical 15-puzzle with a modern twist.</p></div>
-							</button>
-							<button id="select-pegboard-btn" class="game-card pegboard-card" onclick={() => setView('pegboard')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="4" cy="19" r="2"></circle><circle cx="12" cy="19" r="2"></circle><circle cx="20" cy="19" r="2"></circle></svg></div>
-								<div class="card-content"><h2>Peg Solitaire</h2><p>English peg solitaire. Leave only one.</p></div>
-							</button>
-							<button id="select-hanoi-btn" class="game-card hanoi-card" onclick={() => setView('hanoi')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line><rect x="8" y="16" width="8" height="4" rx="1"></rect><rect x="9" y="12" width="6" height="4" rx="1"></rect><rect x="10" y="8" width="4" height="4" rx="1"></rect></svg></div>
-								<div class="card-content"><h2>Hanoi</h2><p>Classic tower puzzle. 3 to 8 discs.</p></div>
-							</button>
-
-							<button class="game-card knights-card" onclick={() => setView('knights-tour')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5,2A1.5,1.5 0 0,1 19,3.5V10A1.5,1.5 0 0,1 17.5,11.5H16.5L13.82,14.18C13.56,14.44 13.25,14.62 12.89,14.71L9.12,15.54C9.56,16.34 10.35,17 11.5,17H17V19H7V17L8.68,14.18L6.4,11.39C5.54,10.32 5,8.96 5,7.5A5.5,5.5 0 0,1 10.5,2H17.5M10.5,4A3.5,3.5 0 0,0 7,7.5C7,8.65 7.42,9.66 8.08,10.45L10.33,13.26L13.3,12.6C13.43,12.57 13.55,12.5 13.63,12.42L15.5,10.54V4H10.5M17.5,4V10H19V4H17.5M13,6A1,1 0 0,1 14,7A1,1 0 0,1 13,8A1,1 0 0,1 12,7A1,1 0 0,1 13,6Z"/></svg></div>
-								<div class="card-content"><h2>Knight's Tour</h2><p>Visit every square on the board exactly once.</p></div>
-							</button>
-							<button class="game-card set-card" onclick={() => setView('set')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></div>
-								<div class="card-content"><h2>Set</h2><p>Find combinations of matching or unique attributes.</p></div>
-							</button>
-							<button class="game-card dots-card" onclick={() => setView('dotsandboxes')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="1"></circle><circle cx="18" cy="6" r="1"></circle><circle cx="6" cy="18" r="1"></circle><circle cx="18" cy="18" r="1"></circle><rect x="6" y="6" width="12" height="12" stroke-dasharray="2 2"></rect></svg></div>
-								<div class="card-content"><h2>Dots & Boxes</h2><p>Connect dots to capture squares against AI.</p></div>
-							</button>
+					{#each gameCategories as category}
+						<div class="category" in:fade={{ duration: 800, delay: category.delay }}>
+							<h2 class="category-title">{category.name}</h2>
+							<div class="game-grid">
+								{#each category.games as game}
+									<button class="game-card {game.cardClass}" onclick={() => setView(game.id as View)}>
+										<div class="card-icon">{@html game.icon}</div>
+										<div class="card-content">
+											<h2>{game.label}</h2>
+											<p>{game.description}</p>
+										</div>
+									</button>
+								{/each}
+							</div>
 						</div>
-					</div>
-
-					<div class="category" in:fade={{ duration: 800, delay: 400 }}>
-						<h2 class="category-title">Math & Strategy</h2>
-						<div class="game-grid">
-							<button class="game-card nim-card" onclick={() => setView('nim')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/></svg></div>
-								<div class="card-content"><h2>Nim</h2><p>Mathematical strategy game of removing objects.</p></div>
-							</button>
-							<button class="game-card hex-card" onclick={() => setView('hex')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg></div>
-								<div class="card-content"><h2>Hex</h2><p>Connect your sides on a hexagonal grid.</p></div>
-							</button>
-							<button class="game-card krypto-card" onclick={() => setView('krypto')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-								<div class="card-content"><h2>Krypto</h2><p>Use math operators to reach the target number.</p></div>
-							</button>
-						</div>
-					</div>
-
-					<div class="category" in:fade={{ duration: 800, delay: 600 }}>
-						<h2 class="category-title">Physics & Simulation</h2>
-						<div class="game-grid">
-							<button id="select-shotsim-btn" class="game-card shotsim-card" onclick={() => setView('shotsim')}>
-								<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21 Q 12 3, 21 12"></path><circle cx="21" cy="12" r="2"></circle><circle cx="3" cy="21" r="1.5"></circle></svg></div>
-								<div class="card-content"><h2>ShotSim</h2><p>Cannon physics simulator. Hit the hoop.</p></div>
-							</button>
-						</div>
-					</div>
+					{/each}
 				</div>
 			</div>
 		{:else}
@@ -352,6 +393,19 @@
 
 	.nav-section {
 		margin-bottom: 4vmin;
+	}
+
+	.sidebar-category {
+		margin-bottom: 2vmin;
+	}
+
+	.sidebar-category-label {
+		font-size: 1.1vmin;
+		color: rgba(255, 255, 255, 0.2);
+		font-weight: 800;
+		letter-spacing: 0.1vmin;
+		text-transform: uppercase;
+		margin: 1.5vmin 0 1vmin 1.5vmin;
 	}
 
 	.section-label {
