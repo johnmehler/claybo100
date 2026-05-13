@@ -3,7 +3,6 @@
 	import Pegboard from '$lib/Pegboard.svelte';
 	import Hanoi from '$lib/Hanoi.svelte';
 	import ShotSim from '$lib/ShotSim.svelte';
-	import RushHour from '$lib/RushHour.svelte';
 	import Nim from '$lib/Nim.svelte';
 	import KnightsTour from '$lib/KnightsTour.svelte';
 	import Hex from '$lib/Hex.svelte';
@@ -12,7 +11,7 @@
 	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'rushhour' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes';
 	let currentView = $state<View>('menu');
 
 	function setView(view: View) {
@@ -48,10 +47,7 @@
 							<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line><rect x="8" y="16" width="8" height="4" rx="1"></rect><rect x="9" y="12" width="6" height="4" rx="1"></rect><rect x="10" y="8" width="4" height="4" rx="1"></rect></svg></div>
 							<div class="card-content"><h2>Hanoi</h2><p>Classic tower puzzle. 3 to 8 discs.</p></div>
 						</button>
-						<button id="select-rushhour-btn" class="game-card rushhour-card" onclick={() => setView('rushhour')}>
-							<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="10" height="4" rx="1"></rect><rect x="15" y="5" width="4" height="10" rx="1"></rect><rect x="5" y="11" width="4" height="8" rx="1"></rect><rect x="11" y="15" width="8" height="4" rx="1"></rect></svg></div>
-							<div class="card-content"><h2>Rush Hour</h2><p>Sliding block logic puzzle.</p></div>
-						</button>
+
 						<button class="game-card knights-card" onclick={() => setView('knights-tour')}>
 							<div class="card-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5,2A1.5,1.5 0 0,1 19,3.5V10A1.5,1.5 0 0,1 17.5,11.5H16.5L13.82,14.18C13.56,14.44 13.25,14.62 12.89,14.71L9.12,15.54C9.56,16.34 10.35,17 11.5,17H17V19H7V17L8.68,14.18L6.4,11.39C5.54,10.32 5,8.96 5,7.5A5.5,5.5 0 0,1 10.5,2H17.5M10.5,4A3.5,3.5 0 0,0 7,7.5C7,8.65 7.42,9.66 8.08,10.45L10.33,13.26L13.3,12.6C13.43,12.57 13.55,12.5 13.63,12.42L15.5,10.54V4H10.5M17.5,4V10H19V4H17.5M13,6A1,1 0 0,1 14,7A1,1 0 0,1 13,8A1,1 0 0,1 12,7A1,1 0 0,1 13,6Z"/></svg></div>
 							<div class="card-content"><h2>Knight's Tour</h2><p>Visit every square on the board exactly once.</p></div>
@@ -106,8 +102,6 @@
 				<Hanoi onBack={() => setView('menu')} />
 			{:else if currentView === 'shotsim'}
 				<ShotSim onBack={() => setView('menu')} />
-			{:else if currentView === 'rushhour'}
-				<RushHour onBack={() => setView('menu')} />
 			{:else if currentView === 'nim'}
 				<Nim onBack={() => setView('menu')} />
 			{:else if currentView === 'knights-tour'}
