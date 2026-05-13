@@ -13,6 +13,7 @@
 
 	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes';
 	let currentView = $state<View>('menu');
+	let isSidebarCollapsed = $state(false);
 
 	let activeGameActions = $state({
 		restart: null as (() => void) | null,
@@ -52,9 +53,26 @@
 
 <main id="main-view" class="main-container" class:in-game={currentView !== 'menu'}>
 	{#if currentView !== 'menu'}
-		<aside class="sidebar" in:fly={{ x: -100, duration: 600 }}>
-			<div class="sidebar-header" onclick={() => setView('menu')} role="button" tabindex="0">
-				<h1 class="sidebar-title">MATH <span class="highlight">MUSEUM</span></h1>
+		<button 
+			class="sidebar-toggle-floating" 
+			class:is-collapsed={isSidebarCollapsed}
+			onclick={() => isSidebarCollapsed = !isSidebarCollapsed}
+			aria-label="Toggle Sidebar"
+		>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				{#if isSidebarCollapsed}
+					<path d="M4 6h16M4 12h16M4 18h16" />
+				{:else}
+					<path d="M18 6L6 18M6 6l12 12" />
+				{/if}
+			</svg>
+		</button>
+
+		<aside class="sidebar" class:collapsed={isSidebarCollapsed} in:fly={{ x: -100, duration: 600 }}>
+			<div class="sidebar-header">
+				<div class="logo-wrapper" onclick={() => setView('menu')} role="button" tabindex="0">
+					<h1 class="sidebar-title">MATH <span class="highlight">MUSEUM</span></h1>
+				</div>
 			</div>
 
 			<nav class="sidebar-nav">
@@ -249,16 +267,73 @@
 		padding: 3vmin 2vmin;
 		backdrop-filter: blur(20px);
 		z-index: 100;
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		position: relative;
+	}
+
+	.sidebar.collapsed {
+		width: 0;
+		padding-left: 0;
+		padding-right: 0;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateX(-100%);
+		border-right: none;
+	}
+
+	.sidebar-toggle-floating {
+		position: fixed;
+		top: 3vmin;
+		left: 26vmin;
+		width: 4.5vmin;
+		height: 4.5vmin;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 1.2vmin;
+		color: rgba(255, 255, 255, 0.6);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		z-index: 1000;
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		backdrop-filter: blur(10px);
+	}
+
+	.sidebar-toggle-floating:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: white;
+		transform: scale(1.1);
+	}
+
+	.sidebar-toggle-floating.is-collapsed {
+		left: 2.5vmin;
+		background: var(--color-bittersweet);
+		border-color: var(--color-bittersweet);
+		color: black;
+		box-shadow: 0 0 20px rgba(255, 110, 97, 0.4);
+	}
+
+	.sidebar-toggle-floating svg {
+		width: 2.2vmin;
+		height: 2.2vmin;
 	}
 
 	.sidebar-header {
-		padding: 1vmin;
-		margin-bottom: 4vmin;
-		cursor: pointer;
-		transition: opacity 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.5vmin;
+		margin-bottom: 5vmin;
 	}
 
-	.sidebar-header:hover {
+	.logo-wrapper {
+		cursor: pointer;
+		transition: opacity 0.2s;
+		white-space: nowrap;
+	}
+
+	.logo-wrapper:hover {
 		opacity: 0.8;
 	}
 

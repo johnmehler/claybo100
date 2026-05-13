@@ -7,7 +7,7 @@
 	type Block = { id: number, val: number, expr: string, used: boolean };
 	let blocks = $state<Block[]>([]);
 	let target = $state(0);
-	let difficulty = $state<'easy'|'medium'|'hard'>('easy');
+	let difficulty = $state<'easy'|'medium'|'hard'|'ultra'>('easy');
 	
 	let selectedBlockId = $state<number | null>(null);
 	let selectedOp = $state<string | null>(null);
@@ -18,20 +18,30 @@
 	let wonByDeclaration = $state(false);
 
 	function generate() {
-		let deck = [];
-		let maxNum = difficulty === 'easy' ? 10 : (difficulty === 'medium' ? 15 : 25);
-		
-		for (let i = 1; i <= maxNum; i++) {
-			let count = 1;
-			if (i <= 6) count = 3;
-			else if (i <= 10) count = 2;
-			for (let j = 0; j < count; j++) deck.push(i);
-		}
-		deck.sort(() => Math.random() - 0.5);
+		let nums: number[] = [];
+		let t = 0;
 
-		let nums = deck.slice(0, 5);
-		let t = deck[5];
-		if (difficulty === 'hard') t += deck[6];
+		function getNum(min: number, max: number) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+		if (difficulty === 'easy') {
+			for (let i = 0; i < 5; i++) nums.push(getNum(1, 10));
+			t = getNum(1, 20);
+		} else if (difficulty === 'medium') {
+			const bigCount = getNum(3, 5);
+			for (let i = 0; i < bigCount; i++) nums.push(getNum(10, 25));
+			for (let i = 0; i < 5 - bigCount; i++) nums.push(getNum(1, 9));
+			t = getNum(10, 40);
+		} else if (difficulty === 'hard') {
+			const bigCount = getNum(3, 5);
+			for (let i = 0; i < bigCount; i++) nums.push(getNum(20, 50));
+			for (let i = 0; i < 5 - bigCount; i++) nums.push(getNum(1, 19));
+			t = getNum(20, 100);
+		} else if (difficulty === 'ultra') {
+			for (let i = 0; i < 5; i++) nums.push(getNum(20, 29));
+			t = getNum(20, 29);
+		}
+
+		nums.sort(() => Math.random() - 0.5);
 
 		let dp: Set<number>[] = Array(32).fill(0).map(() => new Set());
 		for (let i = 0; i < 5; i++) dp[1 << i].add(nums[i]);
@@ -199,6 +209,7 @@
 				<button class="diff-btn" class:active={difficulty === 'easy'} onclick={() => { difficulty='easy'; generate(); }}>EASY</button>
 				<button class="diff-btn" class:active={difficulty === 'medium'} onclick={() => { difficulty='medium'; generate(); }}>MEDIUM</button>
 				<button class="diff-btn" class:active={difficulty === 'hard'} onclick={() => { difficulty='hard'; generate(); }}>HARD</button>
+					<button class="diff-btn" class:active={difficulty === 'ultra'} class:ultra={difficulty === 'ultra'} onclick={() => { difficulty='ultra'; generate(); }}>ULTRA</button>
 			</div>
 			<button class="unsolvable-btn" onclick={declareUnsolvable} disabled={!!status}>IMPOSSIBLE?</button>
 		</div>
@@ -252,6 +263,7 @@
 	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.5vmin; transition: all 0.3s; }
 	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
 	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); box-shadow: 0 0 15px rgba(248, 165, 194, 0.3); }
+	.diff-btn.active.ultra { background: var(--color-indigo); border-color: var(--color-indigo); color: white; box-shadow: 0 0 15px rgba(108, 92, 231, 0.4); }
 
 	.unsolvable-btn { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--color-bittersweet); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; letter-spacing: 0.1vmin; }
 	.unsolvable-btn:hover { background: var(--color-bittersweet); color: black; border-color: var(--color-bittersweet); box-shadow: 0 0 20px rgba(255, 110, 97, 0.3); }
