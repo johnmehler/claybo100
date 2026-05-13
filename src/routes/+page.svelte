@@ -42,7 +42,7 @@
 						</button>
 						<button id="select-pegboard-btn" class="game-card pegboard-card" onclick={() => setView('pegboard')}>
 							<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"></circle><circle cx="8" cy="12" r="2"></circle><circle cx="16" cy="12" r="2"></circle><circle cx="4" cy="19" r="2"></circle><circle cx="12" cy="19" r="2"></circle><circle cx="20" cy="19" r="2"></circle></svg></div>
-							<div class="card-content"><h2>Pegboard</h2><p>English peg solitaire. Leave only one.</p></div>
+							<div class="card-content"><h2>Peg Solitaire</h2><p>English peg solitaire. Leave only one.</p></div>
 						</button>
 						<button id="select-hanoi-btn" class="game-card hanoi-card" onclick={() => setView('hanoi')}>
 							<div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="20" x2="22" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line><rect x="8" y="16" width="8" height="4" rx="1"></rect><rect x="9" y="12" width="6" height="4" rx="1"></rect><rect x="10" y="8" width="4" height="4" rx="1"></rect></svg></div>
@@ -265,8 +265,8 @@
 
 	/* Simple Frame for all games */
 	.game-frame {
-		width: 90vmin;
-		height: 90vmin;
+		width: 95vmin;
+		height: 95vmin;
 		background: rgba(255, 255, 255, 0.02);
 		border: 2px solid rgba(255, 255, 255, 0.1);
 		border-radius: 4vmin;

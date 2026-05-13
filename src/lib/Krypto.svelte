@@ -2,6 +2,7 @@
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
+	import GameOverMenu from './GameOverMenu.svelte';
 	let { onBack } = $props();
 	let instructions: any;
 	
@@ -177,54 +178,63 @@
 		{/snippet}
 	</InGameMenu>
 
-	<div class="target-area">
-		<div class="target-label">TARGET</div>
-		<div class="target-val">{target}</div>
+	<div class="board-wrapper">
+		<div class="target-area">
+			<div class="target-label">TARGET</div>
+			<div class="target-val">{target}</div>
+		</div>
+
+		<div class="workspace">
+			<div class="blocks">
+				{#each blocks.filter(b => !b.used) as b, i (b.id)}
+					<button class="block {selectedBlockId === b.id ? 'selected' : ''}" onclick={() => clickBlock(b.id)} in:fade>
+						<div class="shortcut">{i + 1}</div>
+						<div class="val">{b.val}</div>
+						<div class="expr">{b.expr}</div>
+					</button>
+				{/each}
+			</div>
+			
+			<div class="operators">
+				{#each ['+', '-', '×', '÷'] as op}
+					<button 
+						class="op {selectedOp === op ? 'selected' : ''}" 
+						disabled={selectedBlockId === null}
+						onclick={() => selectedOp = op}
+					>
+						{op}
+					</button>
+				{/each}
+			</div>
+		</div>
+
+		{#if gameLost}
+			<div class="win-overlay" in:fade>
+				<h2 style="color: var(--color-bittersweet)">INCORRECT!</h2>
+				<div class="final-expr">A valid mathematical solution exists for this target.</div>
+			</div>
+		{/if}
+
+		{#if won}
+			<div class="win-overlay" in:fade>
+				<h2>KRYPTO SOLVED!</h2>
+				{#if wonByLogic}
+					<div class="final-expr">{blocks.filter(b => !b.used)[0].expr} = {target}</div>
+				{:else}
+					<div class="final-expr">You correctly identified an impossible puzzle!</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
 
-	<div class="workspace">
-		<div class="blocks">
-			{#each blocks.filter(b => !b.used) as b, i (b.id)}
-				<button class="block {selectedBlockId === b.id ? 'selected' : ''}" onclick={() => clickBlock(b.id)} in:fade>
-					<div class="shortcut">{i + 1}</div>
-					<div class="val">{b.val}</div>
-					<div class="expr">{b.expr}</div>
-				</button>
-			{/each}
-		</div>
-		
-		<div class="operators">
-			{#each ['+', '-', '×', '÷'] as op}
-				<button 
-					class="op {selectedOp === op ? 'selected' : ''}" 
-					disabled={selectedBlockId === null}
-					onclick={() => selectedOp = op}
-				>
-					{op}
-				</button>
-			{/each}
-		</div>
+	<div class="bottom-bar">
+		{#if gameLost}
+			<GameOverMenu onPlayAgain={generate} onMenu={onBack} delay={0} playAgainText="NEW PUZZLE" />
+		{/if}
+		{#if won}
+			<GameOverMenu onPlayAgain={generate} onMenu={onBack} delay={0} playAgainText="NEXT PUZZLE" />
+		{/if}
 	</div>
-
-	{#if gameLost}
-		<div class="win-overlay" in:fade>
-			<h2 style="color: var(--color-bittersweet)">INCORRECT!</h2>
-			<div class="final-expr">A valid mathematical solution exists for this target.</div>
-			<button class="next-btn" style="background: var(--color-bittersweet)" onclick={generate}>NEW PUZZLE</button>
-		</div>
-	{/if}
-
-	{#if won}
-		<div class="win-overlay" in:fade>
-			<h2>KRYPTO SOLVED!</h2>
-			{#if wonByLogic}
-				<div class="final-expr">{blocks.filter(b => !b.used)[0].expr} = {target}</div>
-			{:else}
-				<div class="final-expr">You correctly identified an impossible puzzle!</div>
-			{/if}
-			<button class="next-btn" onclick={generate}>NEXT PUZZLE</button>
-		</div>
-	{/if}
 </div>
 
 <style>
@@ -237,6 +247,25 @@
 	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.4vmin; transition: all 0.2s; }
 	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
 	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); }
+
+	.board-wrapper {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		position: relative;
+		width: 100%;
+		padding: 4vmin;
+		box-sizing: border-box;
+	}
+
+	.bottom-bar {
+		height: 12vmin;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+	}
 
 	.target-area { display: flex; flex-direction: column; align-items: center; margin-top: 5vmin; }
 	.target-label { font-size: 2vmin; font-weight: 800; color: rgba(255,255,255,0.5); letter-spacing: 0.5vmin; }
@@ -260,6 +289,4 @@
 	.win-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(10px); border-radius: 4vmin; }
 	.win-overlay h2 { font-size: 6vmin; color: var(--color-golden); margin-bottom: 2vmin; font-weight: 900; }
 	.final-expr { font-size: 3vmin; color: white; margin-bottom: 5vmin; font-family: monospace; text-align: center; }
-	.next-btn { background: var(--color-golden); color: black; border: none; padding: 2vmin 4vmin; border-radius: 1vmin; font-size: 2.5vmin; font-weight: 900; cursor: pointer; transition: all 0.2s; }
-	.next-btn:hover { filter: brightness(1.2); }
 </style>

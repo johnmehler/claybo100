@@ -2,6 +2,7 @@
 	import { fade, fly, scale } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
+	import GameOverMenu from './GameOverMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -141,7 +142,7 @@
 </script>
 
 <div class="pegboard-container">
-	<Instructions bind:this={instructions} gameId="pegboard" title="Pegboard">
+	<Instructions bind:this={instructions} gameId="pegboard" title="Peg Solitaire">
 		<p><strong>Goal:</strong> Leave only one peg remaining on the board.</p>
 		<p>Click a peg, then click an empty hole to jump over an adjacent peg. The jumped peg is removed. You can only jump horizontally or vertically.</p>
 	</Instructions>
@@ -152,7 +153,7 @@
 		onRestart={gameState === 'playing' || gameState === 'won' || gameState === 'lost' ? restart : undefined}
 	/>
 
-	<div class="game-area">
+	<div class="board-wrapper">
 			<div class="stats">
 				<div class="stat">
 					<span class="label">PEGS</span>
@@ -181,19 +182,17 @@
 						</button>
 					{/if}
 				{/each}
+				{#if gameState === 'won' || gameState === 'lost'}
+					<div class="completion-overlay" transition:fade></div>
+				{/if}
 			</div>
+	</div>
 
-			{#if gameState === 'won' || gameState === 'lost'}
-				<div class="game-over-overlay" in:fade>
-					<h2>{isPerfectWin ? 'PERFECT!' : (gameState === 'won' ? 'VICTORY!' : 'GAME OVER')}</h2>
-					<p>{pegsRemaining} peg{pegsRemaining > 1 ? 's' : ''} left</p>
-					<div class="actions">
-						<button class="cta-btn" onclick={restart}>TRY AGAIN</button>
-						<button class="secondary-btn" onclick={onBack}>MENU</button>
-					</div>
-				</div>
-			{/if}
-		</div>
+	<div class="bottom-bar">
+		{#if gameState === 'won' || gameState === 'lost'}
+			<GameOverMenu onPlayAgain={restart} onMenu={onBack} delay={800} />
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -231,37 +230,31 @@
 		max-width: 40vmin;
 	}
 
-	.cta-btn {
-		background: var(--color-bittersweet);
-		color: white;
-		border: none;
-		padding: 2vmin 5vmin;
-		font-size: 2.5vmin;
-		font-weight: 800;
-		border-radius: 1.5vmin;
-		cursor: pointer;
-		transition: transform 0.2s, background 0.2s;
-		box-shadow: 0 10px 20px -5px rgba(255, 110, 97, 0.4);
-	}
-
-	.cta-btn:hover {
-		background: var(--color-illusion);
-		scale: 1.05;
-	}
-
-	.game-area {
+	.board-wrapper {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding-bottom: 5vmin;
+		width: 100%;
+		padding: 2vmin 4vmin;
+		box-sizing: border-box;
+	}
+
+	.bottom-bar {
+		height: 12vmin;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
 	}
 
 	.stats {
 		display: flex;
+		justify-content: center;
 		gap: 8vmin;
-		margin-bottom: 4vmin;
+		margin-bottom: 2vmin;
+		width: 100%;
 	}
 
 	.stat {
@@ -284,18 +277,20 @@
 
 	.board {
 		display: grid;
-		grid-template-columns: repeat(7, 1fr);
-		gap: 1.5vmin;
-		padding: 3vmin;
+		grid-template-columns: repeat(7, 6vmin);
+		gap: 1vmin;
+		padding: 2vmin;
 		background: rgba(255,255,255,0.03);
 		border: 1px solid rgba(255,255,255,0.08);
 		border-radius: 4vmin;
 		backdrop-filter: blur(10px);
+		position: relative;
+		overflow: hidden;
 	}
 
 	.cell {
-		width: 7vmin;
-		height: 7vmin;
+		width: 6vmin;
+		height: 6vmin;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
@@ -332,8 +327,8 @@
 	}
 
 	.peg {
-		width: 5vmin;
-		height: 5vmin;
+		width: 4vmin;
+		height: 4vmin;
 		border-radius: 50%;
 		background: var(--color-golden);
 		box-shadow: 0 4px 8px rgba(0,0,0,0.4);
@@ -345,50 +340,28 @@
 		scale: 1.1;
 	}
 
-	.game-over-overlay {
+	.completion-overlay {
 		position: absolute;
-		top: 0; left: 0; right: 0; bottom: 0;
-		background: rgba(0,0,0,0.8);
-		backdrop-filter: blur(10px);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
+		top: 0;
+		left: -150%;
+		width: 150%;
+		height: 100%;
+		background: linear-gradient(
+			to right,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(200, 200, 200, 0.2) 30%,
+			rgba(255, 255, 255, 0.5) 50%,
+			rgba(200, 200, 200, 0.2) 70%,
+			rgba(255, 255, 255, 0) 100%
+		);
+		transform: skewX(-25deg);
+		animation: swoosh 0.8s ease-in-out forwards;
+		pointer-events: none;
 		z-index: 20;
-		border-radius: 4vmin;
 	}
 
-	.game-over-overlay h2 {
-		font-size: 8vmin;
-		margin: 0;
-		font-weight: 900;
-	}
-
-	.game-over-overlay p {
-		font-size: 3vmin;
-		color: rgba(255,255,255,0.6);
-		margin: 2vmin 0 5vmin;
-	}
-
-	.actions {
-		display: flex;
-		gap: 3vmin;
-	}
-
-	.secondary-btn {
-		background: transparent;
-		border: 1px solid rgba(255,255,255,0.2);
-		color: white;
-		padding: 2vmin 5vmin;
-		font-size: 2vmin;
-		font-weight: 800;
-		border-radius: 1.5vmin;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.secondary-btn:hover {
-		background: rgba(255,255,255,0.1);
-		border-color: white;
+	@keyframes swoosh {
+		0% { left: -150%; }
+		100% { left: 150%; }
 	}
 </style>

@@ -275,6 +275,8 @@
 			</svg>
 		</div>
 	</div>
+
+	<div class="bottom-bar"></div>
 </div>
 
 <style>
@@ -293,7 +295,8 @@
 	.p1 .val { color: var(--color-bittersweet); }
 	.p2 .val { color: var(--color-apple); }
 
-	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; }
+	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 4vmin; box-sizing: border-box; }
+	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.svg-container { width: 65vmin; height: 65vmin; background: rgba(255,255,255,0.02); border-radius: 2vmin; border: 1px solid rgba(255,255,255,0.05); }
 	.board-svg { width: 100%; height: 100%; }
 

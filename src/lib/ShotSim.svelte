@@ -216,21 +216,22 @@
 		{/snippet}
 	</InGameMenu>
 
-	<div class="game-header">
-		<h1 class="title">SHOTSIM</h1>
-		<div class="scoreboard">
-			<div class="score-item">
-				<span class="label">SCORE</span>
-				<span class="value">{score}</span>
-			</div>
-			<div class="score-item">
-				<span class="label">ATTEMPTS</span>
-				<span class="value">{attempts}</span>
+	<div class="board-wrapper">
+		<div class="game-header">
+			<h1 class="title">SHOTSIM</h1>
+			<div class="scoreboard">
+				<div class="score-item">
+					<span class="label">SCORE</span>
+					<span class="value">{score}</span>
+				</div>
+				<div class="score-item">
+					<span class="label">ATTEMPTS</span>
+					<span class="value">{attempts}</span>
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<div class="court">
+		<div class="court">
 		<!-- Trajectory SVG -->
 		<svg class="trajectory-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
 			{#if trajectory.length > 1}
@@ -305,30 +306,33 @@
 		{#if feedback}
 			<div class="feedback" in:fade>{feedback}</div>
 		{/if}
+		</div>
 	</div>
 
-	<div class="controls">
-		<div class="control-group">
-			<label for="angle">ANGLE</label>
-			<div class="input-stepper">
-				<button onclick={() => angle = Math.max(0, angle - 1)} disabled={isShooting}>-</button>
-				<input type="number" id="angle-input" bind:value={angle} min="0" max="90" disabled={isShooting} />
-				<button onclick={() => angle = Math.min(90, angle + 1)} disabled={isShooting}>+</button>
+	<div class="bottom-bar">
+		<div class="controls">
+			<div class="control-group">
+				<label for="angle">ANGLE</label>
+				<div class="input-stepper">
+					<button onclick={() => angle = Math.max(0, angle - 1)} disabled={isShooting}>-</button>
+					<input type="number" id="angle-input" bind:value={angle} min="0" max="90" disabled={isShooting} />
+					<button onclick={() => angle = Math.min(90, angle + 1)} disabled={isShooting}>+</button>
+				</div>
+				<input type="range" id="angle" min="0" max="90" bind:value={angle} disabled={isShooting} />
 			</div>
-			<input type="range" id="angle" min="0" max="90" bind:value={angle} disabled={isShooting} />
-		</div>
 
-		<div class="control-group">
-			<label for="power">VELOCITY</label>
-			<div class="input-stepper">
-				<button onclick={() => power = Math.max(5, power - 0.5)} disabled={isShooting}>-</button>
-				<input type="number" id="power-input" bind:value={power} min="5" max="25" step="0.5" disabled={isShooting} />
-				<button onclick={() => power = Math.min(25, power + 0.5)} disabled={isShooting}>+</button>
+			<div class="control-group">
+				<label for="power">VELOCITY</label>
+				<div class="input-stepper">
+					<button onclick={() => power = Math.max(5, power - 0.5)} disabled={isShooting}>-</button>
+					<input type="number" id="power-input" bind:value={power} min="5" max="25" step="0.5" disabled={isShooting} />
+					<button onclick={() => power = Math.min(25, power + 0.5)} disabled={isShooting}>+</button>
+				</div>
+				<input type="range" id="power" min="5" max="25" step="0.5" bind:value={power} disabled={isShooting} />
 			</div>
-			<input type="range" id="power" min="5" max="25" step="0.5" bind:value={power} disabled={isShooting} />
-		</div>
 
-		<button class="shoot-btn" onclick={shoot} disabled={isShooting}>SHOOT</button>
+			<button class="shoot-btn" onclick={shoot} disabled={isShooting}>SHOOT</button>
+		</div>
 	</div>
 </div>
 
@@ -372,11 +376,27 @@
 	.label { font-size: 1.2vmin; color: rgba(255,255,255,0.3); font-weight: 800; }
 	.value { font-size: 3vmin; font-weight: 800; }
 
+	.board-wrapper {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		padding: 4vmin;
+		box-sizing: border-box;
+	}
+
+	.bottom-bar {
+		height: 12vmin;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+	}
+
 	.court {
 		flex: 1;
 		position: relative;
 		background: rgba(255,255,255,0.02);
-		margin: 2vmin 4vmin;
 		border-radius: 3vmin;
 		border: 1px solid rgba(255,255,255,0.05);
 		overflow: hidden;
@@ -530,10 +550,9 @@
 	}
 
 	.controls {
-		padding: 2vmin 4vmin 4vmin;
 		display: flex;
 		gap: 4vmin;
-		align-items: flex-end;
+		align-items: center;
 		justify-content: center;
 	}
 

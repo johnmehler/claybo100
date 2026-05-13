@@ -3,6 +3,7 @@
 	import { quintOut } from 'svelte/easing';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
+	import GameOverMenu from './GameOverMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -79,26 +80,32 @@
 		<div class="score">MOVES: <span style="color: var(--color-illusion)">{moves}</span></div>
 	</InGameMenu>
 
-	<div id="sliding-board-container" class="board-container">
-		<div id="sliding-grid" class="grid">
-			{#each tiles as tile, index (tile)}
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-				<div
-					id="tile-{tile}"
-					animate:flip={{ duration: 300, easing: quintOut }}
-					class="tile {tile === 0 ? 'empty' : ''}"
-					role="button"
-					tabindex={tile === 0 ? -1 : 0}
-					onclick={() => move(index)}
-					onkeydown={(e) => e.key === 'Enter' && move(index)}
-				>
-					{tile !== 0 ? tile : ''}
-				</div>
-			{/each}
+	<div class="board-wrapper">
+		<div id="sliding-board-container" class="board-container">
+			<div id="sliding-grid" class="grid">
+				{#each tiles as tile, index (tile)}
+					<div
+						id="tile-{tile}"
+						animate:flip={{ duration: 300, easing: quintOut }}
+						class="tile {tile === 0 ? 'empty' : ''}"
+						role="button"
+						tabindex={tile === 0 ? -1 : 0}
+						onclick={() => move(index)}
+						onkeydown={(e) => e.key === 'Enter' && move(index)}
+					>
+						{tile !== 0 ? tile : ''}
+					</div>
+				{/each}
+			</div>
+			{#if isWon}
+				<div class="completion-overlay" transition:fade></div>
+			{/if}
 		</div>
+	</div>
+
+	<div class="bottom-bar">
 		{#if isWon}
-			<div class="completion-overlay" transition:fade></div>
+			<GameOverMenu onPlayAgain={initGame} onMenu={onBack} delay={800} />
 		{/if}
 	</div>
 </div>
@@ -118,8 +125,25 @@
 		letter-spacing: 2px;
 	}
 
+	.board-wrapper {
+		flex: 1;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+		padding: 4vmin;
+		box-sizing: border-box;
+	}
+
+	.bottom-bar {
+		height: 12vmin;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+	}
+
 	.board-container {
-		margin: auto;
 		width: 60vmin;
 		height: 60vmin;
 		padding: 1vmin;

@@ -2,6 +2,7 @@
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
+	import GameOverMenu from './GameOverMenu.svelte';
 	let { onBack } = $props();
 	let instructions: any;
 	const SIZE = 8;
@@ -86,8 +87,12 @@
 		{#if gameOver}
 			<div class="overlay" in:fade>
 				<h2>{moves === SIZE * SIZE ? 'PERFECT TOUR!' : 'NO MORE MOVES'}</h2>
-				<button onclick={reset}>PLAY AGAIN</button>
 			</div>
+		{/if}
+	</div>
+	<div class="bottom-bar">
+		{#if gameOver}
+			<GameOverMenu onPlayAgain={reset} onMenu={onBack} delay={0} />
 		{/if}
 	</div>
 </div>
@@ -95,7 +100,8 @@
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; }
 	.score { font-size: 3vmin; font-weight: 900; }
-	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
+	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; width: 100%; padding: 4vmin; box-sizing: border-box; }
+	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.grid { display: grid; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 1.5vmin; border-radius: 1.5vmin; border: 1px solid rgba(255,255,255,0.1); }
 	.cell { width: 7vmin; height: 7vmin; background: rgba(255,255,255,0.05); border: none; border-radius: 1vmin; cursor: default; transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; }
 	.cell.visited { background: rgba(255,255,255,0.15); }
@@ -105,6 +111,4 @@
 	.knight-icon { width: 5vmin; height: 5vmin; color: #000; }
 	.overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 2vmin; }
 	.overlay h2 { color: var(--color-illusion); font-size: 5vmin; margin-bottom: 3vmin; font-weight: 900; }
-	.overlay button { background: var(--color-illusion); color: black; border: none; padding: 2vmin 4vmin; border-radius: 1vmin; font-size: 2.5vmin; font-weight: 900; cursor: pointer; transition: all 0.2s; }
-	.overlay button:hover { filter: brightness(1.2); }
 </style>

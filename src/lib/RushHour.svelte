@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
+	import GameOverMenu from './GameOverMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -375,12 +376,18 @@
 			<div class="win-overlay" in:fade>
 				<h2>SOLVED!</h2>
 				<p>{moves} MOVES</p>
-				{#if currentLevel < levels.length - 1}
-					<button class="next-btn" onclick={() => loadLevel(currentLevel + 1)}>NEXT LEVEL</button>
-				{:else}
-					<button class="next-btn" onclick={() => loadLevel(0)}>PLAY AGAIN</button>
-				{/if}
 			</div>
+		{/if}
+	</div>
+
+	<div class="bottom-bar">
+		{#if won}
+			<GameOverMenu 
+				onPlayAgain={() => loadLevel(currentLevel < levels.length - 1 ? currentLevel + 1 : 0)} 
+				onMenu={onBack} 
+				delay={0}
+				playAgainText={currentLevel < levels.length - 1 ? "NEXT LEVEL" : "PLAY AGAIN"}
+			/>
 		{/if}
 	</div>
 </div>
@@ -463,6 +470,16 @@
 		align-items: center;
 		flex: 1;
 		padding: 4vmin;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.bottom-bar {
+		height: 12vmin;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
 	}
 
 	.board {
@@ -553,21 +570,5 @@
 		color: rgba(255,255,255,0.7);
 		margin: 0 0 4vmin 0;
 		font-weight: 800;
-	}
-
-	.next-btn {
-		background: var(--color-apple);
-		color: #000;
-		border: none;
-		padding: 2vmin 6vmin;
-		border-radius: 1vmin;
-		font-size: 2.5vmin;
-		font-weight: 900;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.next-btn:hover {
-		filter: brightness(1.2);
 	}
 </style>

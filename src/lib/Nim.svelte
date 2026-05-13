@@ -105,7 +105,7 @@
 		</div>
 	</div>
 
-	<div class="controls">
+	<div class="bottom-bar">
 		<button class="take-btn" disabled={selectedHeap === null || !isPlayerTurn} onclick={take}>
 			TAKE {selectedCount > 0 ? selectedCount : ''}
 		</button>
@@ -115,14 +115,14 @@
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; }
 	.turn-indicator { font-size: 3vmin; font-weight: 900; letter-spacing: 2px; }
-	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; }
+	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 4vmin; box-sizing: border-box; }
 	.heaps { display: flex; gap: 8vmin; align-items: flex-end; height: 50vmin; }
 	.heap { display: flex; flex-direction: column; gap: 2vmin; align-items: center; justify-content: flex-end; width: 8vmin; min-height: 8vmin; }
 	.dot { width: 8vmin; height: 8vmin; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s; }
 	.dot:hover:not(:disabled) { background: rgba(255,255,255,0.3); border-color: white; }
 	.dot.selected { background: var(--color-apple); border-color: white; box-shadow: 0 0 2vmin rgba(78, 205, 196, 0.5); }
 	.empty-heap { width: 8vmin; height: 1vmin; background: rgba(255,255,255,0.05); border-radius: 1vmin; }
-	.controls { display: flex; justify-content: center; padding: 4vmin; }
+	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.take-btn { background: var(--color-apple); color: black; border: none; padding: 2vmin 6vmin; border-radius: 1vmin; font-size: 3vmin; font-weight: 900; cursor: pointer; transition: all 0.2s; }
 	.take-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
 	.take-btn:not(:disabled):hover { filter: brightness(1.2); }

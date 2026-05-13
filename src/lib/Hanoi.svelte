@@ -3,6 +3,7 @@
 	import { flip } from 'svelte/animate';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
+	import GameOverMenu from './GameOverMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -137,7 +138,7 @@
 			<button class="cta-btn" onclick={initGame}>START GAME</button>
 		</div>
 	{:else}
-		<div class="game-area">
+		<div class="board-wrapper">
 			<div class="stats">
 				<div class="stat">
 					<span class="label">MOVES</span>
@@ -177,11 +178,13 @@
 				<div class="game-over-overlay" in:fade={{ duration: 400 }}>
 					<h2>VICTORY!</h2>
 					<p>Completed in {movesCount} moves and {formatTime(elapsedTime)}</p>
-					<div class="actions">
-						<button class="cta-btn" onclick={() => gameState = 'start'}>NEW GAME</button>
-						<button class="secondary-btn" onclick={onBack}>MENU</button>
-					</div>
 				</div>
+			{/if}
+		</div>
+
+		<div class="bottom-bar">
+			{#if gameState === 'won'}
+				<GameOverMenu onPlayAgain={() => gameState = 'start'} onMenu={onBack} delay={0} playAgainText="NEW GAME" />
 			{/if}
 		</div>
 	{/if}
@@ -267,13 +270,23 @@
 		scale: 1.05;
 	}
 
-	.game-area {
+	.board-wrapper {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding-bottom: 5vmin;
+		width: 100%;
+		padding: 4vmin;
+		box-sizing: border-box;
+	}
+
+	.bottom-bar {
+		height: 12vmin;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
 	}
 
 	.stats {
@@ -415,27 +428,5 @@
 		font-size: 3vmin;
 		color: rgba(255,255,255,0.6);
 		margin: 2vmin 0 5vmin;
-	}
-
-	.actions {
-		display: flex;
-		gap: 3vmin;
-	}
-
-	.secondary-btn {
-		background: transparent;
-		border: 1px solid rgba(255,255,255,0.2);
-		color: white;
-		padding: 2vmin 5vmin;
-		font-size: 2vmin;
-		font-weight: 800;
-		border-radius: 1.5vmin;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.secondary-btn:hover {
-		background: rgba(255,255,255,0.1);
-		border-color: white;
 	}
 </style>

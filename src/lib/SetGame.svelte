@@ -126,13 +126,16 @@
 			{/each}
 		</div>
 	</div>
+
+	<div class="bottom-bar"></div>
 </div>
 
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
 	.score { font-size: 3vmin; font-weight: 900; letter-spacing: 1px; }
 
-	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 2vmin; box-sizing: border-box;}
+	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 4vmin; box-sizing: border-box;}
+	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.board { display: flex; flex-wrap: wrap; gap: 2vmin; justify-content: center; width: 100%; max-width: 80vmin; }
 	.card { 
 		display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1vmin;
