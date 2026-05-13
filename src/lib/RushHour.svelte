@@ -2,6 +2,7 @@
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -307,11 +308,11 @@
 		<p>Click and drag cars to slide them forward or backward along their tracks. Cars cannot move sideways or jump over each other.</p>
 	</Instructions>
 
-	<div class="nav-row">
-		<div class="nav-group">
-			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
-			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-		</div>
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={() => loadLevel(currentLevel)}
+	>
 		<div class="level-select">
 			{#each levels as _, i}
 				<button class="lvl-btn" class:active={currentLevel === i} class:completed={completedLevels[i]} onclick={() => loadLevel(i)}>
@@ -324,8 +325,7 @@
 				</button>
 			{/each}
 		</div>
-		<button class="restart-btn" onclick={() => loadLevel(currentLevel)}>RESTART</button>
-	</div>
+	</InGameMenu>
 
 	<div class="game-header">
 		<h1 class="title">RUSH HOUR</h1>
@@ -394,14 +394,6 @@
 		color: white;
 	}
 
-	.nav-row {
-		padding: 3vmin;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		z-index: 10;
-	}
-
 	.level-select {
 		display: flex;
 		gap: 1vmin;
@@ -434,25 +426,6 @@
 		width: 1.2vmin;
 		height: 1.2vmin;
 	}
-
-	.nav-group {
-		display: flex;
-		gap: 1vmin;
-	}
-
-	.back-btn, .restart-btn, .help-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255,255,255,0.1);
-		color: rgba(255,255,255,0.4);
-		padding: 1vmin 2vmin;
-		border-radius: 1vmin;
-		cursor: pointer;
-		font-weight: 800;
-		font-size: 1.8vmin;
-		transition: all 0.2s;
-	}
-
-	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 
 	.game-header {
 		text-align: center;

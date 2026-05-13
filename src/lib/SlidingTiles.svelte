@@ -2,6 +2,7 @@
 	import { flip } from 'svelte/animate';
 	import { quintOut } from 'svelte/easing';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -9,6 +10,7 @@
 	const SIZE = 4;
 	let tiles = $state<number[]>([]);
 	let isWon = $state(false);
+	let moves = $state(0);
 
 	function initGame() {
 		let newTiles = Array.from({ length: SIZE * SIZE - 1 }, (_, i) => i + 1);
@@ -26,6 +28,7 @@
 		}
 		tiles = newTiles;
 		isWon = false;
+		moves = 0;
 	}
 
 	initGame();
@@ -49,6 +52,7 @@
 			const newTiles = [...tiles];
 			[newTiles[emptyIndex], newTiles[index]] = [newTiles[index], newTiles[emptyIndex]];
 			tiles = newTiles;
+			moves++;
 			checkWin();
 		}
 	}
@@ -67,16 +71,13 @@
 		<p>Click a tile adjacent to the empty space to slide it into the empty space. Arrange them in numerical order with the empty space at the bottom right.</p>
 	</Instructions>
 
-	<div class="nav-group">
-		<button id="back-to-menu-sliding" class="back-btn" onclick={onBack}>
-			BACK TO MENU
-		</button>
-		<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-	</div>
-
-	{#if isWon}
-		<div id="sliding-win-msg" class="win-message">EXCELLENT!</div>
-	{/if}
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={initGame}
+	>
+		<div class="score">MOVES: <span style="color: var(--color-illusion)">{moves}</span></div>
+	</InGameMenu>
 
 	<div id="sliding-board-container" class="board-container">
 		<div id="sliding-grid" class="grid">
@@ -86,7 +87,8 @@
 				<div
 					id="tile-{tile}"
 					animate:flip={{ duration: 300, easing: quintOut }}
-					class="tile {tile === 0 ? 'empty' : ''}"
+					class="tile {tile === 0 ? 'empty' : ''} {isWon && tile !== 0 ? 'shimmer' : ''}"
+					style={isWon && tile !== 0 ? `animation-delay: ${(Math.floor(index / SIZE) + (index % SIZE)) * 0.15}s` : ""}
 					role="button"
 					tabindex={tile === 0 ? -1 : 0}
 					onclick={() => move(index)}
@@ -97,48 +99,25 @@
 			{/each}
 		</div>
 	</div>
-
-	<button id="restart-sliding" class="action-btn" onclick={initGame}>
-		RESTART
-	</button>
 </div>
 
 <style>
 	.game-inner {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		justify-content: center;
 		width: 100%;
 		height: 100%;
-		position: relative;
-	}
-
-	.nav-group {
-		position: absolute;
-		top: 4vmin;
-		left: 4vmin;
-		display: flex;
-		gap: 1vmin;
-	}
-
-	.back-btn, .help-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.6);
-		padding: 1vmin 2.5vmin;
-		border-radius: 1vmin;
-		cursor: pointer;
-		font-weight: 600;
-		transition: all 0.2s;
-	}
-	.back-btn:hover, .help-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: var(--color-indigo);
 		color: white;
 	}
 
+	.score {
+		font-size: 3vmin;
+		font-weight: 900;
+		letter-spacing: 2px;
+	}
+
 	.board-container {
+		margin: auto;
 		width: 60vmin;
 		height: 60vmin;
 		padding: 1vmin;
@@ -182,27 +161,12 @@
 		cursor: default;
 	}
 
-	.win-message {
-		position: absolute;
-		top: 8vmin;
-		font-size: 4vmin;
-		font-weight: 800;
-		color: var(--color-apple);
+	@keyframes shimmer-wave {
+		0%, 100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255,255,255,0)); background: var(--color-bittersweet); }
+		50% { filter: brightness(1.3) drop-shadow(0 0 10px var(--color-golden)); background: var(--color-golden); color: black; transform: scale(1.05); z-index: 10; }
 	}
 
-	.action-btn {
-		margin-top: 4vmin;
-		padding: 1.5vmin 4vmin;
-		font-size: 2vmin;
-		border-radius: 1vmin;
-		border: none;
-		background: var(--color-indigo);
-		color: white;
-		cursor: pointer;
-		font-weight: 800;
-		transition: filter 0.2s;
-	}
-	.action-btn:hover {
-		filter: brightness(1.2);
+	.shimmer {
+		animation: shimmer-wave 1.5s ease-in-out infinite;
 	}
 </style>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -177,11 +178,11 @@
 		<p>Take turns drawing a single horizontal or vertical line between two adjacent dots. If you draw the 4th line that closes a 1x1 box, you capture it and <strong>must take another turn!</strong></p>
 	</Instructions>
 
-	<div class="nav-row">
-		<div class="nav-group">
-			<button class="back-btn" onclick={onBack}>BACK</button>
-			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-		</div>
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={reset}
+	>
 		<div class="turn">
 			{#if gameOver}
 				<span style="color: {scores[1] > scores[2] ? 'var(--color-bittersweet)' : (scores[2] > scores[1] ? 'var(--color-apple)' : 'white')}">
@@ -193,14 +194,13 @@
 				</span>
 			{/if}
 		</div>
-		<div class="nav-group">
+		{#snippet rightControls()}
 			<div class="diff-select">
 				<button class="diff-btn" class:active={SIZE === 4} onclick={() => { SIZE=4; reset(); }}>5x5</button>
 				<button class="diff-btn" class:active={SIZE === 7} onclick={() => { SIZE=7; reset(); }}>8x8</button>
 			</div>
-			<button class="restart-btn" onclick={reset}>RESTART</button>
-		</div>
-	</div>
+		{/snippet}
+	</InGameMenu>
 
 	<div class="scoreboard">
 		<div class="score p1">
@@ -279,10 +279,6 @@
 
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
-	.nav-row { width: 100%; padding: 3vmin; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-	.nav-group { display: flex; gap: 1vmin; }
-	.back-btn, .restart-btn, .help-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s;}
-	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 	.turn { font-size: 3vmin; font-weight: 900; letter-spacing: 2px; }
 
 	.diff-select { display: flex; gap: 0.5vmin; margin-right: 1vmin; }

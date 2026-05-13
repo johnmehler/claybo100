@@ -2,6 +2,7 @@
 	import { fade, fly, scale } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -117,15 +118,11 @@
 		<p>Click a rod to select the top disc, then click another rod to place it there. You can only move one disc at a time, and you cannot place a larger disc onto a smaller one.</p>
 	</Instructions>
 
-	<div class="nav-row">
-		<div class="nav-group">
-			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
-			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-		</div>
-		{#if gameState !== 'start'}
-			<button class="restart-btn" onclick={restart} in:fade>RESTART</button>
-		{/if}
-	</div>
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={gameState !== 'start' ? restart : undefined}
+	/>
 
 	{#if gameState === 'start'}
 		<div class="overlay" in:fade>
@@ -199,34 +196,6 @@
 		color: white;
 		position: relative;
 	}
-
-	.nav-row {
-		padding: 3vmin;
-		z-index: 10;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.nav-group {
-		display: flex;
-		gap: 1vmin;
-	}
-
-	.back-btn, .restart-btn, .help-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255,255,255,0.1);
-		color: rgba(255,255,255,0.4);
-		padding: 1vmin 2vmin;
-		border-radius: 1vmin;
-		cursor: pointer;
-		font-weight: 800;
-		font-size: 1.8vmin;
-		transition: all 0.2s;
-	}
-
-	.back-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); background: rgba(255,255,255,0.08); }
-	.restart-btn:hover { color: white; border-color: var(--color-indigo); background: rgba(255,255,255,0.08); }
 
 	.overlay {
 		flex: 1;

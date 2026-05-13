@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 	let { onBack } = $props();
 	let instructions: any;
 	
@@ -160,19 +161,21 @@
 		<p>If you genuinely believe a target is mathematically impossible to reach, hit the <strong>IMPOSSIBLE?</strong> button. If you're right, you win! If a valid equation exists, you lose.</p>
 	</Instructions>
 
-	<div class="nav-row">
-		<div class="nav-group">
-			<button class="back-btn" onclick={onBack}>BACK</button>
-			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-		</div>
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={undo}
+		restartText="RESTART (⌫)"
+	>
 		<div class="diff-select">
 			<button class="diff-btn" class:active={difficulty === 'easy'} onclick={() => { difficulty='easy'; generate(); }}>EASY</button>
 			<button class="diff-btn" class:active={difficulty === 'medium'} onclick={() => { difficulty='medium'; generate(); }}>MEDIUM</button>
 			<button class="diff-btn" class:active={difficulty === 'hard'} onclick={() => { difficulty='hard'; generate(); }}>HARD</button>
 		</div>
-		<button class="unsolvable-btn" onclick={declareUnsolvable}>IMPOSSIBLE? (I)</button>
-		<button class="restart-btn" onclick={undo}>RESTART (⌫)</button>
-	</div>
+		{#snippet rightControls()}
+			<button class="unsolvable-btn" onclick={declareUnsolvable}>IMPOSSIBLE? (I)</button>
+		{/snippet}
+	</InGameMenu>
 
 	<div class="target-area">
 		<div class="target-label">TARGET</div>
@@ -226,10 +229,6 @@
 
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; position: relative; }
-	.nav-row { width: 100%; padding: 3vmin; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-	.nav-group { display: flex; gap: 1vmin; }
-	.back-btn, .restart-btn, .help-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s;}
-	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-bittersweet); }
 	
 	.unsolvable-btn { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--color-bittersweet); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s; }
 	.unsolvable-btn:hover { background: var(--color-bittersweet); color: black; border-color: var(--color-bittersweet); }

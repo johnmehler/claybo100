@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 	let { onBack } = $props();
 	let instructions: any;
 
@@ -88,14 +89,14 @@
 		<p>Scan the board carefully. There is almost always a valid Set hidden in plain sight!</p>
 	</Instructions>
 
-	<div class="nav-row">
-		<div class="nav-group">
-			<button class="back-btn" onclick={onBack}>BACK</button>
-			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-		</div>
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={deck.length > 0 ? add3 : undefined}
+		restartText="+3 CARDS"
+	>
 		<div class="score">SETS: <span style="color: var(--color-illusion)">{score}</span></div>
-		<button class="restart-btn" onclick={add3} disabled={deck.length === 0}>+3 CARDS</button>
-	</div>
+	</InGameMenu>
 
 	<div class="board-wrapper">
 		<div class="board">
@@ -129,11 +130,6 @@
 
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
-	.nav-row { width: 100%; padding: 3vmin; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-	.nav-group { display: flex; gap: 1vmin; }
-	.back-btn, .restart-btn, .help-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s;}
-	.back-btn:hover, .restart-btn:not(:disabled):hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
-	.restart-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 	.score { font-size: 3vmin; font-weight: 900; letter-spacing: 1px; }
 
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 2vmin; box-sizing: border-box;}

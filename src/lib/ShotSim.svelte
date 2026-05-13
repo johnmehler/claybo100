@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
 	import Instructions from './Instructions.svelte';
+	import InGameMenu from './InGameMenu.svelte';
 
 	let { onBack } = $props();
 	let instructions: any;
@@ -201,19 +202,19 @@
 		<p>Adjust the cannon's angle and firing power using the sliders. Watch how gravity and velocity affect the parabolic trajectory!</p>
 	</Instructions>
 
-	<div class="nav-row">
-		<div class="nav-group">
-			<button class="back-btn" onclick={onBack}>BACK TO MENU</button>
-			<button class="help-btn" onclick={() => instructions.open()}>HOW TO PLAY</button>
-		</div>
-		
-		<label class="telemetry-toggle">
-			<input type="checkbox" bind:checked={showTelemetry} />
-			SHOW TELEMETRY
-		</label>
-
-		<button class="restart-btn" onclick={restart}>RESET</button>
-	</div>
+	<InGameMenu 
+		{onBack} 
+		onHelp={() => instructions.open()} 
+		onRestart={restart}
+		restartText="RESET"
+	>
+		{#snippet rightControls()}
+			<label class="telemetry-toggle">
+				<input type="checkbox" bind:checked={showTelemetry} />
+				SHOW TELEMETRY
+			</label>
+		{/snippet}
+	</InGameMenu>
 
 	<div class="game-header">
 		<h1 class="title">SHOTSIM</h1>
@@ -342,59 +343,7 @@
 		overflow: hidden;
 	}
 
-	.nav-row {
-		padding: 3vmin;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		z-index: 10;
-	}
-
 	.telemetry-toggle {
-		display: flex;
-		align-items: center;
-		gap: 1vmin;
-		color: rgba(255,255,255,0.6);
-		font-weight: 800;
-		font-size: 1.4vmin;
-		cursor: pointer;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 1vmin 2vmin;
-		border-radius: 1vmin;
-		border: 1px solid rgba(255,255,255,0.1);
-	}
-
-	.telemetry-toggle:hover {
-		color: white;
-		background: rgba(255, 255, 255, 0.1);
-	}
-
-	.telemetry-toggle input {
-		cursor: pointer;
-		accent-color: var(--color-golden);
-	}
-
-	.nav-group {
-		display: flex;
-		gap: 1vmin;
-	}
-
-	.back-btn, .restart-btn, .help-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255,255,255,0.1);
-		color: rgba(255,255,255,0.4);
-		padding: 1vmin 2vmin;
-		border-radius: 1vmin;
-		cursor: pointer;
-		font-weight: 800;
-		font-size: 1.8vmin;
-		transition: all 0.2s;
-	}
-
-	.back-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
-	.restart-btn:hover { color: white; border-color: var(--color-golden); }
-
-	.game-header {
 		text-align: center;
 		padding: 0 4vmin;
 	}
