@@ -572,7 +572,6 @@
 		border-radius: 2vmin;
 		backdrop-filter: blur(30px);
 		box-shadow: 
-			0 40px 100px -20px rgba(0, 0, 0, 0.8),
 			inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 		display: flex;
 		align-items: center;

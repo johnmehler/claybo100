@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
-	import GameOverMenu from './GameOverMenu.svelte';
 	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
 	let instructions: any;
 	
@@ -15,7 +14,7 @@
 	let nextId = 0;
 
 	let puzzleSolvable = $state(false);
-	let gameLost = $state(false);
+	let status = $state<string | null>(null);
 	let wonByDeclaration = $state(false);
 
 	function generate() {
@@ -63,15 +62,18 @@
 		selectedBlockId = null;
 		selectedOp = null;
 		wonByDeclaration = false;
-		gameLost = false;
+		status = null;
 	}
 
 	function declareUnsolvable() {
+		if (status) return;
 		if (!puzzleSolvable) {
 			wonByDeclaration = true;
+			status = 'CORRECT! IT WAS IMPOSSIBLE';
 		} else {
-			gameLost = true;
+			status = 'NOPE! A SOLUTION EXISTS';
 		}
+		setTimeout(generate, 2000);
 	}
 
 	function clickBlock(id: number) {
@@ -106,11 +108,17 @@
 	function undo() { generate(); }
 	
 	let wonByLogic = $derived(blocks.filter(b => !b.used).length === 1 && blocks.filter(b => !b.used)[0].val === target);
-	let won = $derived(wonByLogic || wonByDeclaration);
+	
+	$effect(() => {
+		if (wonByLogic && !status) {
+			status = 'KRYPTO SOLVED!';
+			setTimeout(generate, 1500);
+		}
+	});
 
 	function handleKeydown(e: KeyboardEvent) {
 		let key = e.key;
-		if (won || gameLost) { if (key === 'Enter' || key === ' ') generate(); return; }
+		if (status) return;
 		if (key === 'i' || key === 'I') { declareUnsolvable(); return; }
 		if (key === 'Backspace' || key === 'Escape' || key === 'u' || key === 'U') { undo(); return; }
 		if (key === '+' || key === '-' || key === '*' || key === 'x' || key === 'X' || key === '/') {
@@ -152,6 +160,11 @@
 				<span class="label">TARGET</span>
 				<div class="target-val">{target}</div>
 			</div>
+			{#if status}
+				<div class="status-indicator" in:fade>
+					{status}
+				</div>
+			{/if}
 		</div>
 
 		<div class="workspace">
@@ -178,38 +191,17 @@
 			</div>
 		</div>
 
-		{#if gameLost}
-			<div class="win-overlay" in:fade>
-				<h2 style="color: var(--color-bittersweet)">INCORRECT!</h2>
-				<div class="final-expr">A valid mathematical solution exists for this target.</div>
-			</div>
-		{/if}
-
-		{#if won}
-			<div class="win-overlay" in:fade>
-				<h2>KRYPTO SOLVED!</h2>
-				{#if wonByLogic}
-					<div class="final-expr">{blocks.filter(b => !b.used)[0].expr} = {target}</div>
-				{:else}
-					<div class="final-expr">You correctly identified an impossible puzzle!</div>
-				{/if}
-			</div>
-		{/if}
-	</div>
+		</div>
 
 	<div class="bottom-bar">
-		{#if won || gameLost}
-			<GameOverMenu onPlayAgain={generate} onMenu={onBack} delay={0} playAgainText="NEW PUZZLE" />
-		{:else}
-			<div class="game-controls">
-				<div class="diff-select">
-					<button class="diff-btn" class:active={difficulty === 'easy'} onclick={() => { difficulty='easy'; generate(); }}>EASY</button>
-					<button class="diff-btn" class:active={difficulty === 'medium'} onclick={() => { difficulty='medium'; generate(); }}>MEDIUM</button>
-					<button class="diff-btn" class:active={difficulty === 'hard'} onclick={() => { difficulty='hard'; generate(); }}>HARD</button>
-				</div>
-				<button class="unsolvable-btn" onclick={declareUnsolvable}>IMPOSSIBLE?</button>
+		<div class="game-controls">
+			<div class="diff-select">
+				<button class="diff-btn" class:active={difficulty === 'easy'} onclick={() => { difficulty='easy'; generate(); }}>EASY</button>
+				<button class="diff-btn" class:active={difficulty === 'medium'} onclick={() => { difficulty='medium'; generate(); }}>MEDIUM</button>
+				<button class="diff-btn" class:active={difficulty === 'hard'} onclick={() => { difficulty='hard'; generate(); }}>HARD</button>
 			</div>
-		{/if}
+			<button class="unsolvable-btn" onclick={declareUnsolvable} disabled={!!status}>IMPOSSIBLE?</button>
+		</div>
 	</div>
 </div>
 
@@ -264,7 +256,11 @@
 	.unsolvable-btn { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--color-bittersweet); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; letter-spacing: 0.1vmin; }
 	.unsolvable-btn:hover { background: var(--color-bittersweet); color: black; border-color: var(--color-bittersweet); box-shadow: 0 0 20px rgba(255, 110, 97, 0.3); }
 
-	.win-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(10px); border-radius: 4vmin; }
-	.win-overlay h2 { font-size: 6vmin; color: var(--color-golden); margin-bottom: 2vmin; font-weight: 900; letter-spacing: -2px; }
-	.final-expr { font-size: 3vmin; color: white; margin-bottom: 5vmin; font-family: monospace; text-align: center; max-width: 80%; }
+	.unsolvable-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+
+	.status-indicator { 
+		position: absolute; top: 12vmin; font-size: 3vmin; font-weight: 900; 
+		color: var(--color-golden); letter-spacing: 0.5vmin; text-transform: uppercase;
+		text-shadow: 0 0 2vmin rgba(255, 230, 109, 0.4);
+	}
 </style>
