@@ -139,25 +139,25 @@
 	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
-	.status-msg { font-size: 5vmin; font-weight: 900; letter-spacing: 1px; }
+	.status-msg { font-size: 4vmin; font-weight: 900; letter-spacing: 1px; }
 
 	.heaps { 
-		display: flex; gap: 8vmin; align-items: flex-end; 
-		height: 55vmin; padding: 2vmin 6vmin;
+		display: flex; gap: 6vmin; align-items: flex-end; 
+		min-height: 45vmin; padding: 3vmin 6vmin;
 		background: rgba(255,255,255,0.015);
 		border: 1px solid rgba(255,255,255,0.08);
 		border-radius: 4vmin; backdrop-filter: blur(10px);
 	}
 
-	.heap { display: flex; flex-direction: column; gap: 1vmin; align-items: center; justify-content: flex-end; width: 8vmin; min-height: 8vmin; }
+	.heap { display: flex; flex-direction: column; gap: 0.8vmin; align-items: center; justify-content: flex-end; width: 6vmin; min-height: 6vmin; }
 	.dot { 
-		width: 8vmin; height: 8vmin; border-radius: 50%; 
+		width: 6vmin; height: 6vmin; border-radius: 50%; 
 		background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); 
 		cursor: pointer; transition: all 0.3s; 
 	}
 	.dot:hover:not(:disabled) { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-5px); }
 	.dot.selected { background: var(--color-apple); border-color: white; box-shadow: 0 0 3vmin rgba(78, 205, 196, 0.4); transform: scale(1.1); }
-	.empty-heap { width: 8vmin; height: 1.5vmin; background: rgba(255,255,255,0.05); border-radius: 1vmin; }
+	.empty-heap { width: 6vmin; height: 1.2vmin; background: rgba(255,255,255,0.05); border-radius: 1vmin; }
 
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.take-btn { background: var(--color-apple); color: black; border: none; padding: 1.5vmin 8vmin; border-radius: 1.5vmin; font-size: 2.5vmin; font-weight: 900; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 20px -5px rgba(78, 205, 196, 0.3); letter-spacing: 0.1vmin; }
