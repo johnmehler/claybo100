@@ -27,6 +27,11 @@
 	let gameStarted = $state(false);
 	let gameWon = $state(false);
 	let crashed = $state(false);
+	let trackType = $state<"standard" | "random">("standard");
+	let optimalMoves = $state<number | null>(null);
+	let optimalPath = $state<{ x: number; y: number }[]>([]);
+	let showOptimalPath = $state(false);
+
 
 	// Canvas
 	let canvas: HTMLCanvasElement;
@@ -75,13 +80,199 @@
 		track = t;
 		startCells = startCellsList;
 		finishCells = finishCellsList;
+		updateOptimalMoves();
+	}
+
+	function generateRandomTrack() {
+		const t = Array(COLS * ROWS).fill(0);
+		const startCellsList: number[] = [];
+		const finishCellsList: number[] = [];
+
+		// Generate a wavy path from left to right
+		const numPoints = 6;
+		const points: { x: number; y: number }[] = [];
+
+		// Start point (left side)
+		points.push({
+			x: 4,
+			y: Math.floor(ROWS * (0.2 + Math.random() * 0.6)),
+		});
+
+		// Middle waypoints
+		for (let i = 1; i < numPoints - 1; i++) {
+			points.push({
+				x: Math.floor((COLS * i) / (numPoints - 1)),
+				y: Math.floor(ROWS * (0.15 + Math.random() * 0.7)),
+			});
+		}
+
+		// End point (right side)
+		points.push({
+			x: COLS - 4,
+			y: Math.floor(ROWS * (0.2 + Math.random() * 0.6)),
+		});
+
+		// Draw track by filling cells near the segments
+		const trackWidth = 3.5 + Math.random() * 1.5;
+
+		for (let y = 0; y < ROWS; y++) {
+			for (let x = 0; x < COLS; x++) {
+				let minDistSq = Infinity;
+				for (let i = 0; i < points.length - 1; i++) {
+					const p1 = points[i];
+					const p2 = points[i + 1];
+
+					// Distance from point (x,y) to line segment p1-p2
+					const dx = p2.x - p1.x;
+					const dy = p2.y - p1.y;
+					const l2 = dx * dx + dy * dy;
+					let t_param = ((x - p1.x) * dx + (y - p1.y) * dy) / l2;
+					t_param = Math.max(0, Math.min(1, t_param));
+
+					const px = p1.x + t_param * dx;
+					const py = p1.y + t_param * dy;
+
+					const distSq = (x - px) * (x - px) + (y - py) * (y - py);
+					if (distSq < minDistSq) minDistSq = distSq;
+				}
+
+				if (minDistSq < trackWidth * trackWidth) {
+					t[y * COLS + x] = 1;
+				}
+			}
+		}
+
+		// Place start/finish lines
+		// Start line at points[0].x
+		const startX = points[0].x;
+		for (let y = 0; y < ROWS; y++) {
+			if (t[y * COLS + startX] === 1) {
+				t[y * COLS + startX] = 2;
+				startCellsList.push(y * COLS + startX);
+			}
+		}
+
+		// Finish line at points[last].x
+		const finishX = points[points.length - 1].x;
+		for (let y = 0; y < ROWS; y++) {
+			if (t[y * COLS + finishX] === 1) {
+				t[y * COLS + finishX] = 3;
+				finishCellsList.push(y * COLS + finishX);
+			}
+		}
+
+		track = t;
+		startCells = startCellsList;
+		finishCells = finishCellsList;
+		optimalPath = [];
+		updateOptimalMoves();
+	}
+
+	function solveOptimalMoves(): { x: number; y: number }[] | null {
+		if (startCells.length === 0 || finishCells.length === 0) return null;
+
+		const V_OFFSET = 10;
+		const V_RANGE = 21;
+		const visited = new Uint8Array(COLS * ROWS * V_RANGE * V_RANGE);
+
+		const queue: {
+			x: number;
+			y: number;
+			vx: number;
+			vy: number;
+			m: number;
+			parent: number | null;
+		}[] = [];
+
+		for (const sc of startCells) {
+			const sx = sc % COLS;
+			const sy = Math.floor(sc / COLS);
+			queue.push({ x: sx, y: sy, vx: 0, vy: 0, m: 0, parent: null });
+			const idx =
+				((sy * COLS + sx) * V_RANGE + V_OFFSET) * V_RANGE + V_OFFSET;
+			visited[idx] = 1;
+		}
+
+		let head = 0;
+		while (head < queue.length) {
+			const currentIdx = head;
+			const { x, y, vx, vy, m } = queue[head++];
+
+			if (m >= 100) continue;
+
+			for (const ax of accChoices) {
+				for (const ay of accChoices) {
+					const nvx = vx + ax;
+					const nvy = vy + ay;
+
+					if (nvx === 0 && nvy === 0 && m > 0) continue;
+					if (Math.abs(nvx) > 10 || Math.abs(nvy) > 10) continue;
+
+					const nx = x + nvx;
+					const ny = y + nvy;
+
+					const path = checkPath(x, y, nx, ny);
+					if (path.clear) {
+						if (path.won) {
+							// Reconstruct path
+							let pIdx: number | null = currentIdx;
+							const pathNodes: { x: number; y: number }[] = [
+								{ x: path.cx, y: path.cy },
+							];
+							while (pIdx !== null) {
+								pathNodes.unshift({
+									x: queue[pIdx].x,
+									y: queue[pIdx].y,
+								});
+								pIdx = queue[pIdx].parent;
+							}
+							return pathNodes;
+						}
+
+						const idx =
+							((path.cy * COLS + path.cx) * V_RANGE +
+								(nvx + V_OFFSET)) *
+								V_RANGE +
+								(nvy + V_OFFSET);
+
+						if (!visited[idx]) {
+							visited[idx] = 1;
+							queue.push({
+								x: path.cx,
+								y: path.cy,
+								vx: nvx,
+								vy: nvy,
+								m: m + 1,
+								parent: currentIdx,
+							});
+						}
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	function updateOptimalMoves() {
+		setTimeout(() => {
+			const path = solveOptimalMoves();
+			optimalPath = path || [];
+			optimalMoves = path ? path.length - 1 : null;
+		}, 0);
 	}
 
 	function reset() {
-		generateTrack();
+		if (trackType === "random") {
+			generateRandomTrack();
+		} else {
+			generateTrack();
+		}
+
 		gameStarted = false;
 		gameWon = false;
 		crashed = false;
+		showOptimalPath = false;
 		velX = 0;
 		velY = 0;
 		turn = 0;
@@ -203,6 +394,40 @@
 		}
 
 		requestAnimationFrame(draw);
+	}
+
+	function drawOptimalPath(ctx: CanvasRenderingContext2D, cs: number) {
+		if (optimalPath.length < 2) return;
+
+		ctx.save();
+		ctx.strokeStyle = "rgba(251, 191, 36, 0.7)"; // amber-400
+		ctx.lineWidth = cs * 0.25;
+		ctx.setLineDash([cs * 0.4, cs * 0.2]);
+		ctx.lineCap = "round";
+		ctx.lineJoin = "round";
+
+		ctx.beginPath();
+		ctx.moveTo(
+			optimalPath[0].x * cs + cs / 2,
+			optimalPath[0].y * cs + cs / 2,
+		);
+		for (let i = 1; i < optimalPath.length; i++) {
+			ctx.lineTo(
+				optimalPath[i].x * cs + cs / 2,
+				optimalPath[i].y * cs + cs / 2,
+			);
+		}
+		ctx.stroke();
+
+		// Draw path points
+		ctx.setLineDash([]);
+		for (const p of optimalPath) {
+			ctx.fillStyle = "#fbbf24";
+			ctx.beginPath();
+			ctx.arc(p.x * cs + cs / 2, p.y * cs + cs / 2, cs * 0.15, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
 	}
 
 	function draw() {
@@ -328,6 +553,7 @@
 			ctx.restore();
 		}
 
+
 		// Draw trail
 		if (trail.length > 1) {
 			ctx.strokeStyle = "#f8fafc";
@@ -440,6 +666,11 @@
 			}
 		}
 
+		// Draw optimal path last so it's always on top
+		if (showOptimalPath) {
+			drawOptimalPath(ctx, cs);
+		}
+
 		// Pre-start: highlight start cells
 		if (!gameStarted && !crashed && !gameWon) {
 			for (const sc of startCells) {
@@ -506,7 +737,11 @@
 	}
 
 	$effect(() => {
-		generateTrack();
+		if (trackType === "random") {
+			generateRandomTrack();
+		} else {
+			generateTrack();
+		}
 		requestAnimationFrame(() => {
 			resizeCanvas();
 		});
@@ -534,6 +769,8 @@
 		gameStarted;
 		crashed;
 		gameWon;
+		showOptimalPath;
+		optimalPath;
 		requestAnimationFrame(draw);
 	});
 
@@ -585,6 +822,10 @@
 				<span class="label">VELOCITY</span>
 				<span class="value vel-val">({velX}, {velY})</span>
 			</div>
+			<div class="stat">
+				<span class="label">TARGET</span>
+				<span class="value target-val">{optimalMoves ?? "--"}</span>
+			</div>
 		</div>
 
 		<div class="canvas-wrapper">
@@ -596,6 +837,26 @@
 		</div>
 	</div>
 	<div class="bottom-bar">
+		<div class="controls-group">
+			<button
+				class="action-btn"
+				onclick={() => {
+					trackType = trackType === "random" ? "standard" : "random";
+					reset();
+				}}
+			>
+				{trackType === "random" ? "STANDARD TRACK" : "RANDOM TRACK"}
+			</button>
+			{#if crashed || gameWon}
+				<button
+					class="action-btn toggle-path-btn"
+					class:active={showOptimalPath}
+					onclick={() => (showOptimalPath = !showOptimalPath)}
+				>
+					{showOptimalPath ? "HIDE OPTIMAL" : "SHOW OPTIMAL"}
+				</button>
+			{/if}
+		</div>
 		{#if crashed || gameWon}
 			<GameOverMenu onPlayAgain={reset} onMenu={onBack} delay={0} />
 		{/if}
@@ -660,6 +921,9 @@
 	.stat .value.status-val.crashed {
 		color: #ef4444;
 		text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+	}
+	.stat .value.target-val {
+		color: #fbbf24;
 	}
 
 	.canvas-wrapper {
@@ -743,8 +1007,51 @@
 	.bottom-bar {
 		height: 10vmin;
 		display: flex;
+		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		width: 100%;
+		gap: 1vmin;
+	}
+
+	.controls-group {
+		display: flex;
+		gap: 2vmin;
+	}
+
+	.action-btn {
+		background: rgba(56, 189, 248, 0.1);
+		border: 1px solid rgba(56, 189, 248, 0.3);
+		color: #38bdf8;
+		padding: 1vmin 3vmin;
+		border-radius: 1vmin;
+		font-size: 1.6vmin;
+		font-weight: 800;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		text-transform: uppercase;
+		letter-spacing: 0.1vmin;
+	}
+
+	.action-btn:hover {
+		background: rgba(56, 189, 248, 0.2);
+		border-color: #38bdf8;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+	}
+
+	.action-btn:active {
+		transform: translateY(0);
+	}
+
+	.action-btn.toggle-path-btn.active {
+		background: rgba(251, 191, 36, 0.15);
+		border-color: #fbbf24;
+		color: #fbbf24;
+	}
+
+	.action-btn.toggle-path-btn.active:hover {
+		background: rgba(251, 191, 36, 0.25);
+		box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
 	}
 </style>
