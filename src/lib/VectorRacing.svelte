@@ -6,8 +6,8 @@
 	let instructions: any;
 
 	// Grid configuration
-	const COLS = 40;
-	const ROWS = 40;
+	const COLS = 50;
+	const ROWS = 50;
 
 	// Track cells: 0 = off-track, 1 = track, 2 = start, 3 = finish
 	let track = $state<number[]>(Array(COLS * ROWS).fill(0));
@@ -46,7 +46,8 @@
 			for (let x = 0; x < COLS; x++) {
 				const dx = x - cx + 0.5;
 				const dy = y - cy + 0.5;
-				const dist = Math.sqrt(dx*dx + dy*dy);
+				// Multiply dx by 0.75 to make the track stretch horizontally (oblong)
+				const dist = Math.sqrt((dx * 0.75) * (dx * 0.75) + dy * dy);
 				
 				if (dist >= r_inner && dist <= r_outer) {
 					if (y >= cy) {
@@ -255,7 +256,7 @@
 			const sx = (startCells[0] % COLS) * cs;
 			const sy = (Math.floor(startCells[0] / COLS)) * cs - cs * 0.5;
 			ctx.fillStyle = 'rgba(75, 190, 75, 0.9)';
-			ctx.font = `bold ${cs * 1.5}px Outfit`;
+			ctx.font = `bold ${cs * 2.0}px Outfit`;
 			ctx.textAlign = 'center';
 			ctx.fillText('START', sx + cs * 0.5, sy);
 		}
@@ -263,7 +264,7 @@
 			const fx = (finishCells[0] % COLS) * cs;
 			const fy = (Math.floor(finishCells[0] / COLS)) * cs - cs * 0.5;
 			ctx.fillStyle = 'rgba(255, 200, 60, 0.9)';
-			ctx.font = `bold ${cs * 1.5}px Outfit`;
+			ctx.font = `bold ${cs * 2.0}px Outfit`;
 			ctx.textAlign = 'center';
 			ctx.fillText('FINISH', fx + cs * 0.5, fy);
 		}
