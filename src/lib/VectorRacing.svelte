@@ -295,42 +295,62 @@
 	}
 
 	function checkPath(x0: number, y0: number, x1: number, y1: number) {
-		const dx = Math.abs(x1 - x0);
-		const dy = Math.abs(y1 - y0);
-		const sx = x0 < x1 ? 1 : -1;
-		const sy = y0 < y1 ? 1 : -1;
-		let err = dx - dy;
+		let ix = x0;
+		let iy = y0;
 
-		let curX = x0;
-		let curY = y0;
+		const dx = x1 - x0;
+		const dy = y1 - y0;
+
+		const stepX = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+		const stepY = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+
+		const tDeltaX = dx === 0 ? Infinity : Math.abs(1 / dx);
+		const tDeltaY = dy === 0 ? Infinity : Math.abs(1 / dy);
+
+		let tMaxX =
+			dx === 0
+				? Infinity
+				: (stepX > 0 ? ix + 1 - (x0 + 0.5) : x0 + 0.5 - ix) * tDeltaX;
+		let tMaxY =
+			dy === 0
+				? Infinity
+				: (stepY > 0 ? iy + 1 - (y0 + 0.5) : y0 + 0.5 - iy) * tDeltaY;
 
 		while (true) {
 			if (
-				curX < 0 ||
-				curX >= COLS ||
-				curY < 0 ||
-				curY >= ROWS ||
-				track[curY * COLS + curX] === 0
+				ix < 0 ||
+				ix >= COLS ||
+				iy < 0 ||
+				iy >= ROWS ||
+				track[iy * COLS + ix] === 0
 			) {
-				return { clear: false, cx: curX, cy: curY, won: false };
+				return { clear: false, cx: ix, cy: iy, won: false };
 			}
 
-			if (track[curY * COLS + curX] === 3) {
-				return { clear: true, cx: curX, cy: curY, won: true };
+			if (track[iy * COLS + ix] === 3) {
+				return { clear: true, cx: ix, cy: iy, won: true };
 			}
 
-			if (curX === x1 && curY === y1) break;
+			if (ix === x1 && iy === y1) break;
 
-			const e2 = 2 * err;
-			if (e2 > -dy) {
-				err -= dy;
-				curX += sx;
+			if (tMaxX < tMaxY) {
+				tMaxX += tDeltaX;
+				ix += stepX;
+			} else if (tMaxX > tMaxY) {
+				tMaxY += tDeltaY;
+				iy += stepY;
+			} else {
+				// Perfect diagonal - move both
+				tMaxX += tDeltaX;
+				tMaxY += tDeltaY;
+				ix += stepX;
+				iy += stepY;
 			}
-			if (e2 < dx) {
-				err += dx;
-				curY += sy;
-			}
+
+			// Safety to prevent infinite loop
+			if (tMaxX > 1.1 && tMaxY > 1.1) break;
 		}
+
 		return { clear: true, cx: x1, cy: y1, won: false };
 	}
 
