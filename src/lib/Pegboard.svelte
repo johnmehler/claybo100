@@ -55,8 +55,13 @@
 	function handleCellClick(idx: number) {
 		if (gameState !== 'playing') return;
 		if (board[idx] === 1) {
-			selectedIdx = idx;
-			possibleMoves = findPossibleMoves(idx);
+			if (selectedIdx === idx) {
+				selectedIdx = null;
+				possibleMoves = [];
+			} else {
+				selectedIdx = idx;
+				possibleMoves = findPossibleMoves(idx);
+			}
 		} else if (board[idx] === 0 && selectedIdx !== null && possibleMoves.includes(idx)) {
 			makeMove(selectedIdx, idx);
 		} else {
@@ -73,8 +78,16 @@
 		board[midIdx] = 0;
 		board[toIdx] = 1;
 		board = [...board];
-		selectedIdx = null;
-		possibleMoves = [];
+		
+		const nextMoves = findPossibleMoves(toIdx);
+		if (nextMoves.length > 0) {
+			selectedIdx = toIdx;
+			possibleMoves = nextMoves;
+		} else {
+			selectedIdx = null;
+			possibleMoves = [];
+		}
+		
 		movesCount++;
 		checkGameState();
 	}
