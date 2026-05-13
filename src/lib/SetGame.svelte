@@ -11,7 +11,7 @@
 	let selected = $state<number[]>([]);
 	let score = $state(0);
 
-	const colors = ['var(--color-bittersweet)', 'var(--color-apple)', 'var(--color-golden)'];
+	const colors = ['#ef4444', '#22c55e', '#3b82f6'];
 
 	function init() {
 		let temp = [];
@@ -21,7 +21,13 @@
 		for(let n=0; n<3; n++)
 		for(let f=0; f<3; f++)
 			temp.push({ id: id++, c, s, n, f });
-		temp.sort(() => Math.random() - 0.5);
+		
+		// Fisher-Yates shuffle for true randomness
+		for (let i = temp.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[temp[i], temp[j]] = [temp[j], temp[i]];
+		}
+
 		deck = temp;
 		board = deck.splice(0, 12);
 		selected = [];
@@ -67,8 +73,10 @@
 		}
 	}
 
-	function add3() {
-		if (deck.length >= 3) board.push(...deck.splice(0, 3));
+	function addCard() {
+		if (deck.length > 0) {
+			board = [...board, deck.pop()!];
+		}
 	}
 
 	init();
@@ -76,9 +84,9 @@
 
 <svg width="0" height="0" style="position: absolute;">
 	<defs>
-		<pattern id="stripes-0" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="var(--color-bittersweet)" /></pattern>
-		<pattern id="stripes-1" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="var(--color-apple)" /></pattern>
-		<pattern id="stripes-2" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="var(--color-golden)" /></pattern>
+		<pattern id="stripes-0" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="#ef4444" /></pattern>
+		<pattern id="stripes-1" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="#22c55e" /></pattern>
+		<pattern id="stripes-2" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="#3b82f6" /></pattern>
 	</defs>
 </svg>
 
@@ -92,8 +100,8 @@
 	<InGameMenu 
 		{onBack} 
 		onHelp={() => instructions.open()} 
-		onRestart={deck.length > 0 ? add3 : undefined}
-		restartText="+3 CARDS"
+		onRestart={init}
+		restartText="NEW GAME"
 	>
 		<div class="score">SETS: <span style="color: var(--color-illusion)">{score}</span></div>
 	</InGameMenu>
@@ -115,8 +123,8 @@
 									fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
 									stroke="currentColor" stroke-width="2" />
 							{:else}
-								<!-- Squiggle/Pill proxy -->
-								<path d="M5,1 C8,1 8,6 12,6 C16,6 16,1 19,1 C21,1 23,3 23,6 C23,9 21,11 19,11 C16,11 16,6 12,6 C8,6 8,11 5,11 C3,11 1,9 1,6 C1,3 3,1 5,1 Z" 
+								<!-- Squiggle -->
+								<path d="M2,7 C2,2 9,1 12,6 C15,11 22,10 22,5 C22,0 15,1 12,6 C9,11 2,12 2,7 Z" 
 									fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
 									stroke="currentColor" stroke-width="2" />
 							{/if}
@@ -124,6 +132,13 @@
 					{/each}
 				</button>
 			{/each}
+
+			{#if deck.length > 0}
+				<button class="add-cards-btn" onclick={addCard} in:fade>
+					<div class="plus">+</div>
+					<div class="label">ADD 1</div>
+				</button>
+			{/if}
 		</div>
 	</div>
 
@@ -136,13 +151,48 @@
 
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 4vmin; box-sizing: border-box;}
 	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
-	.board { display: flex; flex-wrap: wrap; gap: 2vmin; justify-content: center; width: 100%; max-width: 80vmin; }
+	
+	.board { 
+		display: grid; 
+		grid-template-rows: repeat(3, 24vmin); 
+		grid-auto-flow: column;
+		gap: 2vmin; 
+		justify-content: center; 
+		width: max-content; 
+	}
+	
 	.card { 
 		display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1vmin;
-		width: 18vmin; height: 12vmin; background: rgba(255,255,255,0.05); 
+		width: 16vmin; height: 24vmin; background: rgba(255,255,255,0.05); 
 		border: 2px solid rgba(255,255,255,0.1); border-radius: 1.5vmin; cursor: pointer; transition: all 0.2s; 
 	}
 	.card:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 	.card.selected { border-color: var(--color-illusion); box-shadow: 0 0 2vmin rgba(247, 215, 148, 0.3); background: rgba(247, 215, 148, 0.1); }
-	.shape { width: 12vmin; height: 6vmin; flex-shrink: 0; }
+	.shape { width: 14vmin; height: 7vmin; flex-shrink: 0; }
+
+	.add-cards-btn {
+		width: 16vmin;
+		height: 24vmin;
+		background: rgba(255, 255, 255, 0.03);
+		border: 2px dashed rgba(255, 255, 255, 0.1);
+		border-radius: 1.5vmin;
+		cursor: pointer;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		color: rgba(255, 255, 255, 0.2);
+		transition: all 0.3s;
+		gap: 1vmin;
+	}
+
+	.add-cards-btn:hover {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: var(--color-illusion);
+		color: var(--color-illusion);
+		transform: translateY(-2px);
+	}
+
+	.add-cards-btn .plus { font-size: 4vmin; font-weight: 200; }
+	.add-cards-btn .label { font-size: 1.5vmin; font-weight: 900; letter-spacing: 1px; }
 </style>
