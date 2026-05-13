@@ -9,7 +9,7 @@
 
 	type Card = { id: number, c: number, s: number, n: number, f: number };
 	let deck = $state<Card[]>([]);
-	let rows = $state<Card[][]>([[], [], []]);
+	let rows = $state<(Card | null)[][]>([[], [], []]);
 	let selected = $state<number[]>([]);
 	let score = $state(0);
 
@@ -63,7 +63,7 @@
 	}
 
 	function checkSet() {
-		const flatBoard = rows.flat();
+		const flatBoard = (rows.flat().filter(Boolean) as Card[]);
 		let c1 = flatBoard.find(x => x.id === selected[0])!;
 		let c2 = flatBoard.find(x => x.id === selected[1])!;
 		let c3 = flatBoard.find(x => x.id === selected[2])!;
@@ -79,25 +79,40 @@
 			const cardsToRemove = [...selected];
 			selected = [];
 
-			// 1. DISAPPEAR INSTANTLY
-			const rowCountsBefore = rows.map(r => r.length);
-			rows = rows.map(row => row.filter(c => !cardsToRemove.includes(c.id)));
+			// 1. Identify positions of cards to remove
+			const positions: {r: number, i: number}[] = [];
+			rows.forEach((row, r) => {
+				row.forEach((card, i) => {
+					if (card && cardsToRemove.includes(card.id)) {
+						positions.push({r, i});
+					}
+				});
+			});
 
-			// 2. SLIDE LEFT happens automatically via animate:flip (1000ms)
+			// 2. DISAPPEAR leaving gaps
+			positions.forEach(pos => {
+				rows[pos.r][pos.i] = null;
+			});
 
-			// 3. FADE IN ONE AT A TIME
-			const currentTotal = rows.flat().length;
-			const neededTotal = Math.max(0, 12 - currentTotal);
-
-			if (deck.length > 0 && neededTotal > 0) {
-				const newCards = deck.splice(0, Math.min(neededTotal, deck.length));
+			// 3. FILL GAPS ONE BY ONE
+			const activeCardsCount = rows.flat().filter(Boolean).length;
+			
+			if (activeCardsCount < 12 && deck.length > 0) {
+				// We need to replace them to stay at 12
+				const newCards = deck.splice(0, Math.min(3, deck.length));
 				newCards.forEach((card, i) => {
 					setTimeout(() => {
-						// Add to the row that is currently shortest
-						const r = rows.reduce((minIdx, curr, idx, arr) => curr.length < arr[minIdx].length ? idx : minIdx, 0);
-						rows[r] = [...rows[r], card];
-					}, 1100 + (i * 300));
+						const pos = positions[i];
+						if (pos) rows[pos.r][pos.i] = card;
+					}, 600 + (i * 350));
 				});
+			} else {
+				// We were at > 12 cards, now we are back to 12 (or more).
+				// We should eventually collapse the rows, but let's leave the gaps for a moment
+				// so the user sees the removal.
+				setTimeout(() => {
+					rows = rows.map(row => row.filter(c => c !== null));
+				}, 1200);
 			}
 		} else {
 			setTimeout(() => selected = [], 400);
@@ -109,6 +124,7 @@
 			rows[nextRowIdx] = [...rows[nextRowIdx], deck.pop()!];
 		}
 	}
+
 
 	init();
 </script>
@@ -139,35 +155,40 @@
 		<div class="board">
 			{#each rows as row, r}
 				<div class="row">
-					{#each row as card, i (card.id)}
-						<button 
-							class="card {selected.includes(card.id) ? 'selected' : ''}" 
-							style="grid-column: {i + 1}"
-							onclick={() => clickCard(card.id)} 
-							in:scale={{ duration: 800, start: 0.7, opacity: 0, easing: backOut }}
-							animate:flip={{ duration: 1000, easing: cubicInOut }}
-						>
-							{#each Array(card.n + 1) as _}
-								<svg class="shape" viewBox="0 0 24 12" style="color: {colors[card.c]}">
-									{#if card.s === 0}
-										<!-- Oval -->
-										<rect x="2" y="1" width="20" height="10" rx="5" 
-											fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-											stroke="currentColor" stroke-width="2" />
-									{:else if card.s === 1}
-										<!-- Diamond -->
-										<polygon points="12,1 22,6 12,11 2,6" 
-											fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-											stroke="currentColor" stroke-width="2" />
-									{:else}
-										<!-- Squiggle -->
-										<path d="M2,7 C2,2 9,1 12,6 C15,11 22,10 22,5 C22,0 15,1 12,6 C9,11 2,12 2,7 Z" 
-											fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-											stroke="currentColor" stroke-width="2" />
-									{/if}
-								</svg>
-							{/each}
-						</button>
+					{#each row as card, i (card ? card.id : `empty-${r}-${i}`)}
+						<div class="card-slot" style="grid-column: {i + 1}" animate:flip={{ duration: 1000, easing: cubicInOut }}>
+							{#if card}
+								<button 
+									class="card {selected.includes(card.id) ? 'selected' : ''}" 
+									onclick={() => clickCard(card.id)} 
+									in:scale={{ duration: 600, start: 0.7, opacity: 0, easing: backOut }}
+									out:scale={{ duration: 400, start: 0.7, opacity: 0 }}
+								>
+									{#each Array(card.n + 1) as _}
+										<svg class="shape" viewBox="0 0 24 12" style="color: {colors[card.c]}">
+											{#if card.s === 0}
+												<!-- Oval -->
+												<rect x="2" y="1" width="20" height="10" rx="5" 
+													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+													stroke="currentColor" stroke-width="2" />
+											{:else if card.s === 1}
+												<!-- Diamond -->
+												<polygon points="12,1 22,6 12,11 2,6" 
+													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+													stroke="currentColor" stroke-width="2" />
+											{:else}
+												<!-- Squiggle -->
+												<path d="M2,7 C2,2 9,1 12,6 C15,11 22,10 22,5 C22,0 15,1 12,6 C9,11 2,12 2,7 Z" 
+													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+													stroke="currentColor" stroke-width="2" />
+											{/if}
+										</svg>
+									{/each}
+								</button>
+							{:else}
+								<div class="card placeholder"></div>
+							{/if}
+						</div>
 					{/each}
 
 					{#if r === nextRowIdx && deck.length > 0}
@@ -184,6 +205,8 @@
 				</div>
 			{/each}
 		</div>
+
+
 	</div>
 
 	<div class="bottom-bar"></div>
@@ -240,6 +263,7 @@
 		width: max-content; 
 	}
 
+	.card-slot { width: 15vmin; height: 22vmin; }
 	.row {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, 15vmin);
@@ -253,8 +277,9 @@
 		width: 15vmin; height: 22vmin; background: rgba(255,255,255,0.02); 
 		border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5vmin; cursor: pointer; transition: all 0.3s; 
 	}
-	.card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-0.5vmin); }
+	.card:not(.placeholder):hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-0.5vmin); }
 	.card.selected { border-color: var(--color-illusion); box-shadow: 0 0 2vmin rgba(248, 165, 194, 0.2); background: rgba(248, 165, 194, 0.05); }
+	.card.placeholder { background: transparent; border: 1px dashed rgba(255, 255, 255, 0.03); pointer-events: none; }
 	.shape { width: 11vmin; height: 5.5vmin; flex-shrink: 0; }
 
 	.add-cards-btn {
