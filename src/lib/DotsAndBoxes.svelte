@@ -5,8 +5,8 @@
 	let { onBack } = $props();
 	let instructions: any;
 
-	const SIZE = 12;
-	const VIEWBOX_SIZE = 20 + SIZE * 16;
+	let SIZE = $state(4);
+	let VIEWBOX_SIZE = $derived(20 + SIZE * 16);
 
 	// Svelte 5 nested arrays need to be reactive
 	let hLines = $state(Array(SIZE + 1).fill(0).map(() => Array(SIZE).fill(false)));
@@ -16,6 +16,7 @@
 	let currentTurn = $state(1); // 1 = Player, 2 = AI
 	let scores = $state([0, 0, 0]); // Index 1 is P1, 2 is AI
 	let gameOver = $state(false);
+	let lastAiMove = $state<{type: 'h'|'v', r: number, c: number} | null>(null);
 
 	function reset() {
 		hLines = Array(SIZE + 1).fill(0).map(() => Array(SIZE).fill(false));
@@ -24,6 +25,7 @@
 		currentTurn = 1;
 		scores = [0, 0, 0];
 		gameOver = false;
+		lastAiMove = null;
 	}
 
 	function countBoxLines(r: number, c: number) {
@@ -61,6 +63,8 @@
 
 		// Extra safety to block player while AI is supposedly running
 		if (currentTurn === 2) return;
+		
+		if (currentTurn === 1) lastAiMove = null;
 
 		applyMove(type, r, c);
 	}
@@ -133,6 +137,7 @@
 				if (line.c < SIZE && countBoxLines(line.r, line.c) === 3) completesBox = true;
 			}
 			if (completesBox) {
+				lastAiMove = { type: line.type, r: line.r, c: line.c };
 				applyMove(line.type, line.r, line.c);
 				return;
 			}
@@ -160,6 +165,7 @@
 			chosen = lines[Math.floor(Math.random() * lines.length)];
 		}
 
+		lastAiMove = { type: chosen.type, r: chosen.r, c: chosen.c };
 		applyMove(chosen.type, chosen.r, chosen.c);
 	}
 
@@ -187,7 +193,13 @@
 				</span>
 			{/if}
 		</div>
-		<button class="restart-btn" onclick={reset}>RESTART</button>
+		<div class="nav-group">
+			<div class="diff-select">
+				<button class="diff-btn" class:active={SIZE === 4} onclick={() => { SIZE=4; reset(); }}>5x5</button>
+				<button class="diff-btn" class:active={SIZE === 7} onclick={() => { SIZE=7; reset(); }}>8x8</button>
+			</div>
+			<button class="restart-btn" onclick={reset}>RESTART</button>
+		</div>
 	</div>
 
 	<div class="scoreboard">
@@ -218,7 +230,9 @@
 				{#each Array(SIZE + 1) as _, r}
 					{#each Array(SIZE) as _, c}
 						{#if hLines[r][c]}
-							<rect x={10 + c*16} y={10 + r*16 - 1} width={16} height={2} fill="white" rx="1" in:fade={{duration: 100}} />
+							<rect x={10 + c*16} y={10 + r*16 - 1} width={16} height={2} 
+								fill={lastAiMove?.type === 'h' && lastAiMove.r === r && lastAiMove.c === c ? 'var(--color-golden)' : 'white'} 
+								rx="1" in:fade={{duration: 100}} />
 						{/if}
 					{/each}
 				{/each}
@@ -226,7 +240,9 @@
 				{#each Array(SIZE) as _, r}
 					{#each Array(SIZE + 1) as _, c}
 						{#if vLines[r][c]}
-							<rect x={10 + c*16 - 1} y={10 + r*16} width={2} height={16} fill="white" rx="1" in:fade={{duration: 100}} />
+							<rect x={10 + c*16 - 1} y={10 + r*16} width={2} height={16} 
+								fill={lastAiMove?.type === 'v' && lastAiMove.r === r && lastAiMove.c === c ? 'var(--color-golden)' : 'white'} 
+								rx="1" in:fade={{duration: 100}} />
 						{/if}
 					{/each}
 				{/each}
@@ -268,6 +284,11 @@
 	.back-btn, .restart-btn, .help-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.8vmin; transition: all 0.2s;}
 	.back-btn:hover, .restart-btn:hover, .help-btn:hover { color: white; border-color: var(--color-illusion); }
 	.turn { font-size: 3vmin; font-weight: 900; letter-spacing: 2px; }
+
+	.diff-select { display: flex; gap: 0.5vmin; margin-right: 1vmin; }
+	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.4vmin; transition: all 0.2s; }
+	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); }
 
 	.scoreboard { display: flex; justify-content: center; gap: 10vmin; margin-top: 2vmin; margin-bottom: 2vmin; }
 	.score { display: flex; flex-direction: column; align-items: center; }
