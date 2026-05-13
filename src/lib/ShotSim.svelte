@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
 
-	let { onBack } = $props();
+	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
 	let instructions: any;
 
-	let angle = $state(90); // degrees, 90 is straight up
+	let angle = $state(45); // degrees, 45 is a good starting point
 	let power = $state(15); // initial velocity in m/s
 	let isShooting = $state(false);
 	let score = $state(0);
@@ -25,23 +25,20 @@
 
 	let animationId: number | null = null;
 	const GRAVITY = 9.8; // m/s^2
-	
-	// World scale constants (in meters)
-	const WORLD_WIDTH = 20; 
-	const WORLD_HEIGHT = 20; 
-	const CANNON_X_M = 18;
-	const CANNON_Y_M = 1;
-	
-	// Hoop Physics Geometry
-	const HOOP_X_M = 3;
-	const HOOP_Y_M = 5.0; 
-	const BB_THICKNESS = 0.2;
-	const BB_HEIGHT = 2.0;
-	const RIM_BACK = HOOP_X_M + BB_THICKNESS;
-	const RIM_FRONT = RIM_BACK + 1.0; // 1.0m diameter rim for easier scoring
-	const BALL_R = 0.25; // 25cm physics radius
 
-	// Map meters to percentages for rendering
+	const WORLD_WIDTH = 30; // meters
+	const WORLD_HEIGHT = 15; // meters
+	const CANNON_X_M = 28; // meters from left
+	const CANNON_Y_M = 1; // meters from bottom
+	const HOOP_X_M = 3; // meters from left
+	const HOOP_Y_M = 4.5; // meters from bottom
+	const BALL_R = 0.35; // meters
+	
+	const RIM_BACK = HOOP_X_M + 0.2;
+	const RIM_FRONT = HOOP_X_M + 1.8;
+	const BB_HEIGHT = 2.5;
+	const BB_THICKNESS = 0.3;
+
 	const toX = (m: number) => (m / WORLD_WIDTH) * 100;
 	const toY = (m: number) => (m / WORLD_HEIGHT) * 100;
 
@@ -83,24 +80,22 @@
 				let prevX = curX_m;
 				let prevY = curY_m;
 
-				// Physics Step
 				curX_m += vx * sdt;
 				vy -= GRAVITY * sdt;
 				curY_m += vy * sdt;
 
-				// Track Stats
 				if (curY_m > peakHeight) peakHeight = curY_m;
 				totalDistance = Math.abs(curX_m - startX_m);
 
-				// 1. Backboard Collision (vertical plane)
+				// Backboard Collision
 				if (curX_m - BALL_R <= HOOP_X_M + BB_THICKNESS && prevX - BALL_R > HOOP_X_M + BB_THICKNESS) {
 					if (curY_m >= HOOP_Y_M && curY_m <= HOOP_Y_M + BB_HEIGHT) {
 						curX_m = HOOP_X_M + BB_THICKNESS + BALL_R;
-						vx = -vx * 0.6; // Dampen horizontal velocity
+						vx = -vx * 0.6;
 					}
 				}
 
-				// 2. Rim Front Collision (point)
+				// Rim Collisions
 				let distFront = Math.hypot(curX_m - RIM_FRONT, curY_m - HOOP_Y_M);
 				if (distFront < BALL_R) {
 					let nx = (curX_m - RIM_FRONT) / distFront;
@@ -110,12 +105,10 @@
 						vx = vx - 2 * dot * nx * 0.7;
 						vy = vy - 2 * dot * ny * 0.7;
 					}
-					// Position correction to prevent sticking
 					curX_m = RIM_FRONT + nx * BALL_R;
 					curY_m = HOOP_Y_M + ny * BALL_R;
 				}
 
-				// 3. Rim Back Collision (point)
 				let distBack = Math.hypot(curX_m - RIM_BACK, curY_m - HOOP_Y_M);
 				if (distBack < BALL_R) {
 					let nx = (curX_m - RIM_BACK) / distBack;
@@ -125,12 +118,11 @@
 						vx = vx - 2 * dot * nx * 0.7;
 						vy = vy - 2 * dot * ny * 0.7;
 					}
-					// Position correction to prevent sticking
 					curX_m = RIM_BACK + nx * BALL_R;
 					curY_m = HOOP_Y_M + ny * BALL_R;
 				}
 
-				// 4. Score Detection (Area-based net detection)
+				// Score Detection
 				if (!hasScored && curY_m < HOOP_Y_M && curY_m > HOOP_Y_M - 0.5 && vy < 0) {
 					let safeMargin = BALL_R * 0.6; 
 					if (curX_m > RIM_BACK + safeMargin && curX_m < RIM_FRONT - safeMargin) {
@@ -140,23 +132,15 @@
 					}
 				}
 
-				// Out of bounds (Floor or Screen Edges)
 				if (curY_m < 0 || curX_m < -2 || curX_m > WORLD_WIDTH + 2) {
-					if (!hasScored) {
-						feedback = "MISS";
-					}
-					
-					// Update visual state one last time before stopping
+					if (!hasScored) feedback = "MISS";
 					ballX = toX(curX_m);
 					ballY = toY(curY_m);
-					if (!hasScored && curY_m > 0) trajectory = [...trajectory, { x: ballX, y: ballY, x_m: curX_m, y_m: curY_m }];
-					
 					endShot();
 					return;
 				}
 			}
 
-			// Update visual state once per frame
 			ballX = toX(curX_m);
 			ballY = toY(curY_m);
 			if (!hasScored && curY_m > 0) {
@@ -165,7 +149,6 @@
 
 			animationId = requestAnimationFrame(animate);
 		}
-
 		animate();
 	}
 
@@ -190,10 +173,16 @@
 		if (animationId) cancelAnimationFrame(animationId);
 	}
 
+	$effect(() => {
+		registerActions({
+			restart: restart,
+			help: () => instructions.open()
+		});
+	});
+
 	onDestroy(() => {
 		if (animationId) cancelAnimationFrame(animationId);
 	});
-
 </script>
 
 <div class="shotsim-container">
@@ -202,133 +191,105 @@
 		<p>Adjust the cannon's angle and firing power using the sliders. Watch how gravity and velocity affect the parabolic trajectory!</p>
 	</Instructions>
 
-	<InGameMenu 
-		{onBack} 
-		onHelp={() => instructions.open()} 
-		onRestart={restart}
-		restartText="RESET"
-	>
-		{#snippet rightControls()}
-			<label class="telemetry-toggle">
-				<input type="checkbox" bind:checked={showTelemetry} />
-				SHOW TELEMETRY
-			</label>
-		{/snippet}
-	</InGameMenu>
-
 	<div class="board-wrapper">
-		<div class="game-header">
-			<h1 class="title">SHOTSIM</h1>
-			<div class="scoreboard">
-				<div class="score-item">
-					<span class="label">SCORE</span>
-					<span class="value">{score}</span>
-				</div>
-				<div class="score-item">
-					<span class="label">ATTEMPTS</span>
-					<span class="value">{attempts}</span>
-				</div>
+		<div class="game-stats">
+			<div class="stat">
+				<span class="label">SCORE</span>
+				<span class="value">{score}</span>
+			</div>
+			<div class="stat">
+				<span class="label">ATTEMPTS</span>
+				<span class="value">{attempts}</span>
+			</div>
+			<div class="stat">
+				<label class="telemetry-toggle">
+					<input type="checkbox" bind:checked={showTelemetry} />
+					<span>TELEMETRY</span>
+				</label>
 			</div>
 		</div>
 
 		<div class="court">
-		<!-- Trajectory SVG -->
-		<svg class="trajectory-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-			{#if trajectory.length > 1}
-				<path 
-					d="M {trajectory.map(p => `${p.x} ${100 - p.y}`).join(' L ')}" 
-					fill="none" 
-					stroke="var(--color-golden)" 
-					stroke-width="0.3"
-					stroke-dasharray="1 1"
-					opacity="0.6"
-				/>
-			{/if}
-		</svg>
+			<svg class="trajectory-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+				{#if trajectory.length > 1}
+					<path 
+						d="M {trajectory.map(p => `${p.x} ${100 - p.y}`).join(' L ')}" 
+						fill="none" 
+						stroke="var(--color-golden)" 
+						stroke-width="0.3"
+						stroke-dasharray="1 1"
+						opacity="0.6"
+					/>
+				{/if}
+			</svg>
 
-		<!-- Telemetry Overlays (HTML-based to prevent SVG squishing) -->
-		{#if showTelemetry && trajectory.length > 1}
-			<!-- Initial Conditions Label -->
-			<div class="telemetry-label initial-label" style="left: {toX(CANNON_X_M)}%; bottom: {toY(CANNON_Y_M + 7.0)}%;">
-				<span>v₀ = {power.toFixed(1)} m/s</span>
-				<span>θ₀ = {angle}°</span>
+			{#if showTelemetry && trajectory.length > 1}
+				<div class="telemetry-label initial-label" style="left: {toX(CANNON_X_M)}%; bottom: {toY(CANNON_Y_M + 7.0)}%;">
+					<span>v₀ = {power.toFixed(1)} m/s</span>
+					<span>θ₀ = {angle}°</span>
+				</div>
+
+				{#if peakHeight > 0}
+					<div class="telemetry-label peak-label" style="left: {toX(trajectory.reduce((max, p) => p.y_m > max.y_m ? p : max, trajectory[0]).x_m)}%; bottom: {toY(peakHeight + 2.5)}%;">
+						yₘₐₓ = {peakHeight.toFixed(2)} m
+					</div>
+				{/if}
+
+				{#if totalDistance > 2}
+					<div class="telemetry-label dist-label" style="left: {toX(trajectory[trajectory.length-1].x_m)}%; bottom: {toY(trajectory[trajectory.length-1].y_m + 3.5)}%;">
+						<span>Δx = {totalDistance.toFixed(2)} m</span>
+						<span>t = {totalTime.toFixed(2)} s</span>
+					</div>
+				{/if}
+			{/if}
+
+			<div class="distance-label" style="left: {toX(HOOP_X_M)}%; width: {toX(CANNON_X_M - HOOP_X_M)}%">
+				<div class="dist-line"></div>
+				<span>{ (CANNON_X_M - HOOP_X_M).toFixed(1) }m</span>
 			</div>
 
-			<!-- Peak Height Label -->
-			{#if peakHeight > 0}
-				<div class="telemetry-label peak-label" style="left: {toX(trajectory.reduce((max, p) => p.y_m > max.y_m ? p : max, trajectory[0]).x_m)}%; bottom: {toY(peakHeight + 2.5)}%;">
-					yₘₐₓ = {peakHeight.toFixed(2)} m
-				</div>
-			{/if}
+			<div class="backboard" style="left: {toX(HOOP_X_M)}%; bottom: {toY(HOOP_Y_M)}%; width: {toX(BB_THICKNESS)}%; height: {toY(BB_HEIGHT)}%;"></div>
+			<div class="rim" style="left: {toX(RIM_BACK)}%; bottom: {toY(HOOP_Y_M)}%; width: {toX(RIM_FRONT - RIM_BACK)}%; height: 0.8vmin;"></div>
+			<div class="net" style="left: {toX(RIM_BACK + 0.1)}%; bottom: {toY(HOOP_Y_M - 1.0)}%; width: {toX(RIM_FRONT - RIM_BACK - 0.2)}%; height: {toY(1.0)}%;"></div>
 
-			<!-- Total Distance & Time Label -->
-			{#if totalDistance > 2}
-				<div class="telemetry-label dist-label" style="left: {toX(trajectory[trajectory.length-1].x_m)}%; bottom: {toY(trajectory[trajectory.length-1].y_m + 3.5)}%;">
-					<span>Δx = {totalDistance.toFixed(2)} m</span>
-					<span>t = {totalTime.toFixed(2)} s</span>
-				</div>
-			{/if}
-		{/if}
-
-		<!-- Distance Label -->
-		<div class="distance-label" style="left: {toX(HOOP_X_M)}%; width: {toX(CANNON_X_M - HOOP_X_M)}%">
-			<div class="dist-line"></div>
-			<span>{ (CANNON_X_M - HOOP_X_M).toFixed(1) }m</span>
-		</div>
-
-		<!-- Hoop Elements (Visually aligned to Physics) -->
-		<!-- Backboard -->
-		<div class="backboard" style="left: {toX(HOOP_X_M)}%; bottom: {toY(HOOP_Y_M)}%; width: {toX(BB_THICKNESS)}%; height: {toY(BB_HEIGHT)}%;"></div>
-		
-		<!-- Rim -->
-		<div class="rim" style="left: {toX(RIM_BACK)}%; bottom: {toY(HOOP_Y_M)}%; width: {toX(RIM_FRONT - RIM_BACK)}%; height: 0.8vmin;"></div>
-		
-		<!-- Net -->
-		<div class="net" style="left: {toX(RIM_BACK + 0.1)}%; bottom: {toY(HOOP_Y_M - 1.0)}%; width: {toX(RIM_FRONT - RIM_BACK - 0.2)}%; height: {toY(1.0)}%;"></div>
-
-		<!-- Cannon -->
-		<div class="cannon-container" style="left: calc({toX(CANNON_X_M)}% - 5vmin); bottom: {toY(CANNON_Y_M)}%">
-			<div class="cannon-base"></div>
-			<div class="cannon-barrel" style="transform: rotate({angle}deg)">
-				<div class="barrel-stats">
-					<span>{angle}°</span>
-					<span>{power}m/s</span>
+			<div class="cannon-container" style="left: calc({toX(CANNON_X_M)}% - 5vmin); bottom: {toY(CANNON_Y_M)}%">
+				<div class="cannon-base"></div>
+				<div class="cannon-barrel" style="transform: rotate({angle}deg)">
+					<div class="barrel-stats">
+						<span>{angle}°</span>
+						<span>{power}m/s</span>
+					</div>
 				</div>
 			</div>
-		</div>
 
-		<!-- Ball -->
-		{#if isShooting}
-			<div class="ball" style="left: {ballX}%; bottom: {ballY}%; margin-left: -1.5vmin; margin-bottom: -1.5vmin;"></div>
-		{/if}
+			{#if isShooting}
+				<div class="ball" style="left: {ballX}%; bottom: {ballY}%; margin-left: -1.5vmin; margin-bottom: -1.5vmin;"></div>
+			{/if}
 
-		<!-- Feedback -->
-		{#if feedback}
-			<div class="feedback" in:fade>{feedback}</div>
-		{/if}
+			{#if feedback}
+				<div class="feedback" in:fade>{feedback}</div>
+			{/if}
 		</div>
 	</div>
 
 	<div class="bottom-bar">
 		<div class="controls">
 			<div class="control-group">
-				<label for="angle">ANGLE</label>
-				<div class="input-stepper">
-					<button onclick={() => angle = Math.max(0, angle - 1)} disabled={isShooting}>-</button>
-					<input type="number" id="angle-input" bind:value={angle} min="0" max="90" disabled={isShooting} />
-					<button onclick={() => angle = Math.min(90, angle + 1)} disabled={isShooting}>+</button>
+				<label for="angle">ANGLE: {angle}°</label>
+				<div class="input-row">
+					<button class="step-btn" onclick={() => angle = Math.max(0, angle - 1)} disabled={isShooting}>-</button>
+					<input type="range" id="angle" min="0" max="90" bind:value={angle} disabled={isShooting} />
+					<button class="step-btn" onclick={() => angle = Math.min(90, angle + 1)} disabled={isShooting}>+</button>
 				</div>
-				<input type="range" id="angle" min="0" max="90" bind:value={angle} disabled={isShooting} />
 			</div>
 
 			<div class="control-group">
-				<label for="power">VELOCITY</label>
-				<div class="input-stepper">
-					<button onclick={() => power = Math.max(5, power - 0.5)} disabled={isShooting}>-</button>
-					<input type="number" id="power-input" bind:value={power} min="5" max="25" step="0.5" disabled={isShooting} />
-					<button onclick={() => power = Math.min(25, power + 0.5)} disabled={isShooting}>+</button>
+				<label for="power">VELOCITY: {power}m/s</label>
+				<div class="input-row">
+					<button class="step-btn" onclick={() => power = Math.max(5, power - 0.5)} disabled={isShooting}>-</button>
+					<input type="range" id="power" min="5" max="25" step="0.5" bind:value={power} disabled={isShooting} />
+					<button class="step-btn" onclick={() => power = Math.min(25, power + 0.5)} disabled={isShooting}>+</button>
 				</div>
-				<input type="range" id="power" min="5" max="25" step="0.5" bind:value={power} disabled={isShooting} />
 			</div>
 
 			<button class="shoot-btn" onclick={shoot} disabled={isShooting}>SHOOT</button>
@@ -347,42 +308,41 @@
 		overflow: hidden;
 	}
 
-	.telemetry-toggle {
-		text-align: center;
-		padding: 0 4vmin;
-	}
-
-	.title {
-		font-size: 6vmin;
-		margin: 0;
-		font-weight: 900;
-		letter-spacing: -2px;
-		color: var(--color-bittersweet);
-	}
-
-	.scoreboard {
-		display: flex;
-		justify-content: center;
-		gap: 6vmin;
-		margin-top: 1vmin;
-	}
-
-	.score-item {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.label { font-size: 1.2vmin; color: rgba(255,255,255,0.3); font-weight: 800; }
-	.value { font-size: 3vmin; font-weight: 800; }
-
 	.board-wrapper {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
 		width: 100%;
-		padding: 4vmin;
+		padding: 1vmin 4vmin;
 		box-sizing: border-box;
+		overflow: hidden;
+	}
+
+	.game-stats {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8vmin;
+		margin-bottom: 2vmin;
+		width: 100%;
+	}
+
+	.stat {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.label { font-size: 1.2vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.1vmin; text-transform: uppercase; }
+	.value { font-size: 4vmin; font-weight: 900; color: var(--color-bittersweet); }
+
+	.court {
+		flex: 1;
+		position: relative;
+		background: rgba(255,255,255,0.015);
+		border-radius: 3vmin;
+		border: 1px solid rgba(255,255,255,0.08);
+		overflow: hidden;
 	}
 
 	.bottom-bar {
@@ -393,21 +353,104 @@
 		width: 100%;
 	}
 
-	.court {
-		flex: 1;
-		position: relative;
-		background: rgba(255,255,255,0.02);
-		border-radius: 3vmin;
-		border: 1px solid rgba(255,255,255,0.05);
-		overflow: hidden;
+	.controls {
+		display: flex;
+		gap: 6vmin;
+		align-items: center;
+		justify-content: center;
 	}
 
-	/* Telemetry HTML Labels */
+	.control-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5vmin;
+		width: 30vmin;
+	}
+
+	.input-row {
+		display: flex;
+		align-items: center;
+		gap: 1.5vmin;
+	}
+
+	.step-btn {
+		background: rgba(255,255,255,0.05);
+		border: 1px solid rgba(255,255,255,0.1);
+		color: white;
+		width: 4.5vmin;
+		height: 4.5vmin;
+		border-radius: 1vmin;
+		cursor: pointer;
+		font-weight: 900;
+		font-size: 2.5vmin;
+		transition: all 0.2s;
+	}
+
+	.step-btn:hover:not(:disabled) {
+		background: rgba(255,255,255,0.15);
+		color: var(--color-illusion);
+	}
+
+	input[type="range"] {
+		flex: 1;
+		-webkit-appearance: none;
+		height: 0.6vmin;
+		background: rgba(255,255,255,0.1);
+		border-radius: 1vmin;
+		outline: none;
+	}
+
+	input[type="range"]::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		width: 2.5vmin;
+		height: 2.5vmin;
+		background: var(--color-bittersweet);
+		border-radius: 50%;
+		cursor: pointer;
+		box-shadow: 0 0 10px rgba(255, 110, 97, 0.4);
+	}
+
+	.shoot-btn {
+		background: var(--color-bittersweet);
+		color: white;
+		border: none;
+		padding: 0 6vmin;
+		height: 8vmin;
+		font-size: 2.5vmin;
+		font-weight: 900;
+		border-radius: 1.5vmin;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 10px 20px -5px rgba(255, 110, 97, 0.4);
+		letter-spacing: 0.2vmin;
+	}
+
+	.shoot-btn:hover:not(:disabled) {
+		background: var(--color-illusion);
+		transform: translateY(-2px);
+	}
+
+	.telemetry-toggle {
+		display: flex;
+		align-items: center;
+		gap: 1vmin;
+		cursor: pointer;
+		color: rgba(255,255,255,0.5);
+		font-size: 1.2vmin;
+		font-weight: 800;
+	}
+
+	.telemetry-toggle input {
+		width: 2vmin;
+		height: 2vmin;
+		accent-color: var(--color-golden);
+	}
+
 	.telemetry-label {
 		position: absolute;
 		display: flex;
 		flex-direction: column;
-		font-weight: 600; /* Less bold/thick as requested */
+		font-weight: 600;
 		font-size: 1.8vmin;
 		line-height: 1.2;
 		white-space: nowrap;
@@ -416,120 +459,9 @@
 		width: 20vmin;
 	}
 
-	/* Use margin-left to offset by exactly half the width (10vmin) to center without translates */
-	.initial-label { 
-		color: var(--color-golden); 
-		align-items: center; 
-		margin-left: -10vmin; 
-	}
-	
-	.peak-label { 
-		color: var(--color-apple); 
-		align-items: center;
-		margin-left: -10vmin; 
-	}
-	
-	.dist-label { 
-		color: var(--color-illusion); 
-		align-items: center;
-		margin-left: -10vmin; 
-	}
-
-	/* Cannon */
-	.cannon-container {
-		position: absolute;
-		width: 10vmin;
-		height: 10vmin;
-	}
-
-	.cannon-base {
-		position: absolute;
-		bottom: 0;
-		left: 10%;
-		width: 80%;
-		height: 4vmin;
-		background: #333;
-		border-radius: 1vmin 1vmin 0 0;
-	}
-
-	.cannon-barrel {
-		position: absolute;
-		bottom: 2.5vmin;
-		right: 50%;
-		width: 12vmin;
-		height: 5vmin;
-		background: #444;
-		border-radius: 1vmin;
-		transform-origin: right center;
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		padding-left: 2vmin;
-		box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-	}
-
-	.barrel-stats {
-		display: flex;
-		flex-direction: column;
-		font-size: 1.2vmin;
-		font-weight: 800;
-		color: var(--color-golden);
-	}
-
-	/* Hoop Physics Visuals */
-	.backboard {
-		position: absolute;
-		background: rgba(255,255,255,0.8);
-		border-radius: 0.2vmin;
-	}
-
-	.rim {
-		position: absolute;
-		background: var(--color-bittersweet);
-		border-radius: 0.2vmin;
-		z-index: 2;
-	}
-
-	.net {
-		position: absolute;
-		background: rgba(255,255,255,0.1);
-		border-radius: 0 0 1vmin 1vmin;
-		border: 1px dashed rgba(255,255,255,0.2);
-		z-index: 1;
-	}
-
-	/* Ball */
-	.ball {
-		position: absolute;
-		width: 3vmin;
-		height: 3vmin;
-		background: #ff8c00;
-		border-radius: 50%;
-		z-index: 10;
-		box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-	}
-
-	.trajectory-svg {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		z-index: 5;
-	}
-
-	.feedback {
-		position: absolute;
-		top: 20%;
-		left: 0;
-		right: 0;
-		text-align: center;
-		font-size: 6vmin;
-		font-weight: 900;
-		color: var(--color-golden);
-		text-shadow: 0 4px 20px rgba(0,0,0,0.8);
-	}
+	.initial-label { color: var(--color-golden); align-items: center; margin-left: -10vmin; }
+	.peak-label { color: var(--color-apple); align-items: center; margin-left: -10vmin; }
+	.dist-label { color: var(--color-illusion); align-items: center; margin-left: -10vmin; }
 
 	.distance-label {
 		position: absolute;
@@ -549,127 +481,15 @@
 		margin-bottom: 0.5vmin;
 	}
 
-	.controls {
-		display: flex;
-		gap: 4vmin;
-		align-items: center;
-		justify-content: center;
-	}
+	.cannon-container { position: absolute; width: 10vmin; height: 10vmin; }
+	.cannon-base { position: absolute; bottom: 0; left: 10%; width: 80%; height: 4vmin; background: #333; border-radius: 1vmin 1vmin 0 0; }
+	.cannon-barrel { position: absolute; bottom: 2.5vmin; right: 50%; width: 12vmin; height: 5vmin; background: #444; border-radius: 1vmin; transform-origin: right center; display: flex; align-items: center; justify-content: flex-start; padding-left: 2vmin; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+	.barrel-stats { display: flex; flex-direction: column; font-size: 1.2vmin; font-weight: 800; color: var(--color-golden); }
 
-	.control-group {
-		display: flex;
-		flex-direction: column;
-		gap: 1vmin;
-		width: 25vmin;
-	}
-
-	.input-stepper {
-		display: flex;
-		align-items: center;
-		gap: 1vmin;
-		background: rgba(255,255,255,0.05);
-		padding: 0.5vmin;
-		border-radius: 1vmin;
-		border: 1px solid rgba(255,255,255,0.1);
-	}
-
-	.input-stepper button {
-		background: rgba(255,255,255,0.1);
-		border: none;
-		color: white;
-		width: 4vmin;
-		height: 4vmin;
-		border-radius: 0.5vmin;
-		cursor: pointer;
-		font-weight: 800;
-		font-size: 2vmin;
-		transition: background 0.2s;
-	}
-
-	.input-stepper {
-		display: flex;
-		align-items: center;
-		gap: 0.5vmin;
-		background: rgba(255,255,255,0.05);
-		padding: 0.5vmin;
-		border-radius: 1vmin;
-		border: 1px solid rgba(255,255,255,0.1);
-	}
-
-	.input-stepper button {
-		background: rgba(255,255,255,0.1);
-		border: none;
-		color: white;
-		width: 6vmin; /* Bigger buttons as requested */
-		height: 6vmin;
-		border-radius: 0.5vmin;
-		cursor: pointer;
-		font-weight: 800;
-		font-size: 3vmin;
-		transition: all 0.2s;
-	}
-
-	.input-stepper button:hover:not(:disabled) {
-		background: rgba(255,255,255,0.2);
-		color: var(--color-illusion);
-	}
-
-	.input-stepper input {
-		flex: 1;
-		background: transparent;
-		border: none;
-		color: white;
-		text-align: center;
-		font-size: 2.5vmin;
-		font-weight: 800;
-		width: 0;
-	}
-
-	.input-stepper input::-webkit-inner-spin-button {
-		display: none;
-	}
-
-	label { font-size: 1.4vmin; font-weight: 800; color: rgba(255,255,255,0.4); }
-
-	input[type="range"] {
-		-webkit-appearance: none;
-		width: 100%;
-		height: 6px;
-		background: rgba(255,255,255,0.1);
-		border-radius: 3px;
-		outline: none;
-	}
-
-	input[type="range"]::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		width: 16px;
-		height: 16px;
-		background: var(--color-bittersweet);
-		border-radius: 50%;
-		cursor: pointer;
-	}
-
-	.shoot-btn {
-		background: var(--color-bittersweet);
-		color: white;
-		border: none;
-		padding: 1.5vmin 6vmin;
-		height: 8vmin;
-		font-size: 2.5vmin;
-		font-weight: 800;
-		border-radius: 1.5vmin;
-		cursor: pointer;
-		transition: all 0.2s;
-		box-shadow: 0 10px 20px -5px rgba(255, 110, 97, 0.4);
-	}
-
-	.shoot-btn:hover:not(:disabled) {
-		background: var(--color-illusion);
-		scale: 1.05;
-	}
-
-	.shoot-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
+	.backboard { position: absolute; background: rgba(255,255,255,0.8); border-radius: 0.2vmin; }
+	.rim { position: absolute; background: var(--color-bittersweet); border-radius: 0.2vmin; z-index: 2; }
+	.net { position: absolute; background: rgba(255,255,255,0.1); border-radius: 0 0 1vmin 1vmin; border: 1px dashed rgba(255,255,255,0.2); z-index: 1; }
+	.ball { position: absolute; width: 3vmin; height: 3vmin; background: #ff8c00; border-radius: 50%; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+	.trajectory-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+	.feedback { position: absolute; top: 20%; left: 0; right: 0; text-align: center; font-size: 6vmin; font-weight: 900; color: var(--color-golden); text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
 </style>

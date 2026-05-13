@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
-	import InGameMenu from './InGameMenu.svelte';
 	import GameOverMenu from './GameOverMenu.svelte';
-	let { onBack } = $props();
+	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
 	let instructions: any;
 	const SIZE = 8;
 	let board = $state(Array(SIZE * SIZE).fill(false));
@@ -12,31 +11,27 @@
 	let gameOver = $state(false);
 
 	function getValidMoves(p: number) {
-		if (p === -1) return board.map((v, i) => !v ? i : -1).filter(i => i !== -1);
+		if (p === -1) return Array.from({length: SIZE*SIZE}, (_, i) => i);
 		const r = Math.floor(p / SIZE);
 		const c = p % SIZE;
-		const offsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-		let valid = [];
-		for (let [dr, dc] of offsets) {
-			let nr = r + dr, nc = c + dc;
+		const jumps = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+		return jumps.map(([dr, dc]) => {
+			const nr = r + dr, nc = c + dc;
 			if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
-				let idx = nr * SIZE + nc;
-				if (!board[idx]) valid.push(idx);
+				const np = nr * SIZE + nc;
+				return board[np] ? -1 : np;
 			}
-		}
-		return valid;
+			return -1;
+		}).filter(x => x !== -1);
 	}
 
 	function clickCell(i: number) {
 		if (gameOver) return;
-		let valid = getValidMoves(pos);
-		if (pos === -1 || valid.includes(i)) {
+		if (pos === -1 || getValidMoves(pos).includes(i)) {
 			board[i] = true;
 			pos = i;
 			moves++;
-			if (moves === SIZE * SIZE || getValidMoves(pos).length === 0) {
-				gameOver = true;
-			}
+			if (getValidMoves(pos).length === 0) gameOver = true;
 		}
 	}
 
@@ -46,6 +41,13 @@
 		moves = 0;
 		gameOver = false;
 	}
+
+	$effect(() => {
+		registerActions({
+			restart: reset,
+			help: () => instructions.open()
+		});
+	});
 </script>
 
 <div class="game-container">
@@ -54,16 +56,15 @@
 		<p>You move like a Knight in chess: two squares in one direction, and one square perpendicular (an "L" shape). Plan ahead so you don't get trapped!</p>
 	</Instructions>
 
-	<InGameMenu 
-		{onBack} 
-		onHelp={() => instructions.open()} 
-		onRestart={reset}
-	>
-		<div class="score">MOVES: <span style="color: var(--color-illusion)">{moves}</span> / {SIZE*SIZE}</div>
-	</InGameMenu>
-
 	<div class="board-wrapper">
-		<div class="grid" style="grid-template-columns: repeat({SIZE}, 7vmin);">
+		<div class="game-stats">
+			<div class="stat">
+				<span class="label">PROGRESS</span>
+				<span class="value">{moves} <span class="total">/ {SIZE*SIZE}</span></span>
+			</div>
+		</div>
+
+		<div class="grid">
 			{#each Array(SIZE * SIZE) as _, i}
 				{@const isValid = getValidMoves(pos).includes(i)}
 				{@const isCurrent = pos === i}
@@ -98,17 +99,31 @@
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; }
-	.score { font-size: 3vmin; font-weight: 900; }
-	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; width: 100%; padding: 4vmin; box-sizing: border-box; }
-	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
-	.grid { display: grid; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 1.5vmin; border-radius: 1.5vmin; border: 1px solid rgba(255,255,255,0.1); }
-	.cell { width: 7vmin; height: 7vmin; background: rgba(255,255,255,0.05); border: none; border-radius: 1vmin; cursor: default; transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; }
-	.cell.visited { background: rgba(255,255,255,0.15); }
-	.cell.valid { background: rgba(247, 215, 148, 0.2); cursor: pointer; border: 2px solid var(--color-illusion); }
-	.cell.valid:hover { background: rgba(247, 215, 148, 0.4); }
-	.cell.current { background: var(--color-illusion); }
-	.knight-icon { width: 5vmin; height: 5vmin; color: #000; }
+	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
+	.board-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; width: 100%; padding: 1vmin 4vmin; box-sizing: border-box; overflow: hidden; }
+	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; }
+	.stat { display: flex; flex-direction: column; align-items: center; }
+	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; }
+	.stat .value { font-size: 5vmin; font-weight: 900; color: var(--color-illusion); }
+	.stat .total { font-size: 2.5vmin; color: rgba(255,255,255,0.2); font-weight: 600; }
+	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
+	
+	.grid { 
+		display: grid; grid-template-columns: repeat(8, 7.5vmin); gap: 0.8vmin; 
+		background: rgba(255,255,255,0.015); padding: 1.5vmin; 
+		border-radius: 2vmin; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);
+	}
+
+	.cell { 
+		width: 7.5vmin; height: 7.5vmin; background: rgba(255,255,255,0.03); 
+		border: 1px solid rgba(255,255,255,0.05); border-radius: 1.2vmin; cursor: default; 
+		transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; 
+	}
+	.cell.visited { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.1); }
+	.cell.valid { background: rgba(248, 165, 194, 0.1); cursor: pointer; border: 2px solid var(--color-illusion); }
+	.cell.valid:hover { background: rgba(248, 165, 194, 0.25); transform: scale(1.05); }
+	.cell.current { background: var(--color-illusion); box-shadow: 0 0 20px rgba(248, 165, 194, 0.4); border: none; }
+	.knight-icon { width: 5vmin; height: 5vmin; color: #000; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
 	.overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; border-radius: 2vmin; }
-	.overlay h2 { color: var(--color-illusion); font-size: 5vmin; margin-bottom: 3vmin; font-weight: 900; }
+	.overlay h2 { color: var(--color-illusion); font-size: 6vmin; margin-bottom: 3vmin; font-weight: 900; letter-spacing: -0.1vmin; }
 </style>

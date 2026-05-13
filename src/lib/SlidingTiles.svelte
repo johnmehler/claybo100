@@ -5,7 +5,7 @@
 	import InGameMenu from './InGameMenu.svelte';
 	import GameOverMenu from './GameOverMenu.svelte';
 
-	let { onBack } = $props();
+	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
 	let instructions: any;
 
 	const SIZE = 4;
@@ -33,6 +33,13 @@
 	}
 
 	initGame();
+
+	$effect(() => {
+		registerActions({
+			restart: initGame,
+			help: () => instructions.open()
+		});
+	});
 
 	function getNeighbors(index: number) {
 		const neighbors = [];
@@ -72,15 +79,13 @@
 		<p>Click a tile adjacent to the empty space to slide it into the empty space. Arrange them in numerical order with the empty space at the bottom right.</p>
 	</Instructions>
 
-	<InGameMenu 
-		{onBack} 
-		onHelp={() => instructions.open()} 
-		onRestart={initGame}
-	>
-		<div class="score">MOVES: <span style="color: var(--color-illusion)">{moves}</span></div>
-	</InGameMenu>
-
 	<div class="board-wrapper">
+		<div class="game-stats">
+			<div class="stat">
+				<span class="label">MOVES</span>
+				<span class="value">{moves}</span>
+			</div>
+		</div>
 		<div id="sliding-board-container" class="board-container">
 			<div id="sliding-grid" class="grid">
 				{#each tiles as tile, index (tile)}
@@ -110,6 +115,7 @@
 	</div>
 </div>
 
+
 <style>
 	.game-inner {
 		display: flex;
@@ -128,15 +134,45 @@
 	.board-wrapper {
 		flex: 1;
 		display: flex;
+		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		width: 100%;
-		padding: 4vmin;
+		padding: 1vmin 2vmin;
 		box-sizing: border-box;
+		overflow: hidden;
+	}
+
+	.game-stats {
+		display: flex;
+		justify-content: center;
+		gap: 8vmin;
+		margin-bottom: 2vmin;
+		width: 100%;
+	}
+
+	.stat {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.stat .label {
+		font-size: 1.4vmin;
+		color: rgba(255,255,255,0.3);
+		font-weight: 800;
+		letter-spacing: 0.2vmin;
+		text-transform: uppercase;
+	}
+
+	.stat .value {
+		font-size: 5vmin;
+		font-weight: 900;
+		color: var(--color-illusion);
 	}
 
 	.bottom-bar {
-		height: 12vmin;
+		height: 10vmin;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -144,12 +180,13 @@
 	}
 
 	.board-container {
-		width: 60vmin;
-		height: 60vmin;
-		padding: 1vmin;
-		background: rgba(0,0,0,0.2);
-		border-radius: 2vmin;
-		box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+		width: 75vmin;
+		height: 75vmin;
+		padding: 1.5vmin;
+		background: rgba(255,255,255,0.02);
+		border: 1px solid rgba(255,255,255,0.08);
+		border-radius: 3vmin;
+		box-shadow: inset 0 2px 20px rgba(0,0,0,0.5);
 		position: relative;
 		overflow: hidden;
 	}

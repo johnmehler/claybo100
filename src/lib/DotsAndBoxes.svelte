@@ -3,31 +3,36 @@
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
 
-	let { onBack } = $props();
+	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
 	let instructions: any;
 
 	let SIZE = $state(4);
-	let VIEWBOX_SIZE = $derived(20 + SIZE * 16);
-
-	// Svelte 5 nested arrays need to be reactive
-	let hLines = $state(Array(SIZE + 1).fill(0).map(() => Array(SIZE).fill(false)));
-	let vLines = $state(Array(SIZE).fill(0).map(() => Array(SIZE + 1).fill(false)));
-	let boxes = $state(Array(SIZE).fill(0).map(() => Array(SIZE).fill(0)));
-
-	let currentTurn = $state(1); // 1 = Player, 2 = AI
-	let scores = $state([0, 0, 0]); // Index 1 is P1, 2 is AI
+	let currentTurn = $state(1); // 1 = Red (You), 2 = Blue (AI)
+	let scores = $state({ 1: 0, 2: 0 });
+	let hLines = $state<boolean[][]>([]);
+	let vLines = $state<boolean[][]>([]);
+	let boxes = $state<number[][]>([]);
 	let gameOver = $state(false);
 	let lastAiMove = $state<{type: 'h'|'v', r: number, c: number} | null>(null);
+
+	const VIEWBOX_SIZE = 100;
 
 	function reset() {
 		hLines = Array(SIZE + 1).fill(0).map(() => Array(SIZE).fill(false));
 		vLines = Array(SIZE).fill(0).map(() => Array(SIZE + 1).fill(false));
 		boxes = Array(SIZE).fill(0).map(() => Array(SIZE).fill(0));
+		scores = { 1: 0, 2: 0 };
 		currentTurn = 1;
-		scores = [0, 0, 0];
 		gameOver = false;
 		lastAiMove = null;
 	}
+
+	$effect(() => {
+		registerActions({
+			restart: reset,
+			help: () => instructions.open()
+		});
+	});
 
 	function countBoxLines(r: number, c: number) {
 		let count = 0;
@@ -60,55 +65,42 @@
 	}
 
 	function drawLine(type: 'h'|'v', r: number, c: number) {
-		if (gameOver || (currentTurn === 2 && getAvailableLines().length > 0)) return; // Don't let player click during AI turn, but allow if forced (shouldn't happen)
-
-		// Extra safety to block player while AI is supposedly running
-		if (currentTurn === 2) return;
-		
-		if (currentTurn === 1) lastAiMove = null;
-
+		if (gameOver || currentTurn === 2) return;
+		lastAiMove = null;
 		applyMove(type, r, c);
 	}
 
 	function applyMove(type: 'h'|'v', r: number, c: number) {
 		if (type === 'h') {
-			let newHLines = [...hLines];
-			newHLines[r][c] = true;
-			hLines = newHLines;
+			hLines[r][c] = true;
 		} else {
-			let newVLines = [...vLines];
-			newVLines[r][c] = true;
-			vLines = newVLines;
+			vLines[r][c] = true;
 		}
 
 		let boxesCompleted = 0;
-		let newBoxes = [...boxes];
-
 		if (type === 'h') {
 			if (r > 0 && countBoxLines(r - 1, c) === 4 && boxes[r - 1][c] === 0) {
-				newBoxes[r - 1][c] = currentTurn;
+				boxes[r - 1][c] = currentTurn;
 				scores[currentTurn]++;
 				boxesCompleted++;
 			}
 			if (r < SIZE && countBoxLines(r, c) === 4 && boxes[r][c] === 0) {
-				newBoxes[r][c] = currentTurn;
+				boxes[r][c] = currentTurn;
 				scores[currentTurn]++;
 				boxesCompleted++;
 			}
 		} else {
 			if (c > 0 && countBoxLines(r, c - 1) === 4 && boxes[r][c - 1] === 0) {
-				newBoxes[r][c - 1] = currentTurn;
+				boxes[r][c - 1] = currentTurn;
 				scores[currentTurn]++;
 				boxesCompleted++;
 			}
 			if (c < SIZE && countBoxLines(r, c) === 4 && boxes[r][c] === 0) {
-				newBoxes[r][c] = currentTurn;
+				boxes[r][c] = currentTurn;
 				scores[currentTurn]++;
 				boxesCompleted++;
 			}
 		}
-
-		boxes = newBoxes;
 
 		checkGameOver();
 
@@ -123,11 +115,9 @@
 
 	function aiTurn() {
 		if (gameOver || currentTurn !== 2) return;
-
 		let lines = getAvailableLines();
 		if (lines.length === 0) return;
 
-		// 1. Find winning move
 		for (let line of lines) {
 			let completesBox = false;
 			if (line.type === 'h') {
@@ -144,32 +134,24 @@
 			}
 		}
 
-		// 2. Find safe move
-		let safeLines = [];
-		for (let line of lines) {
-			let isSafe = true;
+		let safeLines = lines.filter(line => {
 			if (line.type === 'h') {
-				if (line.r > 0 && countBoxLines(line.r - 1, line.c) === 2) isSafe = false;
-				if (line.r < SIZE && countBoxLines(line.r, line.c) === 2) isSafe = false;
+				let s1 = line.r > 0 ? countBoxLines(line.r - 1, line.c) < 2 : true;
+				let s2 = line.r < SIZE ? countBoxLines(line.r, line.c) < 2 : true;
+				return s1 && s2;
 			} else {
-				if (line.c > 0 && countBoxLines(line.r, line.c - 1) === 2) isSafe = false;
-				if (line.c < SIZE && countBoxLines(line.r, line.c) === 2) isSafe = false;
+				let s1 = line.c > 0 ? countBoxLines(line.r, line.c - 1) < 2 : true;
+				let s2 = line.c < SIZE ? countBoxLines(line.r, line.c) < 2 : true;
+				return s1 && s2;
 			}
-			if (isSafe) safeLines.push(line);
-		}
+		});
 
-		let chosen;
-		if (safeLines.length > 0) {
-			chosen = safeLines[Math.floor(Math.random() * safeLines.length)];
-		} else {
-			// 3. Sacrifice move (try to pick one that gives away the fewest boxes, but random is okay for simple AI)
-			chosen = lines[Math.floor(Math.random() * lines.length)];
-		}
-
+		let chosen = safeLines.length > 0 ? safeLines[Math.floor(Math.random() * safeLines.length)] : lines[Math.floor(Math.random() * lines.length)];
 		lastAiMove = { type: chosen.type, r: chosen.r, c: chosen.c };
 		applyMove(chosen.type, chosen.r, chosen.c);
 	}
 
+	reset();
 </script>
 
 <div class="game-container">
@@ -178,45 +160,36 @@
 		<p>Take turns drawing a single horizontal or vertical line between two adjacent dots. If you draw the 4th line that closes a 1x1 box, you capture it and <strong>must take another turn!</strong></p>
 	</Instructions>
 
-	<InGameMenu 
-		{onBack} 
-		onHelp={() => instructions.open()} 
-		onRestart={reset}
-	>
-		<div class="turn">
-			{#if gameOver}
-				<span style="color: {scores[1] > scores[2] ? 'var(--color-bittersweet)' : (scores[2] > scores[1] ? 'var(--color-apple)' : 'white')}">
-					{scores[1] > scores[2] ? 'YOU WIN!' : (scores[2] > scores[1] ? 'AI WINS!' : 'TIE GAME!')}
-				</span>
-			{:else}
-				<span style="color: {currentTurn === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
-					{currentTurn === 1 ? 'YOUR TURN' : 'AI TURN'}
-				</span>
-			{/if}
-		</div>
-		{#snippet rightControls()}
-			<div class="diff-select">
-				<button class="diff-btn" class:active={SIZE === 4} onclick={() => { SIZE=4; reset(); }}>5x5</button>
-				<button class="diff-btn" class:active={SIZE === 7} onclick={() => { SIZE=7; reset(); }}>8x8</button>
-			</div>
-		{/snippet}
-	</InGameMenu>
-
-	<div class="scoreboard">
-		<div class="score p1">
-			<span class="label">YOU</span>
-			<span class="val">{scores[1]}</span>
-		</div>
-		<div class="score p2">
-			<span class="label">AI</span>
-			<span class="val">{scores[2]}</span>
-		</div>
-	</div>
-
 	<div class="board-wrapper">
+		<div class="game-stats">
+			<div class="stat scoreboard-stat">
+				<div class="score p1">
+					<span class="label">YOU</span>
+					<span class="val">{scores[1]}</span>
+				</div>
+				<div class="score p2">
+					<span class="label">AI</span>
+					<span class="val">{scores[2]}</span>
+				</div>
+			</div>
+			<div class="stat turn-stat">
+				<span class="label">STATUS</span>
+				<div class="status-msg">
+					{#if gameOver}
+						<span style="color: {scores[1] > scores[2] ? 'var(--color-bittersweet)' : (scores[2] > scores[1] ? 'var(--color-apple)' : 'white')}">
+							{scores[1] > scores[2] ? 'YOU WIN!' : (scores[2] > scores[1] ? 'AI WINS!' : 'TIE GAME!')}
+						</span>
+					{:else}
+						<span style="color: {currentTurn === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
+							{currentTurn === 1 ? 'YOUR TURN' : 'AI TURN'}
+						</span>
+					{/if}
+				</div>
+			</div>
+		</div>
+
 		<div class="svg-container">
 			<svg viewBox="0 0 {VIEWBOX_SIZE} {VIEWBOX_SIZE}" class="board-svg">
-				<!-- Boxes -->
 				{#each Array(SIZE) as _, r}
 					{#each Array(SIZE) as _, c}
 						{#if boxes[r][c] !== 0}
@@ -226,7 +199,6 @@
 					{/each}
 				{/each}
 
-				<!-- Drawn Lines -->
 				{#each Array(SIZE + 1) as _, r}
 					{#each Array(SIZE) as _, c}
 						{#if hLines[r][c]}
@@ -247,14 +219,12 @@
 					{/each}
 				{/each}
 
-				<!-- Dots -->
 				{#each Array(SIZE + 1) as _, r}
 					{#each Array(SIZE + 1) as _, c}
-						<circle cx={10 + c*16} cy={10 + r*16} r="2" fill="var(--color-illusion)" />
+						<circle cx={10 + c*16} cy={10 + r*16} r="2.2" fill="var(--color-illusion)" />
 					{/each}
 				{/each}
 
-				<!-- Click Zones -->
 				{#each Array(SIZE + 1) as _, r}
 					{#each Array(SIZE) as _, c}
 						{#if !hLines[r][c]}
@@ -276,30 +246,59 @@
 		</div>
 	</div>
 
-	<div class="bottom-bar"></div>
+	<div class="bottom-bar">
+		<div class="controls">
+			<span class="label">GRID SIZE</span>
+			<div class="diff-select">
+				<button class="diff-btn" class:active={SIZE === 4} onclick={() => { SIZE=4; reset(); }}>5x5</button>
+				<button class="diff-btn" class:active={SIZE === 7} onclick={() => { SIZE=7; reset(); }}>8x8</button>
+			</div>
+		</div>
+	</div>
 </div>
 
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
-	.turn { font-size: 3vmin; font-weight: 900; letter-spacing: 2px; }
 
-	.diff-select { display: flex; gap: 0.5vmin; margin-right: 1vmin; }
-	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 2vmin; border-radius: 1vmin; cursor: pointer; font-weight: 800; font-size: 1.4vmin; transition: all 0.2s; }
-	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
-	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); }
+	.board-wrapper { 
+		flex: 1; 
+		display: flex; 
+		flex-direction: column;
+		justify-content: center; 
+		align-items: center; 
+		width: 100%; 
+		padding: 1vmin 4vmin; 
+		box-sizing: border-box; 
+		overflow: hidden;
+	}
 
-	.scoreboard { display: flex; justify-content: center; gap: 10vmin; margin-top: 2vmin; margin-bottom: 2vmin; }
+	.game-stats { display: flex; justify-content: center; align-items: center; gap: 6vmin; margin-bottom: 2vmin; width: 100%; }
+	.stat { display: flex; flex-direction: column; align-items: center; }
+	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
+	.scoreboard-stat { flex-direction: row; gap: 6vmin; }
 	.score { display: flex; flex-direction: column; align-items: center; }
-	.label { font-size: 1.5vmin; font-weight: 800; color: rgba(255,255,255,0.5); letter-spacing: 0.2vmin; }
-	.val { font-size: 6vmin; font-weight: 900; }
+	.score .val { font-size: 6vmin; font-weight: 900; }
 	.p1 .val { color: var(--color-bittersweet); }
 	.p2 .val { color: var(--color-apple); }
+	.status-msg { font-size: 5vmin; font-weight: 900; letter-spacing: 1px; }
 
-	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 4vmin; box-sizing: border-box; }
-	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
-	.svg-container { width: 65vmin; height: 65vmin; background: rgba(255,255,255,0.02); border-radius: 2vmin; border: 1px solid rgba(255,255,255,0.05); }
+	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
+	.controls { display: flex; align-items: center; gap: 3vmin; }
+	.diff-select { display: flex; gap: 1vmin; }
+	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; }
+	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); box-shadow: 0 0 15px rgba(248, 165, 194, 0.3); }
+
+	.svg-container { 
+		width: 75vmin; 
+		height: 75vmin; 
+		background: rgba(255,255,255,0.015); 
+		border-radius: 3vmin; 
+		border: 1px solid rgba(255,255,255,0.08); 
+		backdrop-filter: blur(10px);
+		padding: 2vmin;
+	}
 	.board-svg { width: 100%; height: 100%; }
-
 	.click-zone { cursor: pointer; transition: fill 0.2s; }
 	.click-zone:hover { fill: rgba(255,255,255,0.1); }
 </style>
