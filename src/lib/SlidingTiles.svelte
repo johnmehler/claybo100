@@ -87,8 +87,7 @@
 				<div
 					id="tile-{tile}"
 					animate:flip={{ duration: 300, easing: quintOut }}
-					class="tile {tile === 0 ? 'empty' : ''} {isWon && tile !== 0 ? 'shimmer' : ''}"
-					style={isWon && tile !== 0 ? `animation-delay: ${(Math.floor(index / SIZE) + (index % SIZE)) * 0.15}s` : ""}
+					class="tile {tile === 0 ? 'empty' : ''}"
 					role="button"
 					tabindex={tile === 0 ? -1 : 0}
 					onclick={() => move(index)}
@@ -98,6 +97,9 @@
 				</div>
 			{/each}
 		</div>
+		{#if isWon}
+			<div class="completion-overlay" transition:fade></div>
+		{/if}
 	</div>
 </div>
 
@@ -124,6 +126,8 @@
 		background: rgba(0,0,0,0.2);
 		border-radius: 2vmin;
 		box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+		position: relative;
+		overflow: hidden;
 	}
 
 	.grid {
@@ -161,12 +165,28 @@
 		cursor: default;
 	}
 
-	@keyframes shimmer-wave {
-		0%, 100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255,255,255,0)); background: var(--color-bittersweet); }
-		50% { filter: brightness(1.3) drop-shadow(0 0 10px var(--color-golden)); background: var(--color-golden); color: black; transform: scale(1.05); z-index: 10; }
+	.completion-overlay {
+		position: absolute;
+		top: 0;
+		left: -150%;
+		width: 150%;
+		height: 100%;
+		background: linear-gradient(
+			to right,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(200, 200, 200, 0.2) 30%,
+			rgba(255, 255, 255, 0.5) 50%,
+			rgba(200, 200, 200, 0.2) 70%,
+			rgba(255, 255, 255, 0) 100%
+		);
+		transform: skewX(-25deg);
+		animation: swoosh 0.8s ease-in-out forwards;
+		pointer-events: none;
+		z-index: 20;
 	}
 
-	.shimmer {
-		animation: shimmer-wave 1.5s ease-in-out infinite;
+	@keyframes swoosh {
+		0% { left: -150%; }
+		100% { left: 150%; }
 	}
 </style>
