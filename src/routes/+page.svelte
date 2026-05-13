@@ -1,4 +1,5 @@
 <script lang="ts">
+	import VectorRacing from '$lib/VectorRacing.svelte';
 	import SlidingTiles from '$lib/SlidingTiles.svelte';
 	import Pegboard from '$lib/Pegboard.svelte';
 	import Hanoi from '$lib/Hanoi.svelte';
@@ -11,7 +12,7 @@
 	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing';
 	let currentView = $state<View>('menu');
 	let isSidebarCollapsed = $state(false);
 
@@ -119,6 +120,13 @@
 					description: 'Cannon physics simulator. Hit the hoop.',
 					cardClass: 'shotsim-card',
 					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21 Q 12 3, 21 12"></path><circle cx="21" cy="12" r="2"></circle><circle cx="3" cy="21" r="1.5"></circle></svg>` 
+				},
+				{ 
+					id: 'vectorracing', 
+					label: 'Vector Racing', 
+					description: 'Momentum racing. Adjust velocity ±1 each turn.',
+					cardClass: 'vector-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>` 
 				}
 			]
 		}
@@ -264,6 +272,8 @@
 						<SetGame onBack={() => setView('menu')} {registerActions} />
 					{:else if currentView === 'dotsandboxes'}
 						<DotsAndBoxes onBack={() => setView('menu')} {registerActions} />
+					{:else if currentView === 'vectorracing'}
+						<VectorRacing onBack={() => setView('menu')} {registerActions} />
 					{/if}
 				</div>
 			</div>
