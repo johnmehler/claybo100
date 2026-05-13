@@ -131,8 +131,12 @@
 			<p class="description">Move all discs from the first rod to the last rod. A larger disc cannot be placed on a smaller one.</p>
 			
 			<div class="settings">
-				<span class="label">DISCS: {numDiscs}</span>
-				<input type="range" min="3" max="8" bind:value={numDiscs} class="slider" />
+				<span class="label">NUMBER OF DISCS</span>
+				<div class="input-stepper">
+					<button onclick={() => numDiscs = Math.max(3, numDiscs - 1)}>-</button>
+					<div class="stepper-value">{numDiscs}</div>
+					<button onclick={() => numDiscs = Math.min(8, numDiscs + 1)}>+</button>
+				</div>
 			</div>
 
 			<button class="cta-btn" onclick={initGame}>START GAME</button>
@@ -162,6 +166,7 @@
 							{#each tower as discSize (discSize)}
 								<div 
 									class="disc" 
+									class:selected-disc={selectedTower === i && discSize === tower[tower.length - 1]}
 									style="width: {20 + discSize * (80 / numDiscs)}%; background: {DISC_COLORS[(discSize - 1) % DISC_COLORS.length]}"
 									animate:flip={{ duration: 300 }}
 								>
@@ -172,14 +177,10 @@
 						<div class="base"></div>
 					</button>
 				{/each}
+				{#if gameState === 'won'}
+					<div class="completion-overlay" transition:fade></div>
+				{/if}
 			</div>
-
-			{#if gameState === 'won'}
-				<div class="game-over-overlay" in:fade={{ duration: 400 }}>
-					<h2>VICTORY!</h2>
-					<p>Completed in {movesCount} moves and {formatTime(elapsedTime)}</p>
-				</div>
-			{/if}
 		</div>
 
 		<div class="bottom-bar">
@@ -228,28 +229,49 @@
 	.settings {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5vmin;
+		align-items: center;
+		gap: 2vmin;
 		margin-bottom: 5vmin;
-		width: 30vmin;
 	}
 
-	.slider {
-		-webkit-appearance: none;
-		width: 100%;
-		height: 8px;
+	.input-stepper {
+		display: flex;
+		align-items: center;
+		gap: 2vmin;
+		background: rgba(255,255,255,0.05);
+		padding: 1vmin;
+		border-radius: 1.5vmin;
+		border: 1px solid rgba(255,255,255,0.1);
+	}
+
+	.input-stepper button {
 		background: rgba(255,255,255,0.1);
-		border-radius: 4px;
-		outline: none;
+		border: none;
+		color: white;
+		width: 8vmin;
+		height: 8vmin;
+		border-radius: 1vmin;
+		cursor: pointer;
+		font-weight: 900;
+		font-size: 5vmin;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
 	}
 
-	.slider::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		width: 20px;
-		height: 20px;
-		background: var(--color-bittersweet);
-		border-radius: 50%;
-		cursor: pointer;
-		box-shadow: 0 0 10px rgba(255,110,97,0.5);
+	.input-stepper button:hover {
+		background: rgba(255,255,255,0.2);
+		color: var(--color-illusion);
+		transform: scale(1.05);
+	}
+
+	.input-stepper .stepper-value {
+		font-size: 6vmin;
+		font-weight: 900;
+		width: 8vmin;
+		text-align: center;
+		color: var(--color-bittersweet);
 	}
 
 	.cta-btn {
@@ -322,6 +344,7 @@
 		background: rgba(255, 255, 255, 0.02);
 		border-radius: 3vmin;
 		padding: 2vmin;
+		overflow: hidden;
 	}
 
 	.tower {
@@ -386,7 +409,13 @@
 		margin-bottom: 0.2vmin;
 		box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 		position: relative;
-		transition: transform 0.2s;
+		transition: all 0.2s;
+	}
+
+	.disc.selected-disc {
+		box-shadow: 0 0 0 0.4vmin white, 0 10px 20px rgba(0,0,0,0.6);
+		z-index: 10;
+		filter: brightness(1.2);
 	}
 
 	.disc-label {
@@ -404,29 +433,28 @@
 		background: rgba(255,255,255,0.25);
 	}
 
-	.game-over-overlay {
+	.completion-overlay {
 		position: absolute;
-		top: 0; left: 0; right: 0; bottom: 0;
-		background: rgba(0,0,0,0.8);
-		backdrop-filter: blur(15px);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
+		top: 0;
+		left: -150%;
+		width: 150%;
+		height: 100%;
+		background: linear-gradient(
+			to right,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(200, 200, 200, 0.2) 30%,
+			rgba(255, 255, 255, 0.5) 50%,
+			rgba(200, 200, 200, 0.2) 70%,
+			rgba(255, 255, 255, 0) 100%
+		);
+		transform: skewX(-25deg);
+		animation: swoosh 0.8s ease-in-out forwards;
+		pointer-events: none;
 		z-index: 20;
-		border-radius: 4vmin;
 	}
 
-	.game-over-overlay h2 {
-		font-size: 8vmin;
-		margin: 0;
-		font-weight: 900;
-		color: var(--color-apple);
-	}
-
-	.game-over-overlay p {
-		font-size: 3vmin;
-		color: rgba(255,255,255,0.6);
-		margin: 2vmin 0 5vmin;
+	@keyframes swoosh {
+		0% { left: -150%; }
+		100% { left: 150%; }
 	}
 </style>
