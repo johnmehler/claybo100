@@ -119,9 +119,13 @@
 		}
 	}
 
-	function addCard() {
+	function addCards() {
 		if (deck.length > 0) {
-			rows[nextRowIdx] = [...rows[nextRowIdx], deck.pop()!];
+			const toAdd = Math.min(3, deck.length);
+			const newCards = deck.splice(0, toAdd);
+			newCards.forEach((card, i) => {
+				rows[i] = [...rows[i], card];
+			});
 		}
 	}
 
@@ -154,57 +158,60 @@
 
 		<div class="board">
 			{#each rows as row, r}
-				<div class="row">
-					{#each row as card, i (card ? card.id : `empty-${r}-${i}`)}
-						<div class="card-slot" style="grid-column: {i + 1}" animate:flip={{ duration: 1000, easing: cubicInOut }}>
-							{#if card}
-								<button 
-									class="card {selected.includes(card.id) ? 'selected' : ''}" 
-									onclick={() => clickCard(card.id)} 
-									in:scale={{ duration: 600, start: 0.7, opacity: 0, easing: backOut }}
-									out:scale={{ duration: 400, start: 0.7, opacity: 0 }}
-								>
-									{#each Array(card.n + 1) as _}
-										<svg class="shape" viewBox="0 0 24 12" style="color: {colors[card.c]}">
-											{#if card.s === 0}
-												<!-- Oval -->
-												<rect x="2" y="1" width="20" height="10" rx="5" 
-													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-													stroke="currentColor" stroke-width="2" />
-											{:else if card.s === 1}
-												<!-- Diamond -->
-												<polygon points="12,1 22,6 12,11 2,6" 
-													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-													stroke="currentColor" stroke-width="2" />
-											{:else}
-												<!-- Squiggle -->
-												<path d="M2,7 C2,2 9,1 12,6 C15,11 22,10 22,5 C22,0 15,1 12,6 C9,11 2,12 2,7 Z" 
-													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-													stroke="currentColor" stroke-width="2" />
-											{/if}
-										</svg>
-									{/each}
-								</button>
-							{:else}
-								<div class="card placeholder"></div>
-							{/if}
-						</div>
-					{/each}
-
-					{#if r === nextRowIdx && deck.length > 0}
-						<button 
-							class="add-cards-btn" 
-							style="grid-column: {Math.max(5, row.length + 1)}"
-							onclick={addCard} 
-							in:fade
-						>
-							<div class="plus">+</div>
-							<div class="label">ADD 1</div>
-						</button>
-					{/if}
-				</div>
+				{#each row as card, i (card ? card.id : `empty-${r}-${i}`)}
+					<div class="card-slot" 
+						style="grid-row: {r + 1}; grid-column: {i + 1}" 
+						animate:flip={{ duration: 1000, easing: cubicInOut }}
+					>
+						{#if card}
+							<button 
+								class="card {selected.includes(card.id) ? 'selected' : ''}" 
+								onclick={() => clickCard(card.id)} 
+								in:scale={{ duration: 600, start: 0.7, opacity: 0, easing: backOut }}
+								out:scale={{ duration: 400, start: 0.7, opacity: 0 }}
+							>
+								{#each Array(card.n + 1) as _}
+									<svg class="shape" viewBox="0 0 24 12" style="color: {colors[card.c]}">
+										{#if card.s === 0}
+											<!-- Oval -->
+											<rect x="2" y="1" width="20" height="10" rx="5" 
+												fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+												stroke="currentColor" stroke-width="2" />
+										{:else if card.s === 1}
+											<!-- Diamond -->
+											<polygon points="12,1 22,6 12,11 2,6" 
+												fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+												stroke="currentColor" stroke-width="2" />
+										{:else}
+											<!-- Squiggle -->
+											<path d="M2,7 C2,2 9,1 12,6 C15,11 22,10 22,5 C22,0 15,1 12,6 C9,11 2,12 2,7 Z" 
+												fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+												stroke="currentColor" stroke-width="2" />
+										{/if}
+									</svg>
+								{/each}
+							</button>
+						{:else}
+							<div class="card placeholder"></div>
+						{/if}
+					</div>
+				{/each}
 			{/each}
+
+			{#if deck.length > 0}
+				<button 
+					class="add-cards-btn" 
+					style="grid-column: {Math.max(...rows.map(r => r.length)) + 1}; grid-row: 1 / 4"
+					onclick={addCards} 
+					in:fade
+				>
+					<div class="plus">+</div>
+					<div class="label">ADD 3</div>
+				</button>
+			{/if}
 		</div>
+
+
 
 
 	</div>
@@ -256,25 +263,18 @@
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	
 	.board { 
-		display: flex;
-		flex-direction: column;
-		gap: 1.5vmin; 
-		justify-content: center; 
+		display: grid;
+		grid-template-rows: repeat(3, 22vmin);
+		grid-auto-columns: 15vmin;
+		gap: 2vmin;
+		justify-content: center;
 		width: max-content; 
 	}
-
 	.card-slot { width: 15vmin; height: 22vmin; }
-	.row {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, 15vmin);
-		gap: 2vmin;
-		height: 22vmin;
-		justify-content: center;
-	}
 	
 	.card { 
 		display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8vmin;
-		width: 15vmin; height: 22vmin; background: rgba(255,255,255,0.02); 
+		width: 100%; height: 100%; background: rgba(255,255,255,0.02); 
 		border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5vmin; cursor: pointer; transition: all 0.3s; 
 	}
 	.card:not(.placeholder):hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-0.5vmin); }
@@ -284,7 +284,7 @@
 
 	.add-cards-btn {
 		width: 15vmin;
-		height: 22vmin;
+		height: 100%;
 		background: rgba(255, 255, 255, 0.015);
 		border: 2px dashed rgba(255, 255, 255, 0.05);
 		border-radius: 1.5vmin;
