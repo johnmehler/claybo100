@@ -134,7 +134,10 @@
 		let b = blocks.find(x => x.id === id);
 		if (!b || b.used) return;
 		
-		if (selectedBlockId === null) {
+		if (selectedBlockId === id) {
+			selectedBlockId = null;
+			selectedOp = null;
+		} else if (selectedBlockId === null) {
 			selectedBlockId = id;
 		} else if (selectedOp !== null && selectedBlockId !== id) {
 			let b1 = blocks.find(x => x.id === selectedBlockId)!;
@@ -220,7 +223,10 @@
 			let mappedOp = key;
 			if (key === '*' || key.toLowerCase() === 'x') mappedOp = '×';
 			if (key === '/') mappedOp = '÷';
-			if (selectedBlockId !== null) selectedOp = mappedOp;
+			if (selectedBlockId !== null) {
+				if (selectedOp === mappedOp) selectedOp = null;
+				else selectedOp = mappedOp;
+			}
 			return;
 		}
 		let activeBlocks = blocks.filter(b => !b.used);
@@ -260,15 +266,6 @@
 					TARGET REACHED... BUT YOU MUST USE ALL CARDS!
 				</div>
 			{/if}
-			{#if status}
-				<div class="status-overlay" in:fade>
-					<div class="status-text">{status}</div>
-					{#if winningExpr}
-						<div class="winning-formula">{winningExpr} = {target}</div>
-					{/if}
-					<button class="new-puzzle-btn" onclick={generate}>NEW PUZZLE</button>
-				</div>
-			{/if}
 		</div>
 
 		<div class="workspace" class:dimmed={!!status}>
@@ -287,7 +284,7 @@
 					<button 
 						class="op {selectedOp === op ? 'selected' : ''}" 
 						disabled={selectedBlockId === null || !!status}
-						onclick={() => selectedOp = op}
+						onclick={() => selectedOp = selectedOp === op ? null : op}
 					>
 						{op}
 					</button>
@@ -309,8 +306,40 @@
 		</div>
 	</div>
 
+	{#if status}
+		<div class="status-overlay" in:fade>
+			<div class="status-card">
+				<div class="victory-icon">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="20 6 9 17 4 12"></polyline>
+					</svg>
+				</div>
+				<div class="status-text">{status}</div>
+				{#if winningExpr}
+					<div class="winning-formula">
+						<span class="formula">{winningExpr}</span>
+						<span class="equals">=</span>
+						<span class="result">{target}</span>
+					</div>
+				{/if}
+				<button class="new-puzzle-btn" onclick={generate}>NEXT CHALLENGE</button>
+			</div>
+		</div>
+	{/if}
+
 	{#if loserPopup}
-		<div class="loser-popup" in:fade out:fade>LOSER</div>
+		<div class="loser-overlay" in:fade out:fade>
+			<div class="loser-card">
+				<div class="error-icon">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+				</div>
+				<div class="loser-text">INVALID MOVE</div>
+				<div class="loser-sub">Watch out for zeros!</div>
+			</div>
+		</div>
 	{/if}
 </div>
 
@@ -352,38 +381,59 @@
 
 	.status-overlay {
 		position: absolute;
-		top: 50%; left: 50%;
-		transform: translate(-50%, -50%);
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		background: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(8px);
+	}
+
+	.status-card {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 2vmin;
-		z-index: 10;
-		background: rgba(0,0,0,0.8);
-		padding: 4vmin 8vmin;
+		gap: 4vmin;
+		background: rgba(20, 20, 25, 0.95);
+		padding: 6vmin 10vmin;
 		border-radius: 4vmin;
-		border: 1px solid var(--color-golden);
-		box-shadow: 0 0 5vmin rgba(0,0,0,0.5);
-		backdrop-filter: blur(10px);
+		border: 2px solid var(--color-golden);
+		box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(255, 230, 109, 0.15);
+		animation: pop-in 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.27);
+	}
+
+	@keyframes pop-in {
+		0% { transform: scale(0.8); opacity: 0; }
+		100% { transform: scale(1); opacity: 1; }
 	}
 
 	.status-text {
-		font-size: 3.5vmin;
+		font-size: 5vmin;
 		font-weight: 900;
 		color: var(--color-golden);
 		text-transform: uppercase;
-		letter-spacing: 0.5vmin;
-		text-shadow: 0 0 2vmin rgba(255, 230, 109, 0.4);
+		letter-spacing: 0.8vmin;
+		text-shadow: 0 0 3vmin rgba(255, 230, 109, 0.4);
+		margin: 0;
 	}
 
 	.winning-formula {
-		font-size: 2vmin;
-		color: rgba(255,255,255,0.8);
-		font-family: monospace;
-		background: rgba(255,255,255,0.1);
-		padding: 1vmin 2vmin;
-		border-radius: 1vmin;
+		display: flex;
+		align-items: center;
+		gap: 2vmin;
+		font-size: 3vmin;
+		color: white;
+		font-family: 'Outfit', sans-serif;
+		background: rgba(255, 255, 255, 0.05);
+		padding: 2vmin 4vmin;
+		border-radius: 2vmin;
+		border: 1px solid rgba(255, 255, 255, 0.1);
 	}
+
+	.formula { opacity: 0.8; font-weight: 500; }
+	.equals { color: var(--color-golden); font-weight: 900; }
+	.result { color: var(--color-bittersweet); font-weight: 900; }
 
 	.new-puzzle-btn {
 		background: var(--color-golden);
@@ -445,20 +495,67 @@
 		border-color: white;
 	}
 
-	.loser-popup {
+	.victory-icon {
+		width: 10vmin;
+		height: 10vmin;
+		background: rgba(255, 230, 109, 0.1);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--color-golden);
+		margin-bottom: -1vmin;
+		box-shadow: 0 0 3vmin rgba(255, 230, 109, 0.2);
+	}
+	.victory-icon svg { width: 5vmin; height: 5vmin; }
+
+	.loser-overlay {
 		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		background: rgba(255, 0, 0, 0.9);
-		color: white;
-		padding: 5vmin 10vmin;
-		font-size: 10vmin;
-		font-weight: 900;
-		border-radius: 2vmin;
-		z-index: 100;
-		box-shadow: 0 0 10vmin rgba(255,0,0,0.5);
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		background: rgba(255, 0, 0, 0.1);
+		backdrop-filter: blur(4px);
+	}
+
+	.loser-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2vmin;
+		background: #1a0a0a;
+		padding: 5vmin 8vmin;
+		border-radius: 3vmin;
+		border: 2px solid #ff4d4d;
+		box-shadow: 0 0 5vmin rgba(255,0,0,0.3);
 		animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+	}
+
+	.error-icon {
+		width: 8vmin;
+		height: 8vmin;
+		background: rgba(255, 77, 77, 0.1);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ff4d4d;
+	}
+	.error-icon svg { width: 4vmin; height: 4vmin; }
+
+	.loser-text {
+		font-size: 4vmin;
+		font-weight: 900;
+		color: #ff4d4d;
+		letter-spacing: 0.4vmin;
+	}
+
+	.loser-sub {
+		font-size: 1.8vmin;
+		color: rgba(255,255,255,0.4);
+		font-weight: 600;
 	}
 
 	@keyframes shake {
