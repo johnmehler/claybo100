@@ -183,19 +183,28 @@
 		loserPopup = false;
 	}
 	
-	function isWon() {
+	let wonExpr = $derived.by(() => {
 		const active = blocks.filter(b => !b.used);
 		if (active.length === 1 && active[0].val.equals(new Fraction(target))) {
 			return active[0].expr;
 		}
 		return null;
-	}
+	});
+
+	let targetReachedEarly = $derived.by(() => {
+		const active = blocks.filter(b => !b.used);
+		if (active.length > 1) {
+			for (let b of active) {
+				if (b.val.equals(new Fraction(target))) return true;
+			}
+		}
+		return false;
+	});
 	
 	$effect(() => {
-		const win = isWon();
-		if (win && !status) {
+		if (wonExpr && !status) {
 			status = 'KRYPTO SOLVED!';
-			winningExpr = win;
+			winningExpr = wonExpr;
 		}
 	});
 
@@ -246,6 +255,11 @@
 				<span class="label">TARGET</span>
 				<div class="target-val">{target}</div>
 			</div>
+			{#if targetReachedEarly && !status}
+				<div class="early-warning" in:fade out:fade>
+					TARGET REACHED... BUT YOU MUST USE ALL CARDS!
+				</div>
+			{/if}
 			{#if status}
 				<div class="status-overlay" in:fade>
 					<div class="status-text">{status}</div>
@@ -320,6 +334,21 @@
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.5vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
 	.target-val { font-size: 8vmin; font-weight: 900; color: var(--color-bittersweet); line-height: 1; text-shadow: 0 0 3vmin rgba(255, 110, 97, 0.4); }
+
+	.early-warning {
+		position: absolute;
+		top: 100%;
+		margin-top: 1vmin;
+		background: rgba(255,230,109,0.2);
+		color: var(--color-golden);
+		padding: 1vmin 2vmin;
+		border-radius: 1vmin;
+		border: 1px solid rgba(255,230,109,0.4);
+		font-weight: 800;
+		font-size: 1.5vmin;
+		letter-spacing: 0.1vmin;
+		white-space: nowrap;
+	}
 
 	.status-overlay {
 		position: absolute;

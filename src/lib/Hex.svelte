@@ -9,6 +9,9 @@
 	let winner = $state(0);
 	let winningPath = $state<number[]>([]);
 
+	let opponentMode = $state<'ai' | 'human'>('ai');
+	let isThinking = $state(false);
+
 	function getNeighbors(r: number, c: number) {
 		const res = [];
 		const dirs = [[-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0]];
@@ -17,6 +20,85 @@
 			if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) res.push(nr * SIZE + nc);
 		}
 		return res;
+	}
+
+	function getShortestPathLength(p: number, currentBoard: number[]) {
+		const dist = new Array(SIZE * SIZE).fill(1000);
+		const queue: number[] = [];
+
+		for (let i = 0; i < SIZE; i++) {
+			const idx = p === 1 ? i : i * SIZE;
+			if (currentBoard[idx] === 0 || currentBoard[idx] === p) {
+				dist[idx] = currentBoard[idx] === p ? 0 : 1;
+				queue.push(idx);
+			}
+		}
+
+		let head = 0;
+		while (head < queue.length) {
+			const curr = queue[head++];
+			const r = Math.floor(curr / SIZE), c = curr % SIZE;
+			
+			for (const n of getNeighbors(r, c)) {
+				if (currentBoard[n] === 0 || currentBoard[n] === p) {
+					const weight = currentBoard[n] === p ? 0 : 1;
+					if (dist[curr] + weight < dist[n]) {
+						dist[n] = dist[curr] + weight;
+						queue.push(n);
+					}
+				}
+			}
+		}
+
+		let minDist = 1000;
+		for (let i = 0; i < SIZE; i++) {
+			const idx = p === 1 ? (SIZE - 1) * SIZE + i : i * SIZE + (SIZE - 1);
+			minDist = Math.min(minDist, dist[idx]);
+		}
+		return minDist;
+	}
+
+	async function makeAIMove() {
+		if (winner !== 0 || currentTurn !== 2 || opponentMode !== 'ai') return;
+
+		isThinking = true;
+		await new Promise(r => setTimeout(r, 600));
+
+		const emptyCells = board.map((v, i) => v === 0 ? i : -1).filter(v => v !== -1);
+		if (emptyCells.length === 0) { isThinking = false; return; }
+
+		let bestScore = -Infinity;
+		let bestMove = emptyCells[0];
+
+		// Baseline distances
+		const baseRed = getShortestPathLength(1, board);
+		const baseBlue = getShortestPathLength(2, board);
+
+		for (const move of emptyCells) {
+			// Try Blue move
+			board[move] = 2;
+			const blueDist = getShortestPathLength(2, board);
+			board[move] = 0;
+
+			// Try Red move
+			board[move] = 1;
+			const redDist = getShortestPathLength(1, board);
+			board[move] = 0;
+
+			// Score: How much does this improve our position OR block theirs?
+			const score = (baseBlue - blueDist) * 1.2 + (baseRed - redDist);
+			
+			// Add a tiny bit of noise to break ties randomly
+			const finalScore = score + Math.random() * 0.1;
+
+			if (finalScore > bestScore) {
+				bestScore = finalScore;
+				bestMove = move;
+			}
+		}
+
+		isThinking = false;
+		clickHex(Math.floor(bestMove / SIZE), bestMove % SIZE, false);
 	}
 
 	function checkWin(p: number) {
@@ -35,7 +117,6 @@
 			const r = Math.floor(curr / SIZE), c = curr % SIZE;
 			
 			if ((p === 1 && r === SIZE - 1) || (p === 2 && c === SIZE - 1)) {
-				// Reconstruct path
 				const path = [];
 				let temp: number | null = curr;
 				while (temp !== null) {
@@ -55,9 +136,11 @@
 		return null;
 	}
 
-	function clickHex(r: number, c: number) {
+	function clickHex(r: number, c: number, isHuman: boolean = true) {
 		const idx = r * SIZE + c;
-		if (board[idx] !== 0 || winner !== 0) return;
+		if (board[idx] !== 0 || winner !== 0 || isThinking) return;
+		if (isHuman && opponentMode === 'ai' && currentTurn === 2) return;
+		
 		board[idx] = currentTurn;
 		const path = checkWin(currentTurn);
 		if (path) {
@@ -65,6 +148,9 @@
 			winningPath = path;
 		} else {
 			currentTurn = currentTurn === 1 ? 2 : 1;
+			if (currentTurn === 2 && opponentMode === 'ai') {
+				makeAIMove();
+			}
 		}
 	}
 
@@ -73,6 +159,7 @@
 		winner = 0;
 		winningPath = [];
 		currentTurn = 1;
+		isThinking = false;
 	}
 
 	$effect(() => {
@@ -92,11 +179,18 @@
 	<div class="board-wrapper">
 		<div class="game-stats">
 			<div class="stat">
+				<span class="label">MODE</span>
+				<div class="mode-select">
+					<button class="mode-btn" class:active={opponentMode === 'ai'} onclick={() => { opponentMode = 'ai'; reset(); }}>AI</button>
+					<button class="mode-btn" class:active={opponentMode === 'human'} onclick={() => { opponentMode = 'human'; reset(); }}>HUMAN</button>
+				</div>
+			</div>
+			<div class="stat">
 				<span class="label">STATUS</span>
 				<div class="status-msg">
 					{#if winner === 0}
 						<span style="color: {currentTurn === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
-							{currentTurn === 1 ? 'RED' : 'BLUE'} TURN
+							{currentTurn === 1 ? 'RED' : 'BLUE'} {isThinking ? 'THINKING...' : 'TURN'}
 						</span>
 					{:else}
 						<span style="color: {winner === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
@@ -107,7 +201,7 @@
 			</div>
 		</div>
 
-		<div class="hex-grid">
+		<div class="hex-grid" class:thinking={isThinking}>
 			{#each Array(SIZE) as _, r}
 				<div class="hex-row" style="margin-left: {r * 3}vmin">
 					{#each Array(SIZE) as _, c}
@@ -118,6 +212,7 @@
 							class:blue={p === 2}
 							class:winner={winningPath.includes(r * SIZE + c)}
 							onclick={() => clickHex(r, c)}
+							disabled={isThinking && opponentMode === 'ai'}
 						></button>
 					{/each}
 				</div>
@@ -125,31 +220,38 @@
 		</div>
 	</div>
 
-	{#if winner !== 0}
-		<div class="bottom-bar" transition:fade>
-			<button class="action-btn restart" onclick={reset}>
+	<div class="bottom-bar">
+		{#if winner !== 0}
+			<button class="action-btn restart" onclick={reset} in:fade>
 				NEW GAME
 			</button>
-			<button class="action-btn menu" onclick={onBack}>
-				MAIN MENU
-			</button>
-		</div>
-	{/if}
+		{/if}
+		<button class="action-btn menu" onclick={onBack}>
+			MAIN MENU
+		</button>
+	</div>
 </div>
 
 <style>
 	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
 	.board-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; padding: 1vmin 4vmin; box-sizing: border-box; overflow: hidden; }
-	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; }
+	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; gap: 6vmin; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
-	.status-msg { font-size: 4vmin; font-weight: 900; letter-spacing: 1px; }
+	.status-msg { font-size: 3.5vmin; font-weight: 900; letter-spacing: 1px; min-width: 30vmin; text-align: center; }
+
+	.mode-select { display: flex; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 0.5vmin; border-radius: 1.2vmin; border: 1px solid rgba(255,255,255,0.1); }
+	.mode-btn { background: transparent; border: none; color: rgba(255,255,255,0.4); padding: 0.8vmin 2vmin; border-radius: 0.8vmin; font-size: 1.4vmin; font-weight: 900; cursor: pointer; transition: all 0.3s; }
+	.mode-btn.active { background: var(--color-apple); color: black; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
 
 	.hex-grid { 
 		display: flex; flex-direction: column; align-items: flex-start; padding: 4vmin; 
 		background: rgba(255,255,255,0.01); border-radius: 4vmin; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);
 		position: relative;
+		transition: opacity 0.5s ease;
 	}
+
+	.hex-grid.thinking { opacity: 0.7; pointer-events: none; }
 
 	/* Board Edge Indicators */
 	.hex-grid::before, .hex-grid::after {
@@ -161,15 +263,6 @@
 		border-top: 4px solid var(--color-bittersweet);
 		border-bottom: 4px solid var(--color-bittersweet);
 		opacity: 0.3;
-	}
-	/* Blue sides (Left/Right) */
-	.hex-grid::after {
-		top: 0; bottom: 0; left: 0; right: 0;
-		border-left: 4px solid var(--color-apple);
-		border-right: 4px solid var(--color-apple);
-		opacity: 0.3;
-		transform: skewX(-30deg); /* Approximate the tilt of the hex grid */
-		display: none; /* Skew makes it messy, let's stick to a simpler indicator */
 	}
 
 	.hex-row { display: flex; margin-bottom: -1.6vmin; transition: transform 0.3s ease; }
@@ -184,8 +277,9 @@
 		filter: drop-shadow(0 0 1px rgba(255,255,255,0.15));
 		border: none;
 	}
+	.hex:disabled { cursor: not-allowed; }
 
-	.hex:hover:not(.red):not(.blue) { 
+	.hex:hover:not(.red):not(.blue):not(:disabled) { 
 		background: rgba(255,255,255,0.12); 
 		transform: scale(1.05) translateY(-2px); 
 		z-index: 10; 
@@ -208,7 +302,6 @@
 		transform: scale(1.05);
 		z-index: 5;
 		filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
-		border: 2px solid white; /* This won't work perfectly with clip-path, but inner highlight will */
 	}
 
 	.hex.winner::after {
