@@ -4,7 +4,37 @@
 	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
 	let instructions: any;
 	
-	type Block = { id: number, val: number, expr: string, used: boolean };
+	function gcd(a: number, b: number): number {
+		a = Math.abs(a);
+		b = Math.abs(b);
+		while (b) {
+			a %= b;
+			[a, b] = [b, a];
+		}
+		return a;
+	}
+
+	class Fraction {
+		n: number;
+		d: number;
+		constructor(n: number, d: number = 1) {
+			if (d === 0) throw new Error("Division by zero");
+			if (d < 0) { n = -n; d = -d; }
+			const common = gcd(n, d);
+			this.n = n / common;
+			this.d = d / common;
+		}
+		add(o: Fraction) { return new Fraction(this.n * o.d + o.n * this.d, this.d * o.d); }
+		sub(o: Fraction) { return new Fraction(this.n * o.d - o.n * this.d, this.d * o.d); }
+		mul(o: Fraction) { return new Fraction(this.n * o.n, this.d * o.d); }
+		div(o: Fraction) { return new Fraction(this.n * o.d, this.d * o.n); }
+		toValue() { return this.n / this.d; }
+		toString() { return this.d === 1 ? String(this.n) : `${this.n}/${this.d}`; }
+		equals(o: Fraction) { return this.n === o.n && this.d === o.d; }
+		key() { return `${this.n}/${this.d}`; }
+	}
+
+	type Block = { id: number, val: Fraction, expr: string, used: boolean };
 	let blocks = $state<Block[]>([]);
 	let target = $state(0);
 	let difficulty = $state<'easy'|'medium'|'hard'>('easy');
@@ -15,7 +45,14 @@
 
 	let puzzleSolvable = $state(false);
 	let status = $state<string | null>(null);
-	let wonByDeclaration = $state(false);
+	let flashRed = $state(false);
+	let winningExpr = $state<string | null>(null);
+	let loserPopup = $state(false);
+
+	function triggerLoser() {
+		loserPopup = true;
+		setTimeout(() => loserPopup = false, 1500);
+	}
 
 	function generate() {
 		let nums: number[] = [];
@@ -27,12 +64,12 @@
 			for (let i = 0; i < 5; i++) nums.push(getNum(1, 10));
 			t = getNum(1, 20);
 		} else if (difficulty === 'medium') {
-			const bigCount = getNum(2, 4); // "at least 2" over 10
+			const bigCount = getNum(2, 4);
 			for (let i = 0; i < bigCount; i++) nums.push(getNum(11, 19));
 			for (let i = 0; i < 5 - bigCount; i++) nums.push(getNum(1, 10));
 			t = getNum(1, 29);
 		} else if (difficulty === 'hard') {
-			const bigCount = getNum(3, 5); // "at least 3" over 20
+			const bigCount = getNum(3, 5);
 			for (let i = 0; i < bigCount; i++) nums.push(getNum(21, 29));
 			for (let i = 0; i < 5 - bigCount; i++) nums.push(getNum(1, 20));
 			t = getNum(1, 29);
@@ -40,8 +77,9 @@
 
 		nums.sort(() => Math.random() - 0.5);
 
-		let dp: Set<number>[] = Array(32).fill(0).map(() => new Set());
-		for (let i = 0; i < 5; i++) dp[1 << i].add(nums[i]);
+		// Use Set of strings for fractions to check solvability
+		let dp: Set<string>[] = Array(32).fill(0).map(() => new Set());
+		for (let i = 0; i < 5; i++) dp[1 << i].add(new Fraction(nums[i]).key());
 		
 		for (let mask = 1; mask < 32; mask++) {
 			for (let submask = (mask - 1) & mask; submask > 0; submask = (submask - 1) & mask) {
@@ -49,41 +87,50 @@
 				let mask2 = mask ^ submask;
 				if (mask1 > mask2) continue;
 				
-				for (let v1 of dp[mask1]) {
-					for (let v2 of dp[mask2]) {
-						dp[mask].add(v1 + v2);
-						dp[mask].add(v1 - v2);
-						dp[mask].add(v2 - v1);
-						dp[mask].add(v1 * v2);
-						if (v2 !== 0 && v1 % v2 === 0) dp[mask].add(v1 / v2);
-						if (v1 !== 0 && v2 % v1 === 0) dp[mask].add(v2 / v1);
+				for (let k1 of dp[mask1]) {
+					const parts1 = k1.split('/').map(Number);
+					const f1 = new Fraction(parts1[0], parts1[1]);
+					for (let k2 of dp[mask2]) {
+						const parts2 = k2.split('/').map(Number);
+						const f2 = new Fraction(parts2[0], parts2[1]);
+						
+						dp[mask].add(f1.add(f2).key());
+						dp[mask].add(f1.sub(f2).key());
+						dp[mask].add(f2.sub(f1).key());
+						// New Rule: No multiplying by 0
+						if (f1.n !== 0 && f2.n !== 0) dp[mask].add(f1.mul(f2).key());
+						// Division by 0 is already disallowed
+						if (f2.n !== 0) dp[mask].add(f1.div(f2).key());
+						if (f1.n !== 0) dp[mask].add(f2.div(f1).key());
 					}
 				}
 			}
 		}
 
-		blocks = nums.map(val => ({ id: nextId++, val, expr: String(val), used: false }));
+		blocks = nums.map(val => ({ id: nextId++, val: new Fraction(val), expr: String(val), used: false }));
 		target = t;
-		puzzleSolvable = dp[31].has(t);
+		puzzleSolvable = dp[31].has(new Fraction(t).key());
 		
 		selectedBlockId = null;
 		selectedOp = null;
-		wonByDeclaration = false;
 		status = null;
+		flashRed = false;
+		winningExpr = null;
+		loserPopup = false;
 	}
 
 	function declareUnsolvable() {
 		if (status) return;
 		if (!puzzleSolvable) {
-			wonByDeclaration = true;
 			status = 'CORRECT! IT WAS IMPOSSIBLE';
 		} else {
-			status = 'NOPE! A SOLUTION EXISTS';
+			flashRed = true;
+			setTimeout(() => flashRed = false, 500);
 		}
-		setTimeout(generate, 2000);
 	}
 
 	function clickBlock(id: number) {
+		if (status) return;
 		let b = blocks.find(x => x.id === id);
 		if (!b || b.used) return;
 		
@@ -92,16 +139,28 @@
 		} else if (selectedOp !== null && selectedBlockId !== id) {
 			let b1 = blocks.find(x => x.id === selectedBlockId)!;
 			let b2 = b;
-			let val = 0;
-			if (selectedOp === '+') val = b1.val + b2.val;
-			if (selectedOp === '-') val = b1.val - b2.val;
-			if (selectedOp === '×') val = b1.val * b2.val;
-			if (selectedOp === '÷') {
-				if (b2.val === 0 || b1.val % b2.val !== 0) {
-					selectedBlockId = null; selectedOp = null; return;
+			let val: Fraction;
+			try {
+				if (selectedOp === '+') val = b1.val.add(b2.val);
+				else if (selectedOp === '-') val = b1.val.sub(b2.val);
+				else if (selectedOp === '×') {
+					if (b1.val.n === 0 || b2.val.n === 0) {
+						triggerLoser();
+						selectedBlockId = null; selectedOp = null; return;
+					}
+					val = b1.val.mul(b2.val);
 				}
-				val = b1.val / b2.val;
+				else if (selectedOp === '÷') {
+					if (b2.val.n === 0) {
+						triggerLoser();
+						selectedBlockId = null; selectedOp = null; return;
+					}
+					val = b1.val.div(b2.val);
+				} else return;
+			} catch(e) {
+				selectedBlockId = null; selectedOp = null; return;
 			}
+
 			b1.used = true;
 			b2.used = true;
 			blocks = [...blocks, { id: nextId++, val, expr: `(${b1.expr} ${selectedOp} ${b2.expr})`, used: false }];
@@ -112,20 +171,40 @@
 		}
 	}
 
-	function undo() { generate(); }
+	function undo() { 
+		// Just reset the current puzzle
+		let originalNums = blocks.filter(b => b.expr.indexOf(' ') === -1 && b.id < 5).map(b => b.val.n);
+		blocks = originalNums.map((val, i) => ({ id: i, val: new Fraction(val), expr: String(val), used: false }));
+		nextId = 5;
+		selectedBlockId = null;
+		selectedOp = null;
+		status = null;
+		winningExpr = null;
+		loserPopup = false;
+	}
 	
-	let wonByLogic = $derived(blocks.filter(b => !b.used).length === 1 && blocks.filter(b => !b.used)[0].val === target);
+	function isWon() {
+		const active = blocks.filter(b => !b.used);
+		if (active.length === 1 && active[0].val.equals(new Fraction(target))) {
+			return active[0].expr;
+		}
+		return null;
+	}
 	
 	$effect(() => {
-		if (wonByLogic && !status) {
+		const win = isWon();
+		if (win && !status) {
 			status = 'KRYPTO SOLVED!';
-			setTimeout(generate, 1500);
+			winningExpr = win;
 		}
 	});
 
 	function handleKeydown(e: KeyboardEvent) {
 		let key = e.key;
-		if (status) return;
+		if (status) {
+			if (key === 'Enter' || key === ' ') generate();
+			return;
+		}
 		if (key === 'i' || key === 'I') { declareUnsolvable(); return; }
 		if (key === 'Backspace' || key === 'Escape' || key === 'u' || key === 'U') { undo(); return; }
 		if (key === '+' || key === '-' || key === '*' || key === 'x' || key === 'X' || key === '/') {
@@ -144,7 +223,7 @@
 
 	$effect(() => {
 		registerActions({
-			restart: undo,
+			restart: generate,
 			help: () => instructions.open()
 		});
 	});
@@ -154,11 +233,11 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="game-container">
+<div class="game-container" class:flash-red={flashRed}>
 	<Instructions bind:this={instructions} gameId="krypto" title="Krypto">
 		<p><strong>Goal:</strong> Use all five cards exactly once to equal the Target number.</p>
 		<p>Select cards and mathematical operators to combine them into new numbers. <strong>Pro Tip:</strong> Use the keyboard (1-5 for cards, + - * / for math) to play at lightning speed!</p>
-		<p>If you genuinely believe a target is mathematically impossible to reach, hit the <strong>IMPOSSIBLE?</strong> button. If you're right, you win! If a valid equation exists, you lose.</p>
+		<p>If you genuinely believe a target is mathematically impossible to reach, hit the <strong>IMPOSSIBLE?</strong> button. If you're right, you win! If a valid equation exists, the screen will flash red.</p>
 	</Instructions>
 
 	<div class="board-wrapper">
@@ -168,18 +247,22 @@
 				<div class="target-val">{target}</div>
 			</div>
 			{#if status}
-				<div class="status-indicator" in:fade>
-					{status}
+				<div class="status-overlay" in:fade>
+					<div class="status-text">{status}</div>
+					{#if winningExpr}
+						<div class="winning-formula">{winningExpr} = {target}</div>
+					{/if}
+					<button class="new-puzzle-btn" onclick={generate}>NEW PUZZLE</button>
 				</div>
 			{/if}
 		</div>
 
-		<div class="workspace">
+		<div class="workspace" class:dimmed={!!status}>
 			<div class="blocks">
 				{#each blocks.filter(b => !b.used) as b, i (b.id)}
 					<button class="block {selectedBlockId === b.id ? 'selected' : ''}" onclick={() => clickBlock(b.id)} in:fade>
 						<div class="shortcut">{i + 1}</div>
-						<div class="val">{b.val}</div>
+						<div class="val">{b.val.toString()}</div>
 						<div class="expr">{b.expr}</div>
 					</button>
 				{/each}
@@ -189,7 +272,7 @@
 				{#each ['+', '-', '×', '÷'] as op}
 					<button 
 						class="op {selectedOp === op ? 'selected' : ''}" 
-						disabled={selectedBlockId === null}
+						disabled={selectedBlockId === null || !!status}
 						onclick={() => selectedOp = op}
 					>
 						{op}
@@ -208,12 +291,18 @@
 				<button class="diff-btn" class:active={difficulty === 'hard'} onclick={() => { difficulty='hard'; generate(); }}>HARD</button>
 			</div>
 			<button class="unsolvable-btn" onclick={declareUnsolvable} disabled={!!status}>IMPOSSIBLE?</button>
+			<button class="undo-btn" onclick={undo} disabled={!!status}>RESET</button>
 		</div>
 	</div>
+
+	{#if loserPopup}
+		<div class="loser-popup" in:fade out:fade>LOSER</div>
+	{/if}
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; position: relative; }
+	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; position: relative; transition: background-color 0.3s; }
+	.game-container.flash-red { background-color: rgba(255, 0, 0, 0.2) !important; }
 	
 	.board-wrapper { 
 		flex: 1; 
@@ -227,12 +316,62 @@
 		overflow: hidden;
 	}
 
-	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; }
+	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; position: relative; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.5vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
 	.target-val { font-size: 8vmin; font-weight: 900; color: var(--color-bittersweet); line-height: 1; text-shadow: 0 0 3vmin rgba(255, 110, 97, 0.4); }
 
-	.workspace { display: flex; flex-direction: column; gap: 3vmin; align-items: center; margin-top: 1vmin; }
+	.status-overlay {
+		position: absolute;
+		top: 50%; left: 50%;
+		transform: translate(-50%, -50%);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2vmin;
+		z-index: 10;
+		background: rgba(0,0,0,0.8);
+		padding: 4vmin 8vmin;
+		border-radius: 4vmin;
+		border: 1px solid var(--color-golden);
+		box-shadow: 0 0 5vmin rgba(0,0,0,0.5);
+		backdrop-filter: blur(10px);
+	}
+
+	.status-text {
+		font-size: 3.5vmin;
+		font-weight: 900;
+		color: var(--color-golden);
+		text-transform: uppercase;
+		letter-spacing: 0.5vmin;
+		text-shadow: 0 0 2vmin rgba(255, 230, 109, 0.4);
+	}
+
+	.winning-formula {
+		font-size: 2vmin;
+		color: rgba(255,255,255,0.8);
+		font-family: monospace;
+		background: rgba(255,255,255,0.1);
+		padding: 1vmin 2vmin;
+		border-radius: 1vmin;
+	}
+
+	.new-puzzle-btn {
+		background: var(--color-golden);
+		color: black;
+		border: none;
+		padding: 1.5vmin 4vmin;
+		border-radius: 1vmin;
+		font-weight: 900;
+		font-size: 2vmin;
+		cursor: pointer;
+		transition: all 0.3s;
+	}
+	.new-puzzle-btn:hover { transform: scale(1.05); box-shadow: 0 0 2vmin var(--color-golden); }
+
+	.workspace { display: flex; flex-direction: column; gap: 3vmin; align-items: center; margin-top: 1vmin; transition: opacity 0.3s, filter 0.3s; }
+	.workspace.dimmed { opacity: 0.2; filter: blur(5px); pointer-events: none; }
+	
 	.blocks { display: flex; gap: 2vmin; flex-wrap: wrap; justify-content: center; width: 90vmin; min-height: 20vmin; }
 
 	.block { 
@@ -260,14 +399,43 @@
 	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
 	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); box-shadow: 0 0 15px rgba(248, 165, 194, 0.3); }
 
-	.unsolvable-btn { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--color-bittersweet); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; letter-spacing: 0.1vmin; }
-	.unsolvable-btn:hover { background: var(--color-bittersweet); color: black; border-color: var(--color-bittersweet); box-shadow: 0 0 20px rgba(255, 110, 97, 0.3); }
+	.unsolvable-btn, .undo-btn { 
+		background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--color-bittersweet); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; letter-spacing: 0.1vmin; 
+	}
+	.unsolvable-btn:hover:not(:disabled), .undo-btn:hover:not(:disabled) { background: var(--color-bittersweet); color: black; border-color: var(--color-bittersweet); box-shadow: 0 0 20px rgba(255, 110, 97, 0.3); }
+	.unsolvable-btn:disabled, .undo-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
 
-	.unsolvable-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+	.undo-btn {
+		background: rgba(255,255,255,0.05);
+		border-color: rgba(255,255,255,0.2);
+		color: rgba(255,255,255,0.6);
+	}
+	.undo-btn:hover:not(:disabled) {
+		background: rgba(255,255,255,0.2);
+		color: white;
+		border-color: white;
+	}
 
-	.status-indicator { 
-		position: absolute; top: 12vmin; font-size: 3vmin; font-weight: 900; 
-		color: var(--color-golden); letter-spacing: 0.5vmin; text-transform: uppercase;
-		text-shadow: 0 0 2vmin rgba(255, 230, 109, 0.4);
+	.loser-popup {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: rgba(255, 0, 0, 0.9);
+		color: white;
+		padding: 5vmin 10vmin;
+		font-size: 10vmin;
+		font-weight: 900;
+		border-radius: 2vmin;
+		z-index: 100;
+		box-shadow: 0 0 10vmin rgba(255,0,0,0.5);
+		animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+	}
+
+	@keyframes shake {
+		10%, 90% { transform: translate(-50%, -50%) translate3d(-1px, 0, 0); }
+		20%, 80% { transform: translate(-50%, -50%) translate3d(2px, 0, 0); }
+		30%, 50%, 70% { transform: translate(-50%, -50%) translate3d(-4px, 0, 0); }
+		40%, 60% { transform: translate(-50%, -50%) translate3d(4px, 0, 0); }
 	}
 </style>
