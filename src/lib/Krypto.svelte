@@ -55,6 +55,7 @@
 	}
 
 	function generate() {
+		nextId = 0;
 		let nums: number[] = [];
 		let t = 0;
 
@@ -179,9 +180,9 @@
 	}
 
 	function undo() { 
-		// Just reset the current puzzle
-		let originalNums = blocks.filter(b => b.expr.indexOf(' ') === -1 && b.id < 5).map(b => b.val.n);
-		blocks = originalNums.map((val, i) => ({ id: i, val: new Fraction(val), expr: String(val), used: false }));
+		// Just reset the current puzzle by filtering for the first 5 original blocks
+		const originalBlocks = blocks.filter(b => b.id < 5);
+		blocks = originalBlocks.map(b => ({ ...b, used: false }));
 		nextId = 5;
 		selectedBlockId = null;
 		selectedOp = null;
