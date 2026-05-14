@@ -64,14 +64,18 @@
 			for (let i = 0; i < 5; i++) nums.push(getNum(1, 10));
 			t = getNum(1, 20);
 		} else if (difficulty === 'medium') {
-			const bigCount = getNum(2, 4);
-			for (let i = 0; i < bigCount; i++) nums.push(getNum(11, 19));
-			for (let i = 0; i < 5 - bigCount; i++) nums.push(getNum(1, 10));
+			while (true) {
+				nums = [];
+				for (let i = 0; i < 5; i++) nums.push(getNum(1, 19));
+				if (nums.filter(n => n >= 10).length >= 2) break;
+			}
 			t = getNum(1, 29);
 		} else if (difficulty === 'hard') {
-			const bigCount = getNum(3, 5);
-			for (let i = 0; i < bigCount; i++) nums.push(getNum(21, 29));
-			for (let i = 0; i < 5 - bigCount; i++) nums.push(getNum(1, 20));
+			while (true) {
+				nums = [];
+				for (let i = 0; i < 5; i++) nums.push(getNum(1, 29));
+				if (nums.filter(n => n >= 20).length >= 3) break;
+			}
 			t = getNum(1, 29);
 		}
 
