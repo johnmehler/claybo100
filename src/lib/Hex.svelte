@@ -168,7 +168,13 @@
 			help: () => instructions.open()
 		});
 	});
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key.toLowerCase() === 'r') reset();
+	}
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="game-container">
 	<Instructions bind:this={instructions} gameId="hex" title="Hex">
@@ -203,17 +209,31 @@
 
 		<div class="hex-grid" class:thinking={isThinking}>
 			{#each Array(SIZE) as _, r}
-				<div class="hex-row" style="margin-left: {r * 3}vmin">
+				<div class="hex-row" style="margin-left: {r * 2.6}vmin">
 					{#each Array(SIZE) as _, c}
 						{@const p = board[r * SIZE + c]}
-						<button 
-							class="hex" 
-							class:red={p === 1}
-							class:blue={p === 2}
-							class:winner={winningPath.includes(r * SIZE + c)}
-							onclick={() => clickHex(r, c)}
-							disabled={isThinking && opponentMode === 'ai'}
-						></button>
+						<div class="hex-wrapper">
+							<button 
+								class="hex" 
+								class:red={p === 1}
+								class:blue={p === 2}
+								class:winner={winningPath.includes(r * SIZE + c)}
+								onclick={() => clickHex(r, c)}
+								disabled={isThinking && opponentMode === 'ai'}
+							></button>
+							{#if r === 0}
+								<svg class="hex-edge top-edge" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="0,25 50,0 100,25" /></svg>
+							{/if}
+							{#if r === SIZE - 1}
+								<svg class="hex-edge bottom-edge" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="0,75 50,100 100,75" /></svg>
+							{/if}
+							{#if c === 0}
+								<svg class="hex-edge left-edge" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="0,25 0,75 50,100" /></svg>
+							{/if}
+							{#if c === SIZE - 1}
+								<svg class="hex-edge right-edge" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="50,0 100,25 100,75" /></svg>
+							{/if}
+						</div>
 					{/each}
 				</div>
 			{/each}
@@ -245,45 +265,57 @@
 	.mode-btn.active { background: var(--color-apple); color: black; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
 
 	.hex-grid { 
-		display: flex; flex-direction: column; align-items: flex-start; padding: 4vmin; 
-		background: rgba(255,255,255,0.01); border-radius: 4vmin; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);
+		display: flex; flex-direction: column; align-items: flex-start; padding: 3vmin; 
+		background: rgba(255,255,255,0.01); border-radius: 0; backdrop-filter: blur(10px);
 		position: relative;
 		transition: opacity 0.5s ease;
+		border: none;
 	}
 
 	.hex-grid.thinking { opacity: 0.7; pointer-events: none; }
 
-	/* Board Edge Indicators */
-	.hex-grid::before, .hex-grid::after {
-		content: ''; position: absolute; border-radius: 2vmin; pointer-events: none;
-	}
-	/* Red sides (Top/Bottom) */
-	.hex-grid::before {
-		top: 0; bottom: 0; left: 0; right: 0;
-		border-top: 4px solid var(--color-bittersweet);
-		border-bottom: 4px solid var(--color-bittersweet);
-		opacity: 0.3;
+	.hex-wrapper {
+		width: 5.2vmin; height: 6vmin; margin-right: 0.1vmin;
+		position: relative;
+		filter: drop-shadow(0 0 1px rgba(255,255,255,0.15));
 	}
 
-	.hex-row { display: flex; margin-bottom: -1.6vmin; transition: transform 0.3s ease; }
+	.hex-edge {
+		position: absolute;
+		inset: 0; width: 100%; height: 100%;
+		pointer-events: none;
+		z-index: 20;
+		overflow: visible;
+	}
+
+	.hex-edge polyline {
+		fill: none;
+		stroke-width: 4px;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.hex-edge.top-edge polyline, .hex-edge.bottom-edge polyline { stroke: var(--color-bittersweet); }
+	.hex-edge.left-edge polyline, .hex-edge.right-edge polyline { stroke: var(--color-apple); }
+
+	.hex-row { display: flex; margin-bottom: -1.4vmin; transition: transform 0.3s ease; }
 	
 	.hex { 
-		width: 6vmin; height: 6.9vmin; margin-right: 0.1vmin;
-		background: rgba(255,255,255,0.03); 
+		width: 100%; height: 100%; display: block; padding: 0;
+		background: #111114; /* Opaque background prevents shadow bleed-through */
 		clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 		cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-		position: relative;
-		/* Thin outline effect */
-		filter: drop-shadow(0 0 1px rgba(255,255,255,0.15));
 		border: none;
 	}
 	.hex:disabled { cursor: not-allowed; }
 
-	.hex:hover:not(.red):not(.blue):not(:disabled) { 
-		background: rgba(255,255,255,0.12); 
+	.hex-wrapper:hover .hex:not(.red):not(.blue):not(:disabled) { 
+		background: #202025; 
 		transform: scale(1.05) translateY(-2px); 
-		z-index: 10; 
-		filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) drop-shadow(0 0 1px rgba(255,255,255,0.4));
+	}
+	.hex-wrapper:hover {
+		z-index: 10;
 	}
 
 	.hex.red { 
