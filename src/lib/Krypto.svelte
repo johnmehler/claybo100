@@ -57,6 +57,7 @@
 	}
 
 	type Block = { id: number; val: Fraction; expr: string; used: boolean };
+	let initialNums = $state<number[]>([]);
 	let blocks = $state<Block[]>([]);
 	let target = $state(0);
 	let difficulty = $state<"easy" | "medium" | "hard">("easy");
@@ -107,6 +108,7 @@
 		}
 
 		nums.sort(() => Math.random() - 0.5);
+		initialNums = [...nums];
 
 		// Use Set of strings for fractions to check solvability
 		let dp: Set<string>[] = Array(32)
@@ -258,20 +260,28 @@
 	});
 
 	function handleKeydown(e: KeyboardEvent) {
-		let key = e.key;
-		if (status) {
-			if (key === "Enter" || key === " ") generate();
+		let key = e.key.toLowerCase();
+		
+		if (key === "n") {
+			generate();
 			return;
 		}
-		if (key === "i" || key === "I") {
+
+		if (status) {
+			if (key === "enter" || key === " ") generate();
+			return;
+		}
+
+		if (key === "i") {
 			declareUnsolvable();
 			return;
 		}
+
 		if (
-			key === "Backspace" ||
-			key === "Escape" ||
+			key === "backspace" ||
+			key === "escape" ||
 			key === "u" ||
-			key === "U"
+			key === "r"
 		) {
 			undo();
 			return;
@@ -318,20 +328,10 @@
 
 <div class="game-container" class:flash-red={flashRed}>
 	<Instructions bind:this={instructions} gameId="krypto" title="Krypto">
-		<p>
-			<strong>Goal:</strong> Use all five cards exactly once to equal the Target
-			number.
-		</p>
-		<p>
-			Select cards and mathematical operators to combine them into new
-			numbers. <strong>Pro Tip:</strong> Use the keyboard (1-5 for cards, +
-			- * / for math) to play at lightning speed!
-		</p>
-		<p>
-			If you genuinely believe a target is mathematically impossible to
-			reach, hit the <strong>IMPOSSIBLE?</strong> button. If you're right,
-			you win! If a valid equation exists, the screen will flash red.
-		</p>
+		<p><strong>Goal:</strong> Use all five cards exactly once to equal the Target number.</p>
+		<p>Select cards and mathematical operators to combine them into new numbers. <strong>Pro Tip:</strong> Use the keyboard (<strong>1-5</strong> for cards, <strong>+ - * /</strong> for math) to play at lightning speed!</p>
+		<p><strong>Shortcuts:</strong> [<strong>N</strong>]ew Puzzle, [<strong>R</strong>]eset, [<strong>I</strong>]mpossible?</p>
+		<p>If you genuinely believe a target is mathematically impossible to reach, hit the <strong>IMPOSSIBLE?</strong> button. If you're right, you win! If a valid equation exists, the screen will flash red.</p>
 	</Instructions>
 
 	<div class="board-wrapper">
@@ -415,7 +415,7 @@
 
 	{#if status}
 		<div class="status-overlay" in:fade>
-			<div class="status-card">
+			<div class="status-card" class:is-impossible={!winningExpr}>
 				<div class="victory-icon">
 					<svg
 						viewBox="0 0 24 24"
@@ -434,6 +434,18 @@
 						<span class="formula">{winningExpr}</span>
 						<span class="equals">=</span>
 						<span class="result">{target}</span>
+					</div>
+				{:else}
+					<div class="impossible-info">
+						<div class="nums-row">
+							{#each initialNums as n}
+								<span class="num">{n}</span>
+							{/each}
+						</div>
+						<div class="target-row">
+							<span class="label">TARGET:</span>
+							<span class="val">{target}</span>
+						</div>
 					</div>
 				{/if}
 				<button class="new-puzzle-btn" onclick={generate}
@@ -532,19 +544,58 @@
 		backdrop-filter: blur(8px);
 	}
 
-	.status-card {
+	.status-card.is-impossible {
+		padding: 4vmin 6vmin;
+		gap: 3vmin;
+	}
+
+	.status-card.is-impossible .status-text {
+		font-size: 3vmin;
+		letter-spacing: 0.4vmin;
+	}
+
+	.status-card.is-impossible .victory-icon {
+		width: 7vmin;
+		height: 7vmin;
+	}
+	.status-card.is-impossible .victory-icon svg {
+		width: 3.5vmin;
+		height: 3.5vmin;
+	}
+
+	.impossible-info {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 4vmin;
-		background: rgba(20, 20, 25, 0.95);
-		padding: 6vmin 10vmin;
-		border-radius: 4vmin;
-		border: 2px solid var(--color-golden);
-		box-shadow:
-			0 20px 50px rgba(0, 0, 0, 0.8),
-			0 0 30px rgba(255, 230, 109, 0.15);
-		animation: pop-in 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.27);
+		gap: 1.5vmin;
+		background: rgba(255, 255, 255, 0.03);
+		padding: 2vmin 3vmin;
+		border-radius: 2vmin;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.nums-row {
+		display: flex;
+		gap: 1.5vmin;
+	}
+	.nums-row .num {
+		font-size: 2.2vmin;
+		font-weight: 800;
+		color: rgba(255, 255, 255, 0.6);
+	}
+
+	.target-row {
+		display: flex;
+		align-items: center;
+		gap: 1vmin;
+		font-size: 1.8vmin;
+		font-weight: 800;
+	}
+	.target-row .label {
+		color: rgba(255, 255, 255, 0.2);
+	}
+	.target-row .val {
+		color: var(--color-bittersweet);
 	}
 
 	@keyframes pop-in {
