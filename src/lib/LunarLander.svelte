@@ -36,6 +36,7 @@
 	let terrain = $state<{x: number, y: number}[]>([]);
 	let pads = $state<{x: number, y: number, width: number, multiplier: number}[]>([]);
 	let stars = $state<{x: number, y: number, size: number, opacity: number}[]>([]);
+	let debris = $state<{x: number, y: number, vx: number, vy: number, angle: number, va: number, type: string}[]>([]);
 
 	let animationId: number | null = null;
 	let lastTime = 0;
@@ -84,6 +85,7 @@
 			});
 		}
 		stars = newStars;
+		debris = [];
 	}
 
 	function getTerrainYAtX(px: number): number {
@@ -116,6 +118,7 @@
 		thrusting = false;
 		gameState = 'playing';
 		landingMessage = '';
+		debris = [];
 		lastTime = performance.now();
 		animate(lastTime);
 	}
@@ -127,10 +130,32 @@
 	}
 
 	function animate(now: number) {
-		if (gameState !== 'playing') return;
-
 		const dt = Math.min((now - lastTime) / 1000, 0.05);
 		lastTime = now;
+
+		if (gameState === 'crashed') {
+			for (const part of debris) {
+				part.vx *= 0.99;
+				part.vy += GRAVITY * dt;
+				part.x += part.vx * dt;
+				part.y += part.vy * dt;
+				part.angle += part.va * dt;
+				
+				const groundY = getTerrainYAtX(part.x);
+				if (part.y > groundY) {
+					part.y = groundY;
+					part.vy *= -0.3;
+					part.vx *= 0.5;
+					part.va *= 0.5;
+				}
+			}
+			animationId = requestAnimationFrame(animate);
+			return;
+		}
+
+		if (gameState !== 'playing') return;
+
+
 
 		// Rotation
 		if (rotatingLeft) angle -= ROTATION_SPEED;
@@ -182,9 +207,27 @@
 			} else {
 				gameState = 'crashed';
 				landingMessage = getCrashReason(pad, absAngle);
+				
+				// Initialize debris
+				const numDebris = 8;
+				for (let i = 0; i < numDebris; i++) {
+					debris.push({
+						x: x,
+						y: y,
+						vx: (Math.random() - 0.5) * 20,
+						vy: (Math.random() - 1.0) * 15,
+						angle: angle,
+						va: (Math.random() - 0.5) * 500,
+						type: i % 3 === 0 ? 'body' : i % 3 === 1 ? 'leg' : 'nozzle'
+					});
+				}
 			}
 			vx = 0; vy = 0;
-			if (animationId) cancelAnimationFrame(animationId);
+			if (gameState === 'landed') {
+				if (animationId) cancelAnimationFrame(animationId);
+				return;
+			}
+			animationId = requestAnimationFrame(animate);
 			return;
 		}
 
@@ -343,63 +386,81 @@
 			{/each}
 
 			<!-- Spacecraft group -->
-			<g transform="translate({x}, {y}) rotate({angle})">
-				<!-- Thrust flame -->
-				{#if thrusting && fuel > 0}
-					<polygon
-						points="-0.8,2 0.8,2 0,{3.5 + flameFlicker * 2}"
-						fill="var(--color-golden)"
-						opacity={0.7 + flameFlicker * 0.3} />
-					<polygon
-						points="-0.5,2 0.5,2 0,{3 + flameFlicker * 1.5}"
-						fill="var(--color-bittersweet)"
-						opacity="0.9" />
-				{/if}
+			{#if gameState !== 'crashed'}
+				<g transform="translate({x}, {y}) rotate({angle})">
+					<!-- Thrust flame -->
+					{#if thrusting && fuel > 0}
+						<polygon
+							points="-0.8,2 0.8,2 0,{3.5 + flameFlicker * 2}"
+							fill="var(--color-golden)"
+							opacity={0.7 + flameFlicker * 0.3} />
+						<polygon
+							points="-0.5,2 0.5,2 0,{3 + flameFlicker * 1.5}"
+							fill="var(--color-bittersweet)"
+							opacity="0.9" />
+					{/if}
 
-				<!-- Lander body -->
-				<polygon points="-1.5,1 -1,-1.5 1,-1.5 1.5,1" fill="#c0c0d0" stroke="rgba(255,255,255,0.3)" stroke-width="0.1" />
-				<!-- Legs -->
-				<line x1="-1.5" y1="1" x2="-2" y2="2" stroke="#888" stroke-width="0.15" />
-				<line x1="1.5" y1="1" x2="2" y2="2" stroke="#888" stroke-width="0.15" />
-				<line x1="-2.2" y1="2" x2="-1.8" y2="2" stroke="#888" stroke-width="0.2" />
-				<line x1="1.8" y1="2" x2="2.2" y2="2" stroke="#888" stroke-width="0.2" />
-				<!-- Cockpit window -->
-				<circle cx="0" cy="-0.5" r="0.5" fill="#4b6abe" opacity="0.8" />
-				<!-- Nozzle -->
-				<polygon points="-0.6,1 0.6,1 0.8,2 -0.8,2" fill="#666" />
-			</g>
-		</svg>
+					<!-- Lander body -->
+					<polygon points="-1.5,1 -1,-1.5 1,-1.5 1.5,1" fill="#c0c0d0" stroke="rgba(255,255,255,0.3)" stroke-width="0.1" />
+					<!-- Legs -->
+					<line x1="-1.5" y1="1" x2="-2" y2="2" stroke="#888" stroke-width="0.15" />
+					<line x1="1.5" y1="1" x2="2" y2="2" stroke="#888" stroke-width="0.15" />
+					<line x1="-2.2" y1="2" x2="-1.8" y2="2" stroke="#888" stroke-width="0.2" />
+					<line x1="1.8" y1="2" x2="2.2" y2="2" stroke="#888" stroke-width="0.2" />
+					<!-- Cockpit window -->
+					<circle cx="0" cy="-0.5" r="0.5" fill="#4b6abe" opacity="0.8" />
+					<!-- Nozzle -->
+					<polygon points="-0.6,1 0.6,1 0.8,2 -0.8,2" fill="#666" />
+				</g>
+			{/if}
 
-		<!-- Landing / Crash overlay -->
-		{#if gameState === 'landed' || gameState === 'crashed'}
-			<div class="result-overlay" in:fade={{ duration: 400 }}>
-				<div class="result-message" class:success={gameState === 'landed'} class:failure={gameState === 'crashed'}>
+			<!-- Debris -->
+			{#each debris as d}
+				<g transform="translate({d.x}, {d.y}) rotate({d.angle})">
+					{#if d.type === 'body'}
+						<polygon points="-0.8,-0.5 0.8,-0.5 0.5,0.5 -0.5,0.5" fill="#c0c0d0" opacity="0.8" />
+					{:else if d.type === 'leg'}
+						<line x1="-1" y1="0" x2="1" y2="0" stroke="#888" stroke-width="0.1" />
+					{:else}
+						<rect x="-0.3" y="-0.3" width="0.6" height="0.6" fill="#666" />
+					{/if}
+				</g>
+			{/each}
+
+			{#if gameState === 'landed' || gameState === 'crashed'}
+				<text x="50" y="40" text-anchor="middle" font-size="5" font-weight="900" 
+					fill={gameState === 'landed' ? 'var(--color-apple)' : 'var(--color-bittersweet)'}
+					style="filter: drop-shadow(0 2px 10px rgba(0,0,0,0.5))"
+					in:fade>
 					{landingMessage}
-				</div>
-				<div class="result-actions">
-					<button class="action-btn" onclick={restart}>FLY AGAIN</button>
-					<button class="action-btn secondary" onclick={onBack}>MAIN MENU</button>
-				</div>
-			</div>
-		{/if}
+				</text>
+			{/if}
+		</svg>
 	</div>
 
-	<!-- Touch controls -->
+	<!-- Touch controls & Actions -->
 	<div class="touch-controls">
-		<button class="touch-btn rotate-btn"
-			onpointerdown={startRotateLeft} onpointerup={stopRotateLeft} onpointerleave={stopRotateLeft}>
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
-		</button>
-		<button class="touch-btn thrust-btn"
-			onpointerdown={startThrust} onpointerup={stopThrust} onpointerleave={stopThrust}
-			class:active-thrust={thrusting && fuel > 0}>
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
-			<span class="thrust-label">THRUST</span>
-		</button>
-		<button class="touch-btn rotate-btn"
-			onpointerdown={startRotateRight} onpointerup={stopRotateRight} onpointerleave={stopRotateRight}>
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
-		</button>
+		{#if gameState === 'playing'}
+			<button class="touch-btn rotate-btn"
+				onpointerdown={startRotateLeft} onpointerup={stopRotateLeft} onpointerleave={stopRotateLeft}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
+			</button>
+			<button class="touch-btn thrust-btn"
+				onpointerdown={startThrust} onpointerup={stopThrust} onpointerleave={stopThrust}
+				class:active-thrust={thrusting && fuel > 0}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+				<span class="thrust-label">THRUST</span>
+			</button>
+			<button class="touch-btn rotate-btn"
+				onpointerdown={startRotateRight} onpointerup={stopRotateRight} onpointerleave={stopRotateRight}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+			</button>
+		{:else}
+			<div class="end-game-buttons" in:fade>
+				<button class="action-btn" onclick={restart}>FLY AGAIN</button>
+				<button class="action-btn secondary" onclick={onBack}>EXIT</button>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -542,20 +603,7 @@
 		display: block;
 	}
 
-	/* Result overlay */
-	.result-overlay {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 3vmin;
-		background: rgba(0,0,0,0.6);
-		backdrop-filter: blur(4px);
-		z-index: 20;
-	}
-
+	/* Result overlay (Legacy - replaced by in-scene text) */
 	.result-message {
 		font-size: 3.5vmin;
 		font-weight: 900;
@@ -574,9 +622,10 @@
 		text-shadow: 0 0 30px rgba(255, 110, 97, 0.5);
 	}
 
-	.result-actions {
+	.end-game-buttons {
 		display: flex;
 		gap: 2vmin;
+		align-items: center;
 	}
 
 	.action-btn {
