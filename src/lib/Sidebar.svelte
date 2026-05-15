@@ -55,7 +55,11 @@
 					{/if}
 					{#if activeGameActions.newShuffle}
 						<button class="nav-button control-btn shuffle" onclick={activeGameActions.newShuffle}>
-							<div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Shuffle Icon"><path d="M2 18h2gM20 18h2M6 18c0-2 1-4 3-6s4-4 4-6M15 18c0-2-1-4-3-6s-4-4-4-6M9 6h6"/></svg></div>
+							<div class="nav-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Shuffle Icon">
+									<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+								</svg>
+							</div>
 							<span class="nav-label-text">New Shuffle</span>
 						</button>
 					{/if}
