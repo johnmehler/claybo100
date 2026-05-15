@@ -14,8 +14,7 @@
 	let boxes = $state<number[][]>([]);
 	let gameOver = $state(false);
 	let lastAiMove = $state<{type: 'h'|'v', r: number, c: number} | null>(null);
-
-	const VIEWBOX_SIZE = 100;
+	let VIEWBOX_SIZE = $derived(20 + SIZE * 16);
 
 	function reset() {
 		hLines = Array(SIZE + 1).fill(0).map(() => Array(SIZE).fill(false));

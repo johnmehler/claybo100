@@ -10,24 +10,31 @@
 
 	const SIZE = 4;
 	let tiles = $state<number[]>([]);
+	let initialTiles = $state<number[]>([]);
 	let isWon = $state(false);
 	let moves = $state(0);
+	let targetMoves = $state(80);
 
-	function initGame() {
-		let newTiles = Array.from({ length: SIZE * SIZE - 1 }, (_, i) => i + 1);
-		newTiles.push(0);
-		let emptyIndex = SIZE * SIZE - 1;
-		let lastMove = -1;
-		for (let i = 0; i < 300; i++) {
-			const neighbors = getNeighbors(emptyIndex);
-			const validNeighbors = neighbors.filter(n => n !== lastMove);
-			const movePool = validNeighbors.length > 0 ? validNeighbors : neighbors;
-			const randomNeighbor = movePool[Math.floor(Math.random() * movePool.length)];
-			[newTiles[emptyIndex], newTiles[randomNeighbor]] = [newTiles[randomNeighbor], newTiles[emptyIndex]];
-			lastMove = emptyIndex;
-			emptyIndex = randomNeighbor;
+	function initGame(newShuffle = true) {
+		if (newShuffle || initialTiles.length === 0) {
+			let newTiles = Array.from({ length: SIZE * SIZE - 1 }, (_, i) => i + 1);
+			newTiles.push(0);
+			let emptyIndex = SIZE * SIZE - 1;
+			let lastMove = -1;
+			for (let i = 0; i < 300; i++) {
+				const neighbors = getNeighbors(emptyIndex);
+				const validNeighbors = neighbors.filter(n => n !== lastMove);
+				const movePool = validNeighbors.length > 0 ? validNeighbors : neighbors;
+				const randomNeighbor = movePool[Math.floor(Math.random() * movePool.length)];
+				[newTiles[emptyIndex], newTiles[randomNeighbor]] = [newTiles[randomNeighbor], newTiles[emptyIndex]];
+				lastMove = emptyIndex;
+				emptyIndex = randomNeighbor;
+			}
+			initialTiles = [...newTiles];
+			tiles = newTiles;
+		} else {
+			tiles = [...initialTiles];
 		}
-		tiles = newTiles;
 		isWon = false;
 		moves = 0;
 	}
@@ -36,9 +43,22 @@
 
 	$effect(() => {
 		registerActions({
-			restart: initGame,
+			restart: () => initGame(false),
+			newShuffle: () => initGame(true),
 			help: () => instructions.open()
 		});
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+			const key = e.key.toLowerCase();
+			if (key === 'r') {
+				initGame(false);
+			} else if (key === 'n') {
+				initGame(true);
+			}
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
 	});
 
 	function getNeighbors(index: number) {
@@ -77,6 +97,7 @@
 	<Instructions bind:this={instructions} gameId="sliding_tiles" title="Sliding Tiles">
 		<p><strong>Goal:</strong> Order the numbered tiles from 1 to 15.</p>
 		<p>Click a tile adjacent to the empty space to slide it into the empty space. Arrange them in numerical order with the empty space at the bottom right.</p>
+		<p><strong>Shortcuts:</strong> Press <strong>R</strong> to restart the current puzzle, or <strong>N</strong> for a new shuffle.</p>
 	</Instructions>
 
 	<div class="board-wrapper">
@@ -84,6 +105,10 @@
 			<div class="stat">
 				<span class="label">MOVES</span>
 				<span class="value">{moves}</span>
+			</div>
+			<div class="stat">
+				<span class="label">TARGET</span>
+				<span class="value">{targetMoves}</span>
 			</div>
 		</div>
 		<div id="sliding-board-container" class="board-container">

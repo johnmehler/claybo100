@@ -13,25 +13,29 @@
 	import TracksOfGalileo from '$lib/TracksOfGalileo.svelte';
 	import LunarLander from '$lib/LunarLander.svelte';
 	import IceSlider from '$lib/IceSlider.svelte';
+	import EpidemicSim from '$lib/EpidemicSim.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo' | 'lunarlander' | 'iceslider';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo' | 'lunarlander' | 'iceslider' | 'epidemicsim';
 	let currentView = $state<View>('menu');
 	let isSidebarCollapsed = $state(false);
 
 	let activeGameActions = $state({
 		restart: null as (() => void) | null,
+		newShuffle: null as (() => void) | null,
 		help: null as (() => void) | null,
 	});
 
 	function setView(view: View) {
 		currentView = view;
 		activeGameActions.restart = null;
+		activeGameActions.newShuffle = null;
 		activeGameActions.help = null;
 	}
 
-	function registerActions(actions: { restart?: (() => void) | null, help?: (() => void) | null }) {
+	function registerActions(actions: { restart?: (() => void) | null, newShuffle?: (() => void) | null, help?: (() => void) | null }) {
 		activeGameActions.restart = actions.restart || null;
+		activeGameActions.newShuffle = actions.newShuffle || null;
 		activeGameActions.help = actions.help || null;
 	}
 
@@ -148,9 +152,16 @@
 				{ 
 					id: 'lunarlander', 
 					label: 'Lunar Lander', 
-					description: 'Control thrust to land safely on the moon.',
-					cardClass: 'lander-card',
-					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L8 10h8L12 2z"/><line x1="8" y1="10" x2="6" y2="14"/><line x1="16" y1="10" x2="18" y2="14"/><line x1="5" y1="14" x2="7" y2="14"/><line x1="17" y1="14" x2="19" y2="14"/><path d="M2 20c2-2 5-4 10-4s8 2 10 4"/></svg>` 
+					description: 'Land the module safely on the moon.',
+					cardClass: 'lunar-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M7 20l1-5h8l1 5"/><path d="M12 4v11"/><path d="M9 15h6"/><circle cx="12" cy="7" r="3"/></svg>` 
+				},
+				{ 
+					id: 'epidemicsim', 
+					label: 'Epidemic Sim', 
+					description: 'Visualize the spread of viruses through a population.',
+					cardClass: 'epidemic-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>` 
 				}
 			]
 		}
@@ -186,7 +197,7 @@
 			</div>
 
 			<nav class="sidebar-nav">
-				{#if activeGameActions.help || activeGameActions.restart}
+				{#if activeGameActions.help || activeGameActions.restart || activeGameActions.newShuffle}
 					<div class="nav-section controls-section" in:fade>
 						<p class="section-label">GAME CONTROLS</p>
 						<div class="nav-list">
@@ -200,6 +211,12 @@
 								<button class="nav-button control-btn restart" onclick={activeGameActions.restart}>
 									<div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
 									<span class="nav-label-text">Restart Game</span>
+								</button>
+							{/if}
+							{#if activeGameActions.newShuffle}
+								<button class="nav-button control-btn shuffle" onclick={activeGameActions.newShuffle}>
+									<div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 18h2gM20 18h2M6 18c0-2 1-4 3-6s4-4 4-6M15 18c0-2-1-4-3-6s-4-4-4-6M9 6h6"/></svg></div>
+									<span class="nav-label-text">New Shuffle</span>
 								</button>
 							{/if}
 						</div>
@@ -303,7 +320,13 @@
 					{:else if currentView === 'lunarlander'}
 						<LunarLander onBack={() => setView('menu')} {registerActions} />
 					{:else if currentView === 'iceslider'}
-						<IceSlider onBack={() => setView('menu')} {registerActions} />
+						<div in:fade={{ duration: 300, delay: 300 }}>
+							<IceSlider onBack={() => setView('menu')} registerActions={registerActions} />
+						</div>
+					{:else if currentView === 'epidemicsim'}
+						<div in:fade={{ duration: 300, delay: 300 }}>
+							<EpidemicSim onBack={() => setView('menu')} registerActions={registerActions} />
+						</div>
 					{/if}
 				</div>
 			</div>
@@ -525,6 +548,7 @@
 	/* Control Buttons specifically */
 	.control-btn.help { color: var(--color-illusion); }
 	.control-btn.restart { color: var(--color-indigo); }
+	.control-btn.shuffle { color: var(--color-bittersweet); }
 	.control-btn:hover { background: rgba(255, 255, 255, 0.05); }
 
 	.nav-icon {
