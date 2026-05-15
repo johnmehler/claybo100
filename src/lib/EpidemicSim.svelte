@@ -11,12 +11,14 @@
 	const RADIUS = 5;
 	const WIDTH = 800;
 	const HEIGHT = 600;
+	const VAX_COST_PER_UNIT = 1000;
+	const INITIAL_BUDGET = 150000;
 
 	type State = 'S' | 'I' | 'R' | 'D';
 	interface Person {
 		x: number;
 		y: number;
-		baseVx: number; // Storing base velocity for dynamic scaling
+		baseVx: number;
 		baseVy: number;
 		state: State;
 		infectionDay: number;
@@ -27,13 +29,22 @@
 	let isGameOver = $state(false);
 	let isPaused = $state(true);
 	
-	// Adjustable Parameters
-	let transmissionChance = $state(0.15); // "Transmission Rate"
-	let mobilityFactor = $state(0.5);      // "Movement Speed"
-	let recoveryDuration = $state(200);   // "Infection Duration" (frames)
-	let fatalityRate = $state(0.02);      // "Mortality Rate"
-	let initialImmunity = $state(0.1);     // "Vaccination Rate"
+	// Simulation Parameters (Controllable)
+	let mobilityFactor = $state(0.8);
+	let testingIsolation = $state(0);   // T: 0 to 1
+	let quarantineFines = $state(0);    // F: 0 to 1
 
+	// Biological Parameters (Difficulty-locked)
+	let difficulty = $state<'EASY' | 'MED' | 'HARD'>('MED');
+	let transmissionChance = $derived(difficulty === 'EASY' ? 0.08 : (difficulty === 'MED' ? 0.15 : 0.25));
+	let immuneRate = $derived(difficulty === 'EASY' ? 0.50 : (difficulty === 'MED' ? 0.25 : 0.05));
+	let durationBase = $derived(difficulty === 'EASY' ? 180 : (difficulty === 'MED' ? 250 : 350));
+	let fatalityRate = $derived(difficulty === 'EASY' ? 0.01 : (difficulty === 'MED' ? 0.02 : 0.05));
+
+	// Derived System Stats
+	let effectiveMobility = $derived(Math.max(0.2, mobilityFactor - (0.15 * quarantineFines)));
+	let recoveryDuration = $derived(durationBase * (1 - (0.50 * testingIsolation)));
+	
 	let stats = $derived.by(() => {
 		let s = 0, i = 0, r = 0, d = 0;
 		for (const p of people) {
@@ -45,13 +56,27 @@
 		return { s, i, r, d };
 	});
 
+
+	// Economic Variables
+	let budget = $state(INITIAL_BUDGET);
+	let costMobility = $derived(Math.floor(5500 - (5000 * effectiveMobility)));
+	let costHealthDrain = $derived(stats.i * 100);
+	let costTesting = $derived(Math.floor(1500 * testingIsolation));
+	let revenueFines = $derived(Math.floor(3000 * quarantineFines * effectiveMobility));
+
+	let totalDailyDrain = $derived(costMobility + costHealthDrain + costTesting - revenueFines);
+
 	let history = $state<{s: number, i: number, r: number, d: number}[]>([]);
 
 	function initSim() {
 		const newPeople: Person[] = [];
+		budget = INITIAL_BUDGET;
+		
 		for (let i = 0; i < POPULATION_SIZE; i++) {
-			const isImmune = Math.random() < initialImmunity;
-			const isInfected = !isImmune && i === 0;
+			let isImmune = Math.random() < immuneRate;
+			let isInfected = (i === 0); // Force the first person to be the patient zero
+			
+			if (isInfected) isImmune = false; // Patient zero cannot be immune
 			
 			newPeople.push({
 				x: Math.random() * WIDTH,
@@ -73,22 +98,30 @@
 		if (isPaused || isGameOver) return;
 
 		days++;
-		const nextPeople = [...people];
 		
+		// Total Daily Budget Deduct (every 60 frames = 1 day)
+		if (days % 60 === 0) {
+			budget -= totalDailyDrain;
+		}
+
+		if (budget <= 0) {
+			budget = 0;
+			isGameOver = true;
+		}
+
+		const nextPeople = [...people];
 		for (let i = 0; i < nextPeople.length; i++) {
 			const p = nextPeople[i];
 			if (p.state === 'D') continue;
 
-			// Movement scaled by mobilityFactor in real-time
-			p.x += p.baseVx * mobilityFactor;
-			p.y += p.baseVy * mobilityFactor;
+			p.x += p.baseVx * effectiveMobility;
+			p.y += p.baseVy * effectiveMobility;
 
 			if (p.x < 0 || p.x > WIDTH) p.baseVx *= -1;
 			if (p.y < 0 || p.y > HEIGHT) p.baseVy *= -1;
 
 			if (p.state === 'I') {
 				p.infectionDay++;
-				// Recovery duration check
 				if (p.infectionDay > recoveryDuration) {
 					p.state = Math.random() < fatalityRate ? 'D' : 'R';
 				}
@@ -130,15 +163,14 @@
 </script>
 
 <div class="game-inner">
-	<Instructions bind:this={instructions} gameId="epidemic_sim" title="Epidemic Spread Simulator">
-		<p><strong>Science of Spread:</strong> This simulation uses an agent-based SIR model (Susceptible, Infected, Recovered).</p>
+	<Instructions bind:this={instructions} gameId="epidemic_sim" title="Outbreak Management: Optimization Problem">
+		<p><strong>The Challenge:</strong> Contain the outbreak with minimum loss of life while keeping the economy solvent.</p>
 		<ul style="font-size: 0.9em; opacity: 0.8; margin: 1vmin 0; padding-left: 3vmin;">
-			<li><span style="color: #6fb1fc;">Blue (S):</span> Susceptible population.</li>
-			<li><span style="color: #ff6e61;">Red (I):</span> Currently infected and spreading.</li>
-			<li><span style="color: #69af4b;">Green (R):</span> Recovered and immune.</li>
-			<li><span style="color: #444;">Grey (D):</span> Deceased.</li>
+			<li><strong>Immune Rate:</strong> Percentage of the population starting with immunity (based on Difficulty).</li>
+			<li><strong>Lockdowns (Low Mobility):</strong> Reduces spread but causes massive <strong>daily economic drain</strong>.</li>
+			<li><strong>Goal:</strong> Reach zero active infections with at least <strong>$1</strong> remaining in the budget.</li>
 		</ul>
-		<p>Adjust parameters like <strong>Mobility</strong> and <strong>Infection Duration</strong> to see how outbreaks evolve.</p>
+		<p>Can you find the balance between health and the economy?</p>
 	</Instructions>
 
 	<InGameMenu 
@@ -152,6 +184,25 @@
 			</button>
 		{/snippet}
 	</InGameMenu>
+
+	<div class="economic-bar" in:fade>
+		<div class="stat-main">
+			<span class="label">BUDGET</span>
+			<span class="value budget-val {budget < 30000 ? 'low' : ''}">${budget.toLocaleString()}</span>
+		</div>
+		<div class="stat-sub">
+			<span class="label">TOTAL DAILY DRAIN</span>
+			<span class="value cost-val">-${totalDailyDrain.toLocaleString()}/day</span>
+			<div class="drain-breakdown">
+					<span>Mob: {costMobility}</span>
+					<span>Hlth: {costHealthDrain}</span>
+					<span>Test: {costTesting}</span>
+				{#if revenueFines > 0}
+					<span style="color: #69af4b;">Fines: +{revenueFines}</span>
+				{/if}
+			</div>
+		</div>
+	</div>
 
 	<div class="main-layout">
 		<div class="sim-wrapper">
@@ -168,9 +219,18 @@
 				{#if isGameOver}
 					<div class="overlay" in:fade>
 						<div class="overlay-content">
-							<h2>OUTBREAK ENDED</h2>
+							{#if budget <= 0}
+								<h2 class="lost">ECONOMIC COLLAPSE</h2>
+								<p>The economy failed before the virus was contained.</p>
+							{:else if stats.d > POPULATION_SIZE * 0.1}
+								<h2 class="lost">PUBLIC HEALTH CRISIS</h2>
+								<p>Outbreak ended, but casualties exceeded 10% of population.</p>
+							{:else}
+								<h2 class="won">OUTBREAK CONTAINED</h2>
+								<p>Successful management! The population is safe.</p>
+							{/if}
 							<p>Simulation Duration: {Math.floor(days/60)} Days | Final Deceased: {stats.d}</p>
-							<button class="action-btn" onclick={initSim}>RESET SIMULATION</button>
+							<button class="action-btn" onclick={initSim}>RESET CHALLENGE</button>
 						</div>
 					</div>
 				{/if}
@@ -198,24 +258,50 @@
 
 		<div class="controls-panel">
 			<div class="control-group">
-				<label>Contagiousness (Chance/Contact): {(transmissionChance * 100).toFixed(0)}%</label>
-				<input type="range" min="0.01" max="0.5" step="0.01" bind:value={transmissionChance} />
+				<label>Outbreak Difficulty</label>
+				<div class="difficulty-group">
+					<button 
+						class="diff-btn {difficulty === 'EASY' ? 'active' : ''}" 
+						onclick={() => { difficulty = 'EASY'; if (days === 0) initSim(); }}
+					>
+						EASY
+					</button>
+					<button 
+						class="diff-btn {difficulty === 'MED' ? 'active' : ''}" 
+						onclick={() => { difficulty = 'MED'; if (days === 0) initSim(); }}
+					>
+						MED
+					</button>
+					<button 
+						class="diff-btn {difficulty === 'HARD' ? 'active' : ''}" 
+						onclick={() => { difficulty = 'HARD'; if (days === 0) initSim(); }}
+					>
+						HARD
+					</button>
+				</div>
+				<div class="bio-stats">
+					<div class="bio-row"><span>Immune Rate:</span> <span>{Math.round(immuneRate * 100)}%</span></div>
+					<div class="bio-row"><span>Contagiousness:</span> <span>{Math.round(transmissionChance * 100)}%</span></div>
+					<div class="bio-row"><span>Infection Duration:</span> <span>{Math.round(recoveryDuration / 60)}d</span></div>
+					<div class="bio-row"><span>Fatality Rate:</span> <span>{(fatalityRate * 100).toFixed(1)}%</span></div>
+				</div>
 			</div>
-			<div class="control-group">
+
+			<div class="control-group controllable">
 				<label>Population Mobility: {(mobilityFactor * 100).toFixed(0)}%</label>
-				<input type="range" min="0" max="1.5" step="0.05" bind:value={mobilityFactor} />
+				<input type="range" min="0.2" max="1" step="0.01" bind:value={mobilityFactor} />
 			</div>
-			<div class="control-group">
-				<label>Infection Duration: {Math.floor(recoveryDuration / 60)} Days</label>
-				<input type="range" min="30" max="600" step="10" bind:value={recoveryDuration} />
+
+			<div class="control-group controllable">
+				<label>Testing & Isolation: {(testingIsolation * 100).toFixed(0)}%</label>
+				<input type="range" min="0" max="1" step="0.05" bind:value={testingIsolation} />
+				<div class="hint">Shortens Infectious Duration | -$1,500/day</div>
 			</div>
-			<div class="control-group">
-				<label>Fatality Rate: {(fatalityRate * 100).toFixed(1)}%</label>
-				<input type="range" min="0" max="0.2" step="0.005" bind:value={fatalityRate} />
-			</div>
-			<div class="control-group">
-				<label>Initial Vaccination: {(initialImmunity * 100).toFixed(0)}%</label>
-				<input type="range" min="0" max="0.95" step="0.05" bind:value={initialImmunity} />
+
+			<div class="control-group controllable">
+				<label>Quarantine Fines: {(quarantineFines * 100).toFixed(0)}%</label>
+				<input type="range" min="0" max="1" step="0.05" bind:value={quarantineFines} />
+				<div class="hint">Revenue + Mobility suppression | +$3,000/day revenue</div>
 			</div>
 
 			<div class="history-chart">
@@ -243,6 +329,17 @@
 		color: white;
 	}
 
+	.nav-extra-btn {
+		background: rgba(255,255,255,0.1);
+		border: 1px solid rgba(255,255,255,0.2);
+		color: white;
+		padding: 0.8vmin 2vmin;
+		border-radius: 0.8vmin;
+		font-weight: 800;
+		font-size: 1.4vmin;
+		cursor: pointer;
+	}
+
 	.main-layout {
 		flex: 1;
 		display: grid;
@@ -260,13 +357,16 @@
 		border-radius: 2vmin;
 		overflow: hidden;
 		box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+		align-self: center; /* Prevent stretching to match controls height */
+		width: 100%;
 	}
 
 	.sim-container {
-		flex: 1;
+		aspect-ratio: 800 / 600;
 		position: relative;
 		overflow: hidden;
 		background: rgba(0, 0, 0, 0.2);
+		width: 100%;
 	}
 
 	.data-bar-attached {
@@ -301,15 +401,64 @@
 	.r-val { color: #69af4b; }
 	.d-val { color: #888; }
 
-	.nav-extra-btn {
-		background: rgba(255,255,255,0.1);
-		border: 1px solid rgba(255,255,255,0.2);
-		color: white;
-		padding: 0.8vmin 2vmin;
-		border-radius: 0.8vmin;
+	.economic-bar {
+		display: flex;
+		justify-content: center;
+		gap: 8vmin;
+		padding: 2vmin;
+		background: rgba(255, 255, 255, 0.03);
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		margin-bottom: 2vmin;
+		align-items: center;
+	}
+
+	.stat-main {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.stat-sub {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		border-left: 1px solid rgba(255,255,255,0.1);
+		padding-left: 3vmin;
+	}
+
+	.budget-val {
+		font-size: 3vmin;
+		font-weight: 900;
+		color: #69af4b;
+	}
+
+	.budget-val.low {
+		color: var(--color-bittersweet);
+		animation: pulse 1s infinite;
+	}
+
+	.cost-val {
+		font-size: 2vmin;
 		font-weight: 800;
-		font-size: 1.4vmin;
-		cursor: pointer;
+		color: #ff6e61;
+	}
+
+	.drain-breakdown {
+		display: flex;
+		gap: 1.5vmin;
+		font-size: 1.1vmin;
+		opacity: 0.5;
+		font-weight: 800;
+	}
+
+	.lost { color: #ff6e61 !important; }
+	.won { color: #69af4b !important; }
+
+	@keyframes pulse {
+		0% { opacity: 1; }
+		50% { opacity: 0.5; }
+		100% { opacity: 1; }
 	}
 
 	.sim-canvas {
@@ -352,6 +501,91 @@
 
 	.control-group input[type="range"] {
 		width: 100%;
+		accent-color: var(--color-bittersweet);
+	}
+
+	.difficulty-group {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1vmin;
+		margin-top: 0.5vmin;
+	}
+
+	.diff-btn {
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.5);
+		padding: 1vmin 0.5vmin;
+		border-radius: 0.8vmin;
+		font-size: 1vmin;
+		font-weight: 800;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.diff-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: white;
+	}
+
+	.diff-btn.active {
+		background: var(--color-bittersweet);
+		border-color: var(--color-bittersweet);
+		color: white;
+		box-shadow: 0 0 15px rgba(255, 110, 97, 0.3);
+	}
+
+	.bio-stats {
+		margin-top: 1vmin;
+		padding: 1vmin;
+		background: rgba(0,0,0,0.2);
+		border-radius: 1vmin;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5vmin;
+	}
+
+	.bio-row {
+		display: flex;
+		justify-content: space-between;
+		font-size: 1.1vmin;
+		font-weight: 700;
+	}
+
+	.bio-row span:first-child {
+		color: rgba(255,255,255,0.4);
+	}
+
+	.bio-row span:last-child {
+		color: white;
+	}
+
+	.controllable {
+		background: rgba(255,255,255,0.03);
+		padding: 1.5vmin;
+		border-radius: 1vmin;
+		border: 1px solid rgba(255,255,255,0.05);
+	}
+
+	.controllable .hint {
+		font-size: 1vmin;
+		color: var(--color-bittersweet);
+		opacity: 0.6;
+		font-style: italic;
+		margin-top: 0.5vmin;
+	}
+
+	.toggle-label {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		cursor: pointer;
+	}
+
+	.toggle-label input[type="checkbox"] {
+		width: 2vmin;
+		height: 2vmin;
+		cursor: pointer;
 		accent-color: var(--color-bittersweet);
 	}
 
