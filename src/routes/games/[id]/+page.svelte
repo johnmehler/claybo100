@@ -83,6 +83,11 @@
 					{@html guide}
 				</article>
 			{/if}
+			{#if game?.updated}
+				<p class="updated-line">
+					Last updated <time datetime={game.updated}>{new Date(game.updated).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+				</p>
+			{/if}
 		{:else}
 			<div class="error-view">
 				<h1>Game not found</h1>
@@ -181,5 +186,15 @@
 
 	.game-guide :global(p) {
 		margin-bottom: 1rem;
+	}
+
+	.updated-line {
+		max-width: 720px;
+		margin: 0 auto 3vmin;
+		padding: 0 3vmin;
+		font-size: 12px;
+		color: rgba(255, 255, 255, 0.35);
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 </style>

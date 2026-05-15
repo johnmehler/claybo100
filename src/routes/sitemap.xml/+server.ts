@@ -6,11 +6,17 @@ const SITE = 'https://onlinemath.games';
 
 export function GET() {
 	const today = new Date().toISOString().split('T')[0];
+	const homeLastmod = games
+		.map((g) => g.updated)
+		.filter(Boolean)
+		.sort()
+		.pop() ?? today;
 
 	const urls = [
-		{ loc: `${SITE}/`, priority: '1.0', changefreq: 'weekly' },
+		{ loc: `${SITE}/`, lastmod: homeLastmod, priority: '1.0', changefreq: 'weekly' },
 		...games.map((g) => ({
 			loc: `${SITE}/games/${g.id}`,
+			lastmod: g.updated ?? today,
 			priority: '0.8',
 			changefreq: 'monthly'
 		}))
@@ -22,7 +28,7 @@ ${urls
 	.map(
 		(u) => `	<url>
 		<loc>${u.loc}</loc>
-		<lastmod>${today}</lastmod>
+		<lastmod>${u.lastmod}</lastmod>
 		<changefreq>${u.changefreq}</changefreq>
 		<priority>${u.priority}</priority>
 	</url>`
