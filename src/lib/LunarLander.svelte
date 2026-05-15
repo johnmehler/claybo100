@@ -151,7 +151,7 @@
 
 	function startGame() {
 		x = 50;
-		y = 5;
+		y = 15;
 		vx = (Math.random() - 0.5) * 4;
 		vy = 2;
 		angle = 0;
@@ -300,7 +300,7 @@
 		//   At each timestep, steer the velocity vector toward the target
 		//   while decelerating to arrive at near-zero speed.
 		const paths: {x: number, y: number}[][] = [];
-		const startX = 50, startY = 5;
+		const startX = 50, startY = 15;
 
 		for (const pad of pads) {
 			const targetX = pad.x + pad.width / 2;
