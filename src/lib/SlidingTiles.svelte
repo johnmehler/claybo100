@@ -19,8 +19,10 @@
 	// Solver and playback state
 	let solutionPath = $state<number[]>([]);
 	let shufflePath = $state<number[]>([]);
-	let isPlayingSolution = $state(false);
+	let isSolutionMode = $state(false);
+	let isPlaying = $state(false);
 	let isCalculating = $state(false);
+	let currentStep = $state(0);
 	let movesPerSecond = $state(5);
 	let playbackInterval: any;
 
@@ -140,18 +142,13 @@
 		return [...shufflePath].reverse();
 	}
 
-	function startPlayback() {
-		if (isPlayingSolution || isCalculating) return;
+	function enterSolutionMode() {
+		if (isSolutionMode || isCalculating) return;
 		
 		isCalculating = true;
 		
-		// Allow UI to update before starting heavy calculation
 		setTimeout(() => {
-			// If we already won, reset to initial state to show how it was solved
-			tiles = [...initialTiles];
-			moves = 0;
-			isWon = false;
-			
+			// Always solve from initialTiles
 			const path = solvePuzzle();
 			isCalculating = false;
 			
@@ -160,34 +157,77 @@
 				return;
 			}
 			
+			// Reset to beginning of solution
+			tiles = [...initialTiles];
+			moves = 0;
+			isWon = false;
 			solutionPath = path;
-			isPlayingSolution = true;
-			let step = 0;
-			
-			function nextStep() {
-				if (step >= solutionPath.length || !isPlayingSolution) {
-					stopPlayback();
-					return;
-				}
-				
-				const targetIndex = solutionPath[step];
-				move(targetIndex, true);
-				step++;
-				
-				playbackInterval = setTimeout(nextStep, 1000 / movesPerSecond);
-			}
-			
-			nextStep();
+			currentStep = 0;
+			isSolutionMode = true;
+			startAutoPlayback();
 		}, 50);
 	}
 
-	function stopPlayback() {
-		isPlayingSolution = false;
+	function startAutoPlayback() {
+		if (isPlaying) return;
+		isPlaying = true;
+		runPlaybackStep();
+	}
+
+	function runPlaybackStep() {
+		if (!isPlaying || currentStep >= solutionPath.length) {
+			pausePlayback();
+			return;
+		}
+		
+		stepForward();
+		playbackInterval = setTimeout(runPlaybackStep, 1000 / movesPerSecond);
+	}
+
+	function pausePlayback() {
+		isPlaying = false;
 		if (playbackInterval) clearTimeout(playbackInterval);
 	}
 
+	function stepForward() {
+		if (currentStep >= solutionPath.length) return;
+		const targetIndex = solutionPath[currentStep];
+		move(targetIndex, true);
+		currentStep++;
+	}
+
+	function stepBackward() {
+		if (currentStep <= 0) return;
+		
+		pausePlayback();
+		currentStep--;
+		
+		// Move empty tile to previous position
+		let prevEmptyIdx: number;
+		if (currentStep === 0) {
+			prevEmptyIdx = initialTiles.indexOf(0);
+		} else {
+			prevEmptyIdx = solutionPath[currentStep - 1];
+		}
+		
+		move(prevEmptyIdx, true);
+		// Reset moves count because move() increments it
+		moves -= 2; 
+		if (moves < 0) moves = 0;
+	}
+
+	function exitSolutionMode() {
+		pausePlayback();
+		isSolutionMode = false;
+		// If they exit, we show game won if they were at the end
+		if (currentStep >= solutionPath.length) {
+			isWon = true;
+		}
+	}
+
 	function initGame(newShuffle = true) {
-		stopPlayback();
+		pausePlayback();
+		isSolutionMode = false;
 		if (newShuffle || initialTiles.length === 0) {
 			let newTiles = Array.from({ length: SIZE * SIZE - 1 }, (_, i) => i + 1);
 			newTiles.push(0);
@@ -251,7 +291,7 @@
 	}
 
 	function move(index: number, force = false) {
-		if ((isWon || isPlayingSolution) && !force) return;
+		if ((isWon || isSolutionMode) && !force) return;
 		const emptyIndex = tiles.indexOf(0);
 		const neighbors = getNeighbors(index);
 		if (neighbors.includes(emptyIndex)) {
@@ -316,16 +356,41 @@
 			<div class="calculating-indicator" transition:fade>
 				<span class="pulse">CALCULATING OPTIMAL PATH...</span>
 			</div>
-		{:else if isPlayingSolution}
+		{:else if isSolutionMode}
 			<div class="playback-controls" transition:fade>
+				<div class="playback-toolbar">
+					<button class="tool-btn" onclick={stepBackward} disabled={currentStep === 0} title="Backward">
+						<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+					</button>
+					
+					{#if isPlaying}
+						<button class="tool-btn main" onclick={pausePlayback} title="Pause">
+							<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+						</button>
+					{:else}
+						<button class="tool-btn main" onclick={startAutoPlayback} disabled={currentStep >= solutionPath.length} title="Play">
+							<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+						</button>
+					{/if}
+
+					<button class="tool-btn" onclick={stepForward} disabled={currentStep >= solutionPath.length} title="Forward">
+						<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M13 6v12l8.5-6L13 6zM4 6v12l8.5-6L4 6z"/></svg>
+					</button>
+
+					<div class="divider"></div>
+					
+					<button class="tool-btn exit" onclick={exitSolutionMode} title="Exit Solution">
+						<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</div>
+				
 				<div class="speed-control">
-					<span class="speed-label">SPEED: {movesPerSecond} M/S</span>
+					<span class="speed-label">SPEED: {movesPerSecond} M/S • STEP {currentStep}/{solutionPath.length}</span>
 					<input type="range" min="1" max="20" bind:value={movesPerSecond} class="speed-slider" />
 				</div>
-				<button class="stop-btn" onclick={stopPlayback}>STOP</button>
 			</div>
 		{:else if isWon}
-			<GameOverMenu onPlayAgain={initGame} onMenu={onBack} onShowOptimal={startPlayback} delay={800} />
+			<GameOverMenu onPlayAgain={initGame} onMenu={onBack} onShowOptimal={enterSolutionMode} delay={800} />
 		{/if}
 	</div>
 </div>
@@ -470,12 +535,70 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1.5vmin;
-		background: rgba(0, 0, 0, 0.4);
-		padding: 2vmin 4vmin;
-		border-radius: 2vmin;
+		gap: 1.2vmin;
+		background: rgba(15, 23, 42, 0.8);
+		padding: 1.5vmin 3vmin;
+		border-radius: 2.5vmin;
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		backdrop-filter: blur(10px);
+		backdrop-filter: blur(20px);
+		box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+	}
+
+	.playback-toolbar {
+		display: flex;
+		align-items: center;
+		gap: 1.5vmin;
+	}
+
+	.tool-btn {
+		background: transparent;
+		border: none;
+		color: rgba(255,255,255,0.6);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1vmin;
+		border-radius: 1vmin;
+		transition: all 0.2s;
+	}
+
+	.tool-btn:hover:not(:disabled) {
+		background: rgba(255,255,255,0.1);
+		color: white;
+	}
+
+	.tool-btn:disabled {
+		opacity: 0.2;
+		cursor: default;
+	}
+
+	.tool-btn.main {
+		background: var(--color-bittersweet);
+		color: white;
+		padding: 1.2vmin;
+		border-radius: 50%;
+		box-shadow: 0 4px 12px rgba(255, 110, 97, 0.3);
+	}
+
+	.tool-btn.main:hover {
+		transform: scale(1.1);
+		background: var(--color-illusion);
+	}
+
+	.tool-btn.exit {
+		color: rgba(255, 255, 255, 0.4);
+	}
+
+	.tool-btn.exit:hover {
+		color: var(--color-bittersweet);
+	}
+
+	.divider {
+		width: 1px;
+		height: 3vmin;
+		background: rgba(255,255,255,0.1);
+		margin: 0 1vmin;
 	}
 
 	.speed-control {
@@ -483,13 +606,13 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 0.5vmin;
-		width: 30vmin;
+		width: 35vmin;
 	}
 
 	.speed-label {
-		font-size: 1.2vmin;
+		font-size: 1.1vmin;
 		font-weight: 800;
-		color: var(--color-illusion);
+		color: rgba(255,255,255,0.4);
 		letter-spacing: 0.1vmin;
 	}
 
@@ -497,23 +620,7 @@
 		width: 100%;
 		accent-color: var(--color-bittersweet);
 		cursor: pointer;
-	}
-
-	.stop-btn {
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		color: white;
-		padding: 1vmin 3vmin;
-		border-radius: 0.8vmin;
-		font-size: 1.6vmin;
-		font-weight: 900;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.stop-btn:hover {
-		background: var(--color-bittersweet);
-		border-color: var(--color-bittersweet);
+		height: 0.4vmin;
 	}
 
 	.calculating-indicator {
