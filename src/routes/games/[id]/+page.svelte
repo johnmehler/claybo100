@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { getGameById } from '$lib/games';
+	import { gameGuides } from '$lib/guides';
 	import Sidebar from '$lib/Sidebar.svelte';
 	import { fade } from 'svelte/transition';
 
@@ -55,13 +56,13 @@
 	};
 
 	const GameComponent = $derived(gameComponents[id]);
+	const guide = $derived(gameGuides[id] || '');
 </script>
 
 <svelte:head>
 	{#if game}
-		<title>{game.label} - {game.keywords.slice(0, 3).join(', ')} | Brainy Sparks Math Museum</title>
-		<meta name="description" content="{game.description} Play {game.label} online. Explore our {game.keywords.join(', ')} collection for kids." />
-		<meta name="keywords" content={game.keywords.join(', ')} />
+		<title>{game.label} | Brainy Sparks Math Museum</title>
+		<meta name="description" content="{game.description} Play {game.label} online for free at the Brainy Sparks Math Museum." />
 	{:else}
 		<title>Game Not Found | Brainy Sparks Math Museum</title>
 	{/if}
@@ -74,10 +75,14 @@
 		{#if GameComponent}
 			<div id="game-viewport" class="game-mat" in:fade={{ duration: 300 }}>
 				<div class="game-frame-adaptive">
-					<h1 class="seo-h1" style="position: absolute; top: -100px; opacity: 0;">{game?.label} - {game?.keywords.join(' - ')}</h1>
 					<svelte:component this={GameComponent} {registerActions} />
 				</div>
 			</div>
+			{#if guide}
+				<article class="game-guide" aria-label="{game?.label} Guide">
+					{@html guide}
+				</article>
+			{/if}
 		{:else}
 			<div class="error-view">
 				<h1>Game not found</h1>
@@ -149,5 +154,34 @@
 	.error-view a {
 		color: var(--color-bittersweet);
 		margin-top: 1rem;
+	}
+
+	.game-guide {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 4vmin 3vmin;
+		color: rgba(255, 255, 255, 0.7);
+		font-size: 14px;
+		line-height: 1.7;
+	}
+
+	.game-guide :global(h2) {
+		font-size: 1.4rem;
+		font-weight: 800;
+		color: rgba(255, 255, 255, 0.9);
+		margin-bottom: 1rem;
+		letter-spacing: -0.02em;
+	}
+
+	.game-guide :global(h3) {
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.8);
+		margin-top: 1.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.game-guide :global(p) {
+		margin-bottom: 1rem;
 	}
 </style>

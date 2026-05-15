@@ -6,9 +6,8 @@
 </script>
 
 <svelte:head>
-	<title>Brain Games for Kids Online Free | Brainy Sparks Math Museum | Logic & Math Arcade</title>
-	<meta name="description" content="Explore Brainy Sparks Math Museum: a robust collection of brain games for kids online free. Featuring puzzles, abstract games, and physics & sims for children of all ages. Perfect for elementary and middle school students!" />
-	<meta name="keywords" content="brain games for kids, online logic puzzles, math strategy games, educational simulations, physics games for kids, brain training online, kids math museum" />
+	<title>Brainy Sparks Math Museum | Interactive Logic & Math Games for All Ages</title>
+	<meta name="description" content="Explore the Brainy Sparks Math Museum: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
 </svelte:head>
 
 <main id="main-view" class="main-container centered">
@@ -16,9 +15,6 @@
 		<header id="app-header" class="header" in:fade={{ duration: 800 }}>
 			<h1 id="app-title">BRAINY SPARKS <span class="highlight">MATH MUSEUM</span></h1>
 			<p id="app-subtitle" class="app-subtitle">SELECT YOUR EXPERIENCE</p>
-			<p class="seo-text" style="opacity: 0; height: 1px; overflow: hidden;">
-				Brain games for kids online free. Logic and math puzzles for elementary and middle school students. Interactive educational simulations including physics, strategy, and critical thinking challenges.
-			</p>
 		</header>
 
 		<div id="game-list" class="game-catalog">
