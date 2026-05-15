@@ -10,9 +10,10 @@
 	import Krypto from '$lib/Krypto.svelte';
 	import SetGame from '$lib/SetGame.svelte';
 	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
+	import TracksOfGalileo from '$lib/TracksOfGalileo.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo';
 	let currentView = $state<View>('menu');
 	let isSidebarCollapsed = $state(false);
 
@@ -127,6 +128,13 @@
 					description: 'Momentum racing. Adjust velocity ±1 each turn.',
 					cardClass: 'vector-card',
 					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>` 
+				},
+				{ 
+					id: 'tracksofgalileo', 
+					label: 'Tracks of Galileo', 
+					description: 'Find the curve of fastest descent.',
+					cardClass: 'galileo-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M3 3c3 8 8 13 18 13"/><circle cx="12" cy="11.5" r="1.5"/></svg>` 
 				}
 			]
 		}
@@ -274,6 +282,8 @@
 						<DotsAndBoxes onBack={() => setView('menu')} {registerActions} />
 					{:else if currentView === 'vectorracing'}
 						<VectorRacing onBack={() => setView('menu')} {registerActions} />
+					{:else if currentView === 'tracksofgalileo'}
+						<TracksOfGalileo onBack={() => setView('menu')} {registerActions} />
 					{/if}
 				</div>
 			</div>
