@@ -61,10 +61,10 @@
 
 <svelte:head>
 	{#if game}
-		<title>{game.label} | Brainy Sparks Math Museum</title>
-		<meta name="description" content="{game.description} Play {game.label} online for free at the Brainy Sparks Math Museum." />
+		<title>{game.label} | The Math Museum</title>
+		<meta name="description" content="{game.description} Play {game.label} online for free at The Math Museum." />
 	{:else}
-		<title>Game Not Found | Brainy Sparks Math Museum</title>
+		<title>Game Not Found | The Math Museum</title>
 	{/if}
 </svelte:head>
 
