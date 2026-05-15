@@ -8,8 +8,8 @@
 	} = $props();
 
 	let isSidebarCollapsed = $state(false);
-	let isGamesOpen = $state(true);
 	const gameCategories = getGamesByCategory();
+	let openCategories = $state(Object.fromEntries(gameCategories.map(c => [c.name, true])));
 
 	const currentPath = $derived($page.url.pathname);
 </script>
@@ -39,7 +39,7 @@
 	<nav class="sidebar-nav">
 		{#if activeGameActions.help || activeGameActions.restart || activeGameActions.newShuffle}
 			<div class="nav-section controls-section" in:fade>
-				<p class="section-label">GAME CONTROLS</p>
+				<p class="controls-label">GAME CONTROLS</p>
 				<div class="nav-list">
 					{#if activeGameActions.help}
 						<button class="nav-button control-btn help" onclick={activeGameActions.help}>
@@ -64,16 +64,15 @@
 		{/if}
 
 		<div class="nav-section">
-			<button class="dropdown-toggle" onclick={() => isGamesOpen = !isGamesOpen}>
-				<span class="section-label">GAMES</span>
-				<svg class="chevron" class:open={isGamesOpen} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" role="img" aria-label="Toggle Games List"><polyline points="6 9 12 15 18 9"></polyline></svg>
-			</button>
-			
-			{#if isGamesOpen}
-				<div class="nav-list" transition:fade={{ duration: 200 }}>
-					{#each gameCategories as category}
-						<div class="sidebar-category">
-							<p class="sidebar-category-label">{category.name}</p>
+			{#each gameCategories as category}
+				<div class="sidebar-category">
+					<button class="dropdown-toggle" onclick={() => openCategories[category.name] = !openCategories[category.name]}>
+						<span class="sidebar-category-label">{category.name}</span>
+						<svg class="chevron" class:open={openCategories[category.name]} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" role="img" aria-label="Toggle {category.name} List"><polyline points="6 9 12 15 18 9"></polyline></svg>
+					</button>
+					
+					{#if openCategories[category.name]}
+						<div class="nav-list category-list" transition:fade={{ duration: 200 }}>
 							{#each category.games as game}
 								<a 
 									href="/games/{game.id}"
@@ -88,9 +87,9 @@
 								</a>
 							{/each}
 						</div>
-					{/each}
+					{/if}
 				</div>
-			{/if}
+			{/each}
 		</div>
 	</nav>
 
@@ -204,20 +203,20 @@
 	}
 
 	.sidebar-category {
-		margin-bottom: 2vmin;
+		margin-bottom: 1vmin;
 	}
 
 	.sidebar-category-label {
-		font-size: 1.1vmin;
-		color: rgba(255, 255, 255, 0.2);
+		font-size: 1.8vmin;
+		color: rgba(255, 255, 255, 0.85);
 		font-weight: 800;
 		letter-spacing: 0.1vmin;
 		text-transform: uppercase;
-		margin: 1.5vmin 0 1vmin 1.5vmin;
+		margin: 0;
 	}
 
-	.section-label {
-		font-size: 1.2vmin;
+	.controls-label {
+		font-size: 1.8vmin;
 		color: rgba(255, 255, 255, 0.3);
 		font-weight: 800;
 		letter-spacing: 0.2vmin;
@@ -234,13 +233,13 @@
 		background: transparent;
 		border: none;
 		cursor: pointer;
-		margin-bottom: 1vmin;
+		margin-bottom: 0.5vmin;
 		border-radius: 1vmin;
 		transition: background 0.2s;
 	}
 
 	.dropdown-toggle:hover {
-		background: rgba(255,255,255,0.03);
+		background: rgba(255,255,255,0.05);
 	}
 
 	.chevron {
@@ -322,9 +321,9 @@
 	}
 
 	.nav-label-text {
-		font-size: 1.8vmin;
+		font-size: 1.5vmin;
 		font-weight: 600;
-		letter-spacing: 0.05vmin;
+		letter-spacing: 0.03vmin;
 	}
 
 	.active-indicator {

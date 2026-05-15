@@ -7,7 +7,7 @@
 
 <svelte:head>
 	<title>Brain Games for Kids Online Free | Brainy Sparks Math Museum | Logic & Math Arcade</title>
-	<meta name="description" content="Explore Brainy Sparks Math Museum: a robust collection of brain games for kids online free. Featuring logic puzzles, math strategy games, interactive brain teasers, physics simulations, and online brain training for children of all ages. Perfect for elementary and middle school students!" />
+	<meta name="description" content="Explore Brainy Sparks Math Museum: a robust collection of brain games for kids online free. Featuring puzzles, abstract games, and physics & sims for children of all ages. Perfect for elementary and middle school students!" />
 	<meta name="keywords" content="brain games for kids, online logic puzzles, math strategy games, educational simulations, physics games for kids, brain training online, kids math museum" />
 </svelte:head>
 

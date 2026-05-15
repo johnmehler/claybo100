@@ -13,7 +13,7 @@
 <footer class="seo-footer" aria-hidden="true">
 	<div class="footer-content">
 		<h2>Math Museum - Brainy Sparks</h2>
-		<p>Explore our collection of brain games for kids online free. Logic puzzles, math strategy, and physics simulations.</p>
+		<p>Explore our collection of brain games for kids online free. Puzzles, abstract games, and physics & sims.</p>
 		<p>Targeting: 
 			{uniqueKeywords.join(', ')}.
 		</p>

@@ -3,12 +3,14 @@
 	let { 
 		onPlayAgain, 
 		onMenu, 
+		onShowOptimal,
 		delay = 800,
 		playAgainText = "PLAY AGAIN",
 		menuText = "MAIN MENU"
 	} = $props<{
 		onPlayAgain: () => void;
 		onMenu: () => void;
+		onShowOptimal?: () => void;
 		delay?: number;
 		playAgainText?: string;
 		menuText?: string;
@@ -17,6 +19,9 @@
 
 <div class="end-actions" in:fade={{ delay, duration: 300 }}>
 	<button class="action-btn" onclick={onPlayAgain}>{playAgainText}</button>
+	{#if onShowOptimal}
+		<button class="action-btn secondary" onclick={onShowOptimal}>SHOW OPTIMAL</button>
+	{/if}
 	<button class="action-btn secondary" onclick={onMenu}>{menuText}</button>
 </div>
 

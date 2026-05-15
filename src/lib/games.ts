@@ -243,19 +243,19 @@ export const games = [
 
 export const gameCategories = [
 	{
-		name: 'Logic & Puzzles',
+		name: 'Puzzles',
 		delay: 200,
-		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'set', 'dotsandboxes', 'iceslider']
+		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'set', 'iceslider', 'krypto']
 	},
 	{
-		name: 'Math & Strategy',
+		name: 'Abstract Games',
 		delay: 400,
-		gameIds: ['nim', 'hex', 'krypto']
+		gameIds: ['dotsandboxes', 'nim', 'hex', 'vectorracing']
 	},
 	{
-		name: 'Physics & Simulation',
+		name: 'Physics & Sims',
 		delay: 600,
-		gameIds: ['shotsim', 'vectorracing', 'tracksofgalileo', 'lunarlander', 'epidemicsim']
+		gameIds: ['shotsim', 'tracksofgalileo', 'lunarlander', 'epidemicsim']
 	}
 ];
 

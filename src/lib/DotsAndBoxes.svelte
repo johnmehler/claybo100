@@ -175,9 +175,14 @@
 				<span class="label">STATUS</span>
 				<div class="status-msg">
 					{#if gameOver}
-						<span style="color: {scores[1] > scores[2] ? 'var(--color-bittersweet)' : (scores[2] > scores[1] ? 'var(--color-apple)' : 'white')}">
-							{scores[1] > scores[2] ? 'YOU WIN!' : (scores[2] > scores[1] ? 'AI WINS!' : 'TIE GAME!')}
-						</span>
+						<div class="game-over-container" in:fade>
+							<span style="color: {scores[1] > scores[2] ? 'var(--color-bittersweet)' : (scores[2] > scores[1] ? 'var(--color-apple)' : 'white')}">
+								{scores[1] > scores[2] ? 'YOU WIN!' : (scores[2] > scores[1] ? 'AI WINS!' : 'TIE GAME!')}
+							</span>
+							<button class="play-again-btn" onclick={reset}>
+								PLAY AGAIN
+							</button>
+						</div>
 					{:else}
 						<span style="color: {currentTurn === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
 							{currentTurn === 1 ? 'YOUR TURN' : 'AI TURN'}
@@ -280,6 +285,24 @@
 	.p1 .val { color: var(--color-bittersweet); }
 	.p2 .val { color: var(--color-apple); }
 	.status-msg { font-size: 5vmin; font-weight: 900; letter-spacing: 1px; }
+	.game-over-container { display: flex; flex-direction: column; align-items: center; gap: 1vmin; }
+	.play-again-btn { 
+		background: var(--color-bittersweet); 
+		color: black; 
+		border: none; 
+		padding: 1vmin 3vmin; 
+		border-radius: 1vmin; 
+		font-size: 1.8vmin; 
+		font-weight: 900; 
+		cursor: pointer; 
+		transition: all 0.3s;
+		box-shadow: 0 4px 15px rgba(255, 110, 97, 0.3);
+	}
+	.play-again-btn:hover { 
+		transform: scale(1.05); 
+		box-shadow: 0 6px 20px rgba(255, 110, 97, 0.5); 
+	}
+	.play-again-btn:active { transform: scale(0.95); }
 
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.controls { display: flex; align-items: center; gap: 3vmin; }
