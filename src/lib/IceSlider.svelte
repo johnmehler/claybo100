@@ -364,12 +364,50 @@
 
 	<div class="bottom-bar">
 		{#if isGameOver}
-			<GameOverMenu onPlayAgain={nextLevel} onMenu={onBack} />
+			<div class="end-actions" in:fade={{ delay: 300 }}>
+				<button class="action-btn secondary" onclick={resetGame}>RETRY</button>
+				<button class="action-btn" onclick={nextLevel}>NEW PUZZLE</button>
+				<button class="action-btn secondary" onclick={onBack}>MAIN MENU</button>
+			</div>
 		{/if}
 	</div>
 </div>
 
 <style>
+	.end-actions {
+		display: flex;
+		gap: 2vmin;
+		justify-content: center;
+	}
+
+	.action-btn {
+		background: var(--color-bittersweet);
+		color: white;
+		border: none;
+		padding: 1.5vmin 4vmin;
+		border-radius: 1vmin;
+		font-size: 2vmin;
+		font-weight: 900;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.action-btn:hover {
+		filter: brightness(1.2);
+		transform: scale(1.05);
+	}
+
+	.action-btn.secondary {
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	.action-btn.secondary:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.4);
+		color: white;
+	}
 	.game-inner {
 		display: flex;
 		flex-direction: column;
