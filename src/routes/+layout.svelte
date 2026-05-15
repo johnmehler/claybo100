@@ -3,6 +3,17 @@
 	import Footer from '$lib/Footer.svelte';
 
 	let { children } = $props();
+
+	$effect(() => {
+		function blockArrowScroll(e: KeyboardEvent) {
+			if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+			if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+				e.preventDefault();
+			}
+		}
+		window.addEventListener('keydown', blockArrowScroll, { passive: false });
+		return () => window.removeEventListener('keydown', blockArrowScroll);
+	});
 </script>
 
 <svelte:head>

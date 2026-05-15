@@ -98,9 +98,9 @@
 	function solvePuzzle() {
 		const startBoard = [...initialTiles];
 		const path: number[] = [];
-		const limit = 80; // Absolute max for 15-puzzle
-		const MAX_NODES = 200000;
-		const MAX_TIME_MS = 1500;
+		const limit = 100;
+		const MAX_NODES = 500000;
+		const MAX_TIME_MS = 3000;
 		
 		let nodesExplored = 0;
 		let startTime = Date.now();

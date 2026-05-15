@@ -32,7 +32,7 @@
 <aside class="sidebar" class:collapsed={isSidebarCollapsed} in:fly={{ x: -100, duration: 600 }}>
 	<div class="sidebar-header">
 		<a href="/" class="logo-wrapper">
-			<h1 class="sidebar-title">MATH <span class="highlight">MUSEUM</span></h1>
+			<h1 class="sidebar-title">ONLINEMATH<span class="highlight">.GAMES</span></h1>
 		</a>
 	</div>
 

@@ -4,7 +4,7 @@
 
 <footer class="seo-footer">
 	<div class="footer-content">
-		<h2>The Math Museum</h2>
+		<h2>onlinemath.games</h2>
 		<p>A free collection of interactive logic puzzles, abstract strategy games, and physics simulations designed for students, educators, and curious minds of all ages.</p>
 		<nav>
 			<ul>

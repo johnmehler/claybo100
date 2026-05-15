@@ -6,14 +6,14 @@
 </script>
 
 <svelte:head>
-	<title>The Math Museum | Interactive Logic & Math Games</title>
-	<meta name="description" content="Explore The Math Museum: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
+	<title>onlinemath.games | Interactive Logic & Math Games</title>
+	<meta name="description" content="onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
 </svelte:head>
 
 <main id="main-view" class="main-container centered">
 	<div id="menu-screen" class="menu-screen" in:fade={{ duration: 400 }}>
 		<header id="app-header" class="header" in:fade={{ duration: 800 }}>
-			<h1 id="app-title">THE <span class="highlight">MATH MUSEUM</span></h1>
+			<h1 id="app-title">ONLINEMATH<span class="highlight">.GAMES</span></h1>
 			<p id="app-subtitle" class="app-subtitle">EXPLORE THE COLLECTION</p>
 		</header>
 
