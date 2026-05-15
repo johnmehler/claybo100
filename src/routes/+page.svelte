@@ -12,9 +12,10 @@
 	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
 	import TracksOfGalileo from '$lib/TracksOfGalileo.svelte';
 	import LunarLander from '$lib/LunarLander.svelte';
+	import IceSlider from '$lib/IceSlider.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo' | 'lunarlander';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo' | 'lunarlander' | 'iceslider';
 	let currentView = $state<View>('menu');
 	let isSidebarCollapsed = $state(false);
 
@@ -82,6 +83,13 @@
 					description: 'Connect dots to capture squares against AI.',
 					cardClass: 'dots-card',
 					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="1"></circle><circle cx="18" cy="6" r="1"></circle><circle cx="6" cy="18" r="1"></circle><circle cx="18" cy="18" r="1"></circle><rect x="6" y="6" width="12" height="12" stroke-dasharray="2 2"></rect></svg>` 
+				},
+				{ 
+					id: 'iceslider', 
+					label: 'Ice Slider', 
+					description: 'Slide blocks on frictionless ice to reach the goal.',
+					cardClass: 'ice-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><rect x="7" y="4" width="10" height="8" rx="1"/><path d="M7 12l-2 8h14l-2-8"/></svg>` 
 				}
 			]
 		},
@@ -294,6 +302,8 @@
 						<TracksOfGalileo onBack={() => setView('menu')} {registerActions} />
 					{:else if currentView === 'lunarlander'}
 						<LunarLander onBack={() => setView('menu')} {registerActions} />
+					{:else if currentView === 'iceslider'}
+						<IceSlider onBack={() => setView('menu')} {registerActions} />
 					{/if}
 				</div>
 			</div>
