@@ -1,0 +1,675 @@
+<script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import Instructions from './Instructions.svelte';
+
+	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
+	let instructions: any;
+
+	// Physics constants
+	const GRAVITY = 1.62; // Moon gravity m/s²
+	const THRUST_POWER = 5.0;
+	const ROTATION_SPEED = 3; // degrees per frame
+	const MAX_LANDING_VY = 2.0;
+	const MAX_LANDING_VX = 1.0;
+	const MAX_LANDING_ANGLE = 15;
+	const INITIAL_FUEL = 100;
+	const FUEL_BURN_RATE = 0.3;
+
+	// Game state
+	let gameState = $state<'playing' | 'landed' | 'crashed' | 'idle'>('idle');
+	let x = $state(50); // % horizontal position
+	let y = $state(8); // % vertical from top
+	let vx = $state(8); // horizontal velocity
+	let vy = $state(0); // vertical velocity
+	let angle = $state(0); // spacecraft angle in degrees
+	let fuel = $state(INITIAL_FUEL);
+	let thrusting = $state(false);
+	let rotatingLeft = $state(false);
+	let rotatingRight = $state(false);
+	let score = $state(0);
+	let landingMessage = $state('');
+	let altitude = $state(0);
+	let speed = $state(0);
+
+	// Terrain
+	let terrain = $state<{x: number, y: number}[]>([]);
+	let pads = $state<{x: number, y: number, width: number, multiplier: number}[]>([]);
+	let stars = $state<{x: number, y: number, size: number, opacity: number}[]>([]);
+
+	let animationId: number | null = null;
+	let lastTime = 0;
+	let keysDown = new Set<string>();
+
+	function generateTerrain() {
+		const points: {x: number, y: number}[] = [];
+		const numPoints = 60;
+		let baseY = 75;
+
+		for (let i = 0; i <= numPoints; i++) {
+			const px = (i / numPoints) * 100;
+			const noise = Math.sin(i * 0.5) * 6 + Math.sin(i * 1.3) * 3 + Math.sin(i * 0.2) * 8;
+			points.push({ x: px, y: baseY + noise });
+		}
+
+		// Create landing pads (flat sections)
+		const padConfigs = [
+			{ center: 20, width: 8, multiplier: 3 },
+			{ center: 50, width: 12, multiplier: 1 },
+			{ center: 78, width: 6, multiplier: 5 },
+		];
+
+		const newPads: typeof pads = [];
+		for (const cfg of padConfigs) {
+			const padY = baseY + Math.sin(cfg.center * 0.5 / (100/numPoints)) * 6;
+			const startIdx = Math.round((cfg.center - cfg.width / 2) / 100 * numPoints);
+			const endIdx = Math.round((cfg.center + cfg.width / 2) / 100 * numPoints);
+			for (let i = startIdx; i <= endIdx && i < points.length; i++) {
+				points[i].y = padY + 2;
+			}
+			newPads.push({ x: cfg.center - cfg.width / 2, y: padY + 2, width: cfg.width, multiplier: cfg.multiplier });
+		}
+
+		terrain = points;
+		pads = newPads;
+
+		// Stars
+		const newStars: typeof stars = [];
+		for (let i = 0; i < 80; i++) {
+			newStars.push({
+				x: Math.random() * 100,
+				y: Math.random() * 60,
+				size: Math.random() * 0.3 + 0.1,
+				opacity: Math.random() * 0.6 + 0.2
+			});
+		}
+		stars = newStars;
+	}
+
+	function getTerrainYAtX(px: number): number {
+		if (terrain.length < 2) return 80;
+		for (let i = 0; i < terrain.length - 1; i++) {
+			if (px >= terrain[i].x && px <= terrain[i + 1].x) {
+				const t = (px - terrain[i].x) / (terrain[i + 1].x - terrain[i].x);
+				return terrain[i].y + t * (terrain[i + 1].y - terrain[i].y);
+			}
+		}
+		return 80;
+	}
+
+	function getLandingPadAt(px: number, py: number): typeof pads[0] | null {
+		for (const pad of pads) {
+			if (px >= pad.x && px <= pad.x + pad.width && Math.abs(py - pad.y) < 2) {
+				return pad;
+			}
+		}
+		return null;
+	}
+
+	function startGame() {
+		x = 15;
+		y = 10;
+		vx = 8 + Math.random() * 0.5;
+		vy = 0;
+		angle = 0;
+		fuel = INITIAL_FUEL;
+		thrusting = false;
+		gameState = 'playing';
+		landingMessage = '';
+		lastTime = performance.now();
+		animate(lastTime);
+	}
+
+	function restart() {
+		if (animationId) cancelAnimationFrame(animationId);
+		generateTerrain();
+		startGame();
+	}
+
+	function animate(now: number) {
+		if (gameState !== 'playing') return;
+
+		const dt = Math.min((now - lastTime) / 1000, 0.05);
+		lastTime = now;
+
+		// Rotation
+		if (rotatingLeft) angle -= ROTATION_SPEED;
+		if (rotatingRight) angle += ROTATION_SPEED;
+		angle = Math.max(-90, Math.min(90, angle));
+
+		// Thrust
+		const isThrusting = thrusting && fuel > 0;
+		if (isThrusting) {
+			const rad = (angle * Math.PI) / 180;
+			vx += Math.sin(rad) * THRUST_POWER * dt;
+			vy -= Math.cos(rad) * THRUST_POWER * dt;
+			fuel = Math.max(0, fuel - FUEL_BURN_RATE);
+		}
+
+		// Gravity
+		vy += GRAVITY * dt;
+
+		// Update position
+		x += vx * dt;
+		y += vy * dt;
+
+		// Wrap horizontally
+		if (x < -2) x = 102;
+		if (x > 102) x = -2;
+
+		// Altitude & speed
+		const terrainY = getTerrainYAtX(x);
+		altitude = Math.max(0, terrainY - y - 3);
+		speed = Math.sqrt(vx * vx + vy * vy);
+
+		// Collision detection
+		if (y + 3 >= terrainY) {
+			y = terrainY - 3;
+			const pad = getLandingPadAt(x, terrainY);
+			const absAngle = Math.abs(angle);
+
+			if (pad && vy <= MAX_LANDING_VY && Math.abs(vx) <= MAX_LANDING_VX && absAngle <= MAX_LANDING_ANGLE) {
+				gameState = 'landed';
+				const fuelBonus = Math.round(fuel);
+				const baseScore = 50 * pad.multiplier;
+				const landScore = baseScore + fuelBonus;
+				score += landScore;
+				if (vy < 0.5 && Math.abs(vx) < 0.3) {
+					landingMessage = `PERFECT LANDING! ×${pad.multiplier} +${landScore}`;
+				} else {
+					landingMessage = `SAFE LANDING ×${pad.multiplier} +${landScore}`;
+				}
+			} else {
+				gameState = 'crashed';
+				landingMessage = getCrashReason(pad, absAngle);
+			}
+			vx = 0; vy = 0;
+			if (animationId) cancelAnimationFrame(animationId);
+			return;
+		}
+
+		animationId = requestAnimationFrame(animate);
+	}
+
+	function getCrashReason(pad: typeof pads[0] | null, absAngle: number): string {
+		if (!pad) return 'CRASHED — Missed the landing pad!';
+		if (vy > MAX_LANDING_VY) return `CRASHED — Too fast! (${vy.toFixed(1)} m/s vertical)`;
+		if (Math.abs(vx) > MAX_LANDING_VX) return `CRASHED — Too much drift! (${Math.abs(vx).toFixed(1)} m/s horizontal)`;
+		if (absAngle > MAX_LANDING_ANGLE) return `CRASHED — Bad angle! (${absAngle.toFixed(0)}°)`;
+		return 'CRASHED!';
+	}
+
+	function handleKeyDown(e: KeyboardEvent) {
+		if (gameState !== 'playing') return;
+		keysDown.add(e.key);
+		if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') thrusting = true;
+		if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') rotatingLeft = true;
+		if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') rotatingRight = true;
+		e.preventDefault();
+	}
+
+	function handleKeyUp(e: KeyboardEvent) {
+		keysDown.delete(e.key);
+		if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') thrusting = false;
+		if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') rotatingLeft = false;
+		if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') rotatingRight = false;
+	}
+
+	// Touch controls
+	function startThrust() { if (gameState === 'playing') thrusting = true; }
+	function stopThrust() { thrusting = false; }
+	function startRotateLeft() { if (gameState === 'playing') rotatingLeft = true; }
+	function stopRotateLeft() { rotatingLeft = false; }
+	function startRotateRight() { if (gameState === 'playing') rotatingRight = true; }
+	function stopRotateRight() { rotatingRight = false; }
+
+	$effect(() => {
+		registerActions({
+			restart: restart,
+			help: () => instructions.open()
+		});
+	});
+
+	onMount(() => {
+		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('keyup', handleKeyUp);
+		generateTerrain();
+		startGame();
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('keydown', handleKeyDown);
+		window.removeEventListener('keyup', handleKeyUp);
+		if (animationId) cancelAnimationFrame(animationId);
+		keysDown.clear();
+		thrusting = false;
+		rotatingLeft = false;
+		rotatingRight = false;
+	});
+
+	// Build terrain SVG path
+	let terrainPath = $derived.by(() => {
+		if (terrain.length < 2) return '';
+		return 'M ' + terrain.map(p => `${p.x} ${p.y}`).join(' L ') + ' L 100 100 L 0 100 Z';
+	});
+
+	// Flame particles
+	let flameFlicker = $state(0);
+	$effect(() => {
+		if (gameState === 'playing') {
+			const interval = setInterval(() => flameFlicker = Math.random(), 80);
+			return () => clearInterval(interval);
+		}
+	});
+</script>
+
+<div class="lander-container">
+	<Instructions bind:this={instructions} gameId="lunarlander" title="Lunar Lander">
+		<p><strong>Objective:</strong> Land safely on a landing pad.</p>
+		<p><strong>Controls:</strong> Arrow Keys or WAD</p>
+	</Instructions>
+
+	<div class="hud">
+		<div class="hud-group">
+			<div class="hud-item">
+				<span class="hud-label">SCORE</span>
+				<span class="hud-value score-val">{score}</span>
+			</div>
+			<div class="hud-item">
+				<span class="hud-label">ALTITUDE</span>
+				<span class="hud-value">{altitude.toFixed(1)}<small>m</small></span>
+			</div>
+		</div>
+		<div class="hud-group center-hud">
+			<div class="hud-item" title="Safe horizontal drift: < {MAX_LANDING_VX} m/s">
+				<span class="hud-label">HORIZONTAL</span>
+				<span class="hud-value" class:danger={Math.abs(vx) > MAX_LANDING_VX}>{vx.toFixed(1)}<small>m/s</small></span>
+				<span class="hud-limit">SAFE: &lt;{MAX_LANDING_VX}</span>
+			</div>
+			<div class="hud-item" title="Safe vertical speed: < {MAX_LANDING_VY} m/s">
+				<span class="hud-label">VERTICAL</span>
+				<span class="hud-value" class:danger={vy > MAX_LANDING_VY}>{vy.toFixed(1)}<small>m/s</small></span>
+				<span class="hud-limit">SAFE: &lt;{MAX_LANDING_VY}</span>
+			</div>
+			<div class="hud-item" title="Safe landing angle: < {MAX_LANDING_ANGLE}°">
+				<span class="hud-label">ANGLE</span>
+				<span class="hud-value" class:danger={Math.abs(angle) > MAX_LANDING_ANGLE}>{angle.toFixed(0)}<small>°</small></span>
+				<span class="hud-limit">SAFE: &lt;{MAX_LANDING_ANGLE}°</span>
+			</div>
+		</div>
+		<div class="hud-group">
+			<div class="hud-item fuel-item">
+				<span class="hud-label">FUEL</span>
+				<div class="fuel-bar-bg">
+					<div class="fuel-bar" style="width: {fuel}%" class:fuel-low={fuel < 25}></div>
+				</div>
+				<span class="fuel-pct" class:fuel-low={fuel < 25}>{fuel.toFixed(0)}%</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="viewport">
+		<svg class="scene" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+			<!-- Grid background -->
+			<defs>
+				<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+					<path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.1"/>
+				</pattern>
+			</defs>
+			<rect width="100" height="100" fill="url(#grid)" />
+
+			<!-- Stars -->
+			{#each stars as star}
+				<circle cx={star.x} cy={star.y} r={star.size} fill="white" opacity={star.opacity} />
+			{/each}
+
+			<!-- Terrain -->
+			<path d={terrainPath} fill="#1a1a2e" stroke="rgba(255,255,255,0.15)" stroke-width="0.15" />
+
+			<!-- Landing pads -->
+			{#each pads as pad}
+				<rect x={pad.x} y={pad.y - 0.4} width={pad.width} height="0.5" rx="0.15"
+					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
+					opacity="0.9" />
+				<text x={pad.x + pad.width / 2} y={pad.y + 3} text-anchor="middle"
+					fill="rgba(255,255,255,0.5)" font-size="1.8" font-weight="800">×{pad.multiplier}</text>
+				<!-- Pad beacon lights -->
+				<circle cx={pad.x + 0.3} cy={pad.y - 0.2} r="0.3"
+					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
+					opacity={0.4 + Math.sin(Date.now() / 500) * 0.3} />
+				<circle cx={pad.x + pad.width - 0.3} cy={pad.y - 0.2} r="0.3"
+					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
+					opacity={0.4 + Math.sin(Date.now() / 500) * 0.3} />
+			{/each}
+
+			<!-- Spacecraft group -->
+			<g transform="translate({x}, {y}) rotate({angle})">
+				<!-- Thrust flame -->
+				{#if thrusting && fuel > 0}
+					<polygon
+						points="-0.8,2 0.8,2 0,{3.5 + flameFlicker * 2}"
+						fill="var(--color-golden)"
+						opacity={0.7 + flameFlicker * 0.3} />
+					<polygon
+						points="-0.5,2 0.5,2 0,{3 + flameFlicker * 1.5}"
+						fill="var(--color-bittersweet)"
+						opacity="0.9" />
+				{/if}
+
+				<!-- Lander body -->
+				<polygon points="-1.5,1 -1,-1.5 1,-1.5 1.5,1" fill="#c0c0d0" stroke="rgba(255,255,255,0.3)" stroke-width="0.1" />
+				<!-- Legs -->
+				<line x1="-1.5" y1="1" x2="-2" y2="2" stroke="#888" stroke-width="0.15" />
+				<line x1="1.5" y1="1" x2="2" y2="2" stroke="#888" stroke-width="0.15" />
+				<line x1="-2.2" y1="2" x2="-1.8" y2="2" stroke="#888" stroke-width="0.2" />
+				<line x1="1.8" y1="2" x2="2.2" y2="2" stroke="#888" stroke-width="0.2" />
+				<!-- Cockpit window -->
+				<circle cx="0" cy="-0.5" r="0.5" fill="#4b6abe" opacity="0.8" />
+				<!-- Nozzle -->
+				<polygon points="-0.6,1 0.6,1 0.8,2 -0.8,2" fill="#666" />
+			</g>
+		</svg>
+
+		<!-- Landing / Crash overlay -->
+		{#if gameState === 'landed' || gameState === 'crashed'}
+			<div class="result-overlay" in:fade={{ duration: 400 }}>
+				<div class="result-message" class:success={gameState === 'landed'} class:failure={gameState === 'crashed'}>
+					{landingMessage}
+				</div>
+				<div class="result-actions">
+					<button class="action-btn" onclick={restart}>FLY AGAIN</button>
+					<button class="action-btn secondary" onclick={onBack}>MAIN MENU</button>
+				</div>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Touch controls -->
+	<div class="touch-controls">
+		<button class="touch-btn rotate-btn"
+			onpointerdown={startRotateLeft} onpointerup={stopRotateLeft} onpointerleave={stopRotateLeft}>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
+		</button>
+		<button class="touch-btn thrust-btn"
+			onpointerdown={startThrust} onpointerup={stopThrust} onpointerleave={stopThrust}
+			class:active-thrust={thrusting && fuel > 0}>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+			<span class="thrust-label">THRUST</span>
+		</button>
+		<button class="touch-btn rotate-btn"
+			onpointerdown={startRotateRight} onpointerup={stopRotateRight} onpointerleave={stopRotateRight}>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+		</button>
+	</div>
+</div>
+
+<style>
+	.lander-container {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		height: 100%;
+		color: white;
+		position: relative;
+		overflow: hidden;
+	}
+
+	/* HUD */
+	.hud {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 2vmin 3vmin;
+		flex-shrink: 0;
+		z-index: 10;
+	}
+
+	.hud-group {
+		display: flex;
+		gap: 4vmin;
+		align-items: center;
+	}
+
+	.center-hud {
+		gap: 6vmin;
+	}
+
+	.hud-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.3vmin;
+		cursor: help;
+		position: relative;
+	}
+
+	.hud-limit {
+		font-size: 1vmin;
+		color: rgba(255,255,255,0.2);
+		font-weight: 800;
+		letter-spacing: 0.05vmin;
+	}
+
+	.hud-item:hover .hud-limit {
+		color: var(--color-golden);
+	}
+
+	.hud-label {
+		font-size: 1.1vmin;
+		color: rgba(255,255,255,0.3);
+		font-weight: 800;
+		letter-spacing: 0.15vmin;
+		text-transform: uppercase;
+	}
+
+	.hud-value {
+		font-size: 2.8vmin;
+		font-weight: 900;
+		color: rgba(255,255,255,0.85);
+		font-variant-numeric: tabular-nums;
+		transition: color 0.2s;
+	}
+
+	.hud-value small {
+		font-size: 1.6vmin;
+		opacity: 0.5;
+		margin-left: 0.2vmin;
+	}
+
+	.hud-value.danger {
+		color: var(--color-bittersweet);
+		text-shadow: 0 0 10px rgba(255, 110, 97, 0.5);
+	}
+
+	.score-val {
+		color: var(--color-golden);
+		font-size: 3.5vmin;
+	}
+
+	.fuel-item {
+		min-width: 14vmin;
+	}
+
+	.fuel-bar-bg {
+		width: 100%;
+		height: 1vmin;
+		background: rgba(255,255,255,0.08);
+		border-radius: 0.5vmin;
+		overflow: hidden;
+	}
+
+	.fuel-bar {
+		height: 100%;
+		background: var(--color-apple);
+		border-radius: 0.5vmin;
+		transition: width 0.1s linear;
+	}
+
+	.fuel-bar.fuel-low {
+		background: var(--color-bittersweet);
+		animation: pulse-fuel 0.5s ease-in-out infinite alternate;
+	}
+
+	.fuel-pct {
+		font-size: 1.4vmin;
+		font-weight: 800;
+		color: var(--color-apple);
+	}
+
+	.fuel-pct.fuel-low {
+		color: var(--color-bittersweet);
+	}
+
+	@keyframes pulse-fuel {
+		from { opacity: 0.6; }
+		to { opacity: 1; }
+	}
+
+	/* Viewport */
+	.viewport {
+		flex: 1;
+		position: relative;
+		overflow: hidden;
+		border-radius: 2vmin;
+		margin: 0 2vmin;
+		background: linear-gradient(180deg, #05050f 0%, #0a0a20 40%, #12122e 100%);
+		border: 1px solid rgba(255,255,255,0.06);
+	}
+
+	.scene {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	/* Result overlay */
+	.result-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 3vmin;
+		background: rgba(0,0,0,0.6);
+		backdrop-filter: blur(4px);
+		z-index: 20;
+	}
+
+	.result-message {
+		font-size: 3.5vmin;
+		font-weight: 900;
+		letter-spacing: 0.1vmin;
+		text-align: center;
+		padding: 0 4vmin;
+	}
+
+	.result-message.success {
+		color: var(--color-apple);
+		text-shadow: 0 0 30px rgba(105, 175, 75, 0.5);
+	}
+
+	.result-message.failure {
+		color: var(--color-bittersweet);
+		text-shadow: 0 0 30px rgba(255, 110, 97, 0.5);
+	}
+
+	.result-actions {
+		display: flex;
+		gap: 2vmin;
+	}
+
+	.action-btn {
+		background: var(--color-bittersweet);
+		color: white;
+		border: none;
+		padding: 1.5vmin 4vmin;
+		border-radius: 1vmin;
+		font-size: 2vmin;
+		font-weight: 900;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.action-btn:hover {
+		filter: brightness(1.2);
+		transform: scale(1.05);
+	}
+
+	.action-btn.secondary {
+		background: transparent;
+		border: 2px solid rgba(255,255,255,0.2);
+		color: rgba(255,255,255,0.7);
+	}
+
+	.action-btn.secondary:hover {
+		background: rgba(255,255,255,0.1);
+		border-color: rgba(255,255,255,0.4);
+		color: white;
+	}
+
+	/* Touch controls */
+	.touch-controls {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 3vmin;
+		padding: 2vmin;
+		flex-shrink: 0;
+	}
+
+	.touch-btn {
+		background: rgba(255,255,255,0.04);
+		border: 1px solid rgba(255,255,255,0.1);
+		color: rgba(255,255,255,0.5);
+		border-radius: 1.5vmin;
+		cursor: pointer;
+		transition: all 0.15s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	.rotate-btn {
+		width: 8vmin;
+		height: 8vmin;
+	}
+
+	.rotate-btn svg {
+		width: 3.5vmin;
+		height: 3.5vmin;
+	}
+
+	.thrust-btn {
+		width: 14vmin;
+		height: 8vmin;
+		flex-direction: column;
+		gap: 0.3vmin;
+	}
+
+	.thrust-btn svg {
+		width: 3vmin;
+		height: 3vmin;
+	}
+
+	.thrust-label {
+		font-size: 1.2vmin;
+		font-weight: 800;
+		letter-spacing: 0.1vmin;
+	}
+
+	.touch-btn:hover {
+		background: rgba(255,255,255,0.08);
+		color: white;
+	}
+
+	.touch-btn:active, .active-thrust {
+		background: rgba(255, 110, 97, 0.2) !important;
+		border-color: var(--color-bittersweet) !important;
+		color: var(--color-bittersweet) !important;
+		box-shadow: 0 0 15px rgba(255, 110, 97, 0.3);
+	}
+</style>

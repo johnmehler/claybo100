@@ -11,9 +11,10 @@
 	import SetGame from '$lib/SetGame.svelte';
 	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
 	import TracksOfGalileo from '$lib/TracksOfGalileo.svelte';
+	import LunarLander from '$lib/LunarLander.svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo';
+	type View = 'menu' | 'sliding-tiles' | 'pegboard' | 'hanoi' | 'shotsim' | 'nim' | 'knights-tour' | 'hex' | 'krypto' | 'set' | 'dotsandboxes' | 'vectorracing' | 'tracksofgalileo' | 'lunarlander';
 	let currentView = $state<View>('menu');
 	let isSidebarCollapsed = $state(false);
 
@@ -135,6 +136,13 @@
 					description: 'Find the curve of fastest descent.',
 					cardClass: 'galileo-card',
 					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M3 3c3 8 8 13 18 13"/><circle cx="12" cy="11.5" r="1.5"/></svg>` 
+				},
+				{ 
+					id: 'lunarlander', 
+					label: 'Lunar Lander', 
+					description: 'Control thrust to land safely on the moon.',
+					cardClass: 'lander-card',
+					icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L8 10h8L12 2z"/><line x1="8" y1="10" x2="6" y2="14"/><line x1="16" y1="10" x2="18" y2="14"/><line x1="5" y1="14" x2="7" y2="14"/><line x1="17" y1="14" x2="19" y2="14"/><path d="M2 20c2-2 5-4 10-4s8 2 10 4"/></svg>` 
 				}
 			]
 		}
@@ -284,6 +292,8 @@
 						<VectorRacing onBack={() => setView('menu')} {registerActions} />
 					{:else if currentView === 'tracksofgalileo'}
 						<TracksOfGalileo onBack={() => setView('menu')} {registerActions} />
+					{:else if currentView === 'lunarlander'}
+						<LunarLander onBack={() => setView('menu')} {registerActions} />
 					{/if}
 				</div>
 			</div>
