@@ -46,6 +46,18 @@
 		}
 	}
 
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === '1') {
+			handleTowerClick(0);
+		} else if (e.key === '2') {
+			handleTowerClick(1);
+		} else if (e.key === '3') {
+			handleTowerClick(2);
+		} else if (e.key.toLowerCase() === 'r') {
+			if (gameState !== 'start') initGame();
+		}
+	}
+
 	function handleTowerClick(index: number) {
 		if (gameState !== 'playing') return;
 
@@ -104,6 +116,8 @@
 		});
 	});
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="hanoi-container">
 	<Instructions bind:this={instructions} gameId="hanoi" title="Tower of Hanoi">
