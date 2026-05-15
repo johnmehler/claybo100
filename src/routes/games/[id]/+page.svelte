@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { getGameById } from '$lib/games';
 	import { gameGuides } from '$lib/guides';
+	import { gameSEO } from '$lib/seo';
 	import Sidebar from '$lib/Sidebar.svelte';
 	import { fade } from 'svelte/transition';
 
@@ -57,14 +58,48 @@
 
 	const GameComponent = $derived(gameComponents[id]);
 	const guide = $derived(gameGuides[id] || '');
+	const seo = $derived(gameSEO[id]);
+	const canonical = $derived(`https://onlinemath.games/games/${id}`);
+	const pageTitle = $derived(seo?.title ?? (game ? `${game.label} | onlinemath.games` : 'Game Not Found | onlinemath.games'));
+	const pageDescription = $derived(seo?.description ?? (game ? `${game.description} Play ${game.label} online for free at onlinemath.games.` : ''));
+	const schema = $derived(game && seo ? JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'VideoGame',
+		name: game.label,
+		url: canonical,
+		description: seo.description,
+		genre: seo.genre,
+		applicationCategory: 'Game',
+		operatingSystem: 'Any (web browser)',
+		gamePlatform: ['Web browser', 'Mobile', 'Desktop'],
+		inLanguage: 'en',
+		isAccessibleForFree: true,
+		keywords: seo.keywords.join(', '),
+		publisher: { '@type': 'Organization', name: 'onlinemath.games', url: 'https://onlinemath.games' },
+		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+		...(game.updated ? { dateModified: game.updated } : {})
+	}) : '');
 </script>
 
 <svelte:head>
+	<title>{pageTitle}</title>
 	{#if game}
-		<title>{game.label} | onlinemath.games</title>
-		<meta name="description" content="{game.description} Play {game.label} online for free at onlinemath.games." />
-	{:else}
-		<title>Game Not Found | onlinemath.games</title>
+		<meta name="description" content={pageDescription} />
+		{#if seo?.keywords?.length}
+			<meta name="keywords" content={seo.keywords.join(', ')} />
+		{/if}
+		<link rel="canonical" href={canonical} />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={pageDescription} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:site_name" content="onlinemath.games" />
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:title" content={pageTitle} />
+		<meta name="twitter:description" content={pageDescription} />
+		{#if schema}
+			{@html `<script type="application/ld+json">${schema}<\/script>`}
+		{/if}
 	{/if}
 </svelte:head>
 
@@ -78,6 +113,9 @@
 					<svelte:component this={GameComponent} {registerActions} />
 				</div>
 			</div>
+			{#if seo?.about}
+				<p class="game-about">{seo.about}</p>
+			{/if}
 			{#if guide}
 				<article class="game-guide" aria-label="{game?.label} Guide">
 					{@html guide}
@@ -159,10 +197,20 @@
 		margin-top: 1rem;
 	}
 
+	.game-about {
+		max-width: 720px;
+		margin: 4vmin auto 0;
+		padding: 0 3vmin;
+		color: rgba(255, 255, 255, 0.85);
+		font-size: 15px;
+		line-height: 1.6;
+		font-weight: 500;
+	}
+
 	.game-guide {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: 4vmin 3vmin;
+		padding: 2vmin 3vmin 4vmin;
 		color: rgba(255, 255, 255, 0.7);
 		font-size: 14px;
 		line-height: 1.7;

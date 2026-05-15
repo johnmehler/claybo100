@@ -191,7 +191,7 @@
 			try {
 				if (selectedOp === "+") val = b1.val.add(b2.val);
 				else if (selectedOp === "-") val = b1.val.sub(b2.val);
-				else if (selectedOp === "×") {
+				else if (selectedOp === "x") {
 					if (b1.val.n === 0 || b2.val.n === 0) {
 						triggerLoser();
 						selectedBlockId = null;
@@ -295,7 +295,7 @@
 			key === "/"
 		) {
 			let mappedOp = key;
-			if (key === "*" || key.toLowerCase() === "x") mappedOp = "×";
+			if (key === "*" || key.toLowerCase() === "x") mappedOp = "x";
 			if (key === "/") mappedOp = "÷";
 			if (selectedBlockId !== null) {
 				if (selectedOp === mappedOp) selectedOp = null;
@@ -360,7 +360,7 @@
 			</div>
 
 			<div class="operators">
-				{#each ["+", "-", "×", "÷"] as op}
+				{#each ["+", "-", "x", "÷"] as op}
 					<button
 						class="op {selectedOp === op ? 'selected' : ''}"
 						disabled={selectedBlockId === null || !!status}

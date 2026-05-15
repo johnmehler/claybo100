@@ -248,9 +248,9 @@
 				const landScore = baseScore + fuelBonus;
 				score += landScore;
 				if (vy < 0.5 && Math.abs(vx) < 0.3) {
-					landingMessage = `PERFECT LANDING! ×${pad.multiplier} +${landScore}`;
+					landingMessage = `PERFECT LANDING! x${pad.multiplier} +${landScore}`;
 				} else {
-					landingMessage = `SAFE LANDING ×${pad.multiplier} +${landScore}`;
+					landingMessage = `SAFE LANDING x${pad.multiplier} +${landScore}`;
 				}
 			} else {
 				gameState = 'crashed';
@@ -495,7 +495,7 @@
 					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
 					opacity="0.9" />
 				<text x={pad.x + pad.width / 2} y={pad.y + 3} text-anchor="middle"
-					fill="rgba(255,255,255,0.5)" font-size="1.8" font-weight="800">×{pad.multiplier}</text>
+					fill="rgba(255,255,255,0.5)" font-size="1.8" font-weight="800">x{pad.multiplier}</text>
 				<!-- Pad beacon lights -->
 				<circle cx={pad.x + 0.3} cy={pad.y - 0.2} r="0.3"
 					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
