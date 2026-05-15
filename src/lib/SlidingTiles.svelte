@@ -14,7 +14,15 @@
 	let initialTiles = $state<number[]>([]);
 	let isWon = $state(false);
 	let moves = $state(0);
-	let targetMoves = $state(80);
+	let optimalMoves = $state(0);
+	let currentRating = $derived.by(() => {
+		if (optimalMoves === 0) return "---";
+		const diff = moves / optimalMoves;
+		if (diff <= 1.1) return "BRILLIANT";
+		if (diff <= 1.35) return "AMAZING";
+		if (diff <= 1.7) return "GOOD";
+		return "LEARNING";
+	});
 
 	// Solver and playback state
 	let solutionPath = $state<number[]>([]);
@@ -250,6 +258,16 @@
 			initialTiles = [...newTiles];
 			tiles = newTiles;
 			shufflePath = sPath;
+			
+			// Background calculate optimal
+			setTimeout(() => {
+				const path = solvePuzzle();
+				if (path) {
+					optimalMoves = path.length;
+				} else {
+					optimalMoves = shufflePath.length;
+				}
+			}, 50);
 		} else {
 			tiles = [...initialTiles];
 		}
@@ -325,9 +343,15 @@
 				<span class="value">{moves}</span>
 			</div>
 			<div class="stat">
-				<span class="label">TARGET</span>
-				<span class="value">{targetMoves}</span>
+				<span class="label">OPTIMAL</span>
+				<span class="value">{optimalMoves || '...'}</span>
 			</div>
+			{#if isWon}
+				<div class="stat" transition:fade>
+					<span class="label">RATING</span>
+					<span class="value rating-value">{currentRating}</span>
+				</div>
+			{/if}
 		</div>
 		<div id="sliding-board-container" class="board-container">
 			<div id="sliding-grid" class="grid">
@@ -493,6 +517,12 @@
 		user-select: none;
 		transition: background 0.2s, filter 0.2s;
 	}
+	.stat .value.rating-value {
+		font-size: 3.5vmin;
+		color: var(--color-bittersweet);
+		text-shadow: 0 0 15px rgba(255, 110, 97, 0.4);
+	}
+
 	.tile:hover:not(.empty) {
 		background: var(--color-illusion);
 		filter: brightness(1.1);
