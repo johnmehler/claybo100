@@ -6,15 +6,15 @@
 </script>
 
 <svelte:head>
-	<title>Brainy Sparks Math Museum | Interactive Logic & Math Games for All Ages</title>
-	<meta name="description" content="Explore the Brainy Sparks Math Museum: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
+	<title>The Math Museum | Interactive Logic & Math Games</title>
+	<meta name="description" content="Explore The Math Museum: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
 </svelte:head>
 
 <main id="main-view" class="main-container centered">
 	<div id="menu-screen" class="menu-screen" in:fade={{ duration: 400 }}>
 		<header id="app-header" class="header" in:fade={{ duration: 800 }}>
-			<h1 id="app-title">BRAINY SPARKS <span class="highlight">MATH MUSEUM</span></h1>
-			<p id="app-subtitle" class="app-subtitle">SELECT YOUR EXPERIENCE</p>
+			<h1 id="app-title">THE <span class="highlight">MATH MUSEUM</span></h1>
+			<p id="app-subtitle" class="app-subtitle">EXPLORE THE COLLECTION</p>
 		</header>
 
 		<div id="game-list" class="game-catalog">
@@ -70,11 +70,12 @@
 	}
 
 	h1 {
-		font-size: 7vmin;
+		font-size: 8vmin;
 		font-weight: 900;
-		letter-spacing: -0.3vmin;
+		letter-spacing: -0.4vmin;
 		margin: 0;
 		color: white;
+		text-transform: uppercase;
 	}
 
 	.highlight {
