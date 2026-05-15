@@ -107,10 +107,10 @@
 	}
 
 	function startGame() {
-		x = 15;
-		y = 10;
-		vx = 8 + Math.random() * 0.5;
-		vy = 0;
+		x = 50;
+		y = 5;
+		vx = (Math.random() - 0.5) * 4;
+		vy = 2;
 		angle = 0;
 		fuel = INITIAL_FUEL;
 		thrusting = false;
