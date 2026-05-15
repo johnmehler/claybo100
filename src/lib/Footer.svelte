@@ -2,7 +2,7 @@
 	import { games } from './games';
 </script>
 
-<footer class="seo-footer" aria-hidden="true">
+<footer class="seo-footer">
 	<div class="footer-content">
 		<h2>The Math Museum</h2>
 		<p>A free collection of interactive logic puzzles, abstract strategy games, and physics simulations designed for students, educators, and curious minds of all ages.</p>
@@ -19,34 +19,52 @@
 
 <style>
 	.seo-footer {
-		position: absolute;
-		top: 100%;
-		left: 0;
 		width: 100%;
-		height: 1px;
-		overflow: hidden;
-		opacity: 0;
-		pointer-events: none;
-		background: #000;
-		color: #333;
-		font-size: 10px;
+		background: rgba(255, 255, 255, 0.02);
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
+		color: rgba(255, 255, 255, 0.4);
+		font-size: 12px;
 	}
 
 	.footer-content {
-		padding: 20px;
+		padding: 4vmin;
+		max-width: 800px;
+		margin: 0 auto;
+		text-align: center;
+	}
+
+	.footer-content h2 {
+		font-size: 2vmin;
+		font-weight: 800;
+		color: rgba(255, 255, 255, 0.6);
+		margin: 0 0 1vmin;
+	}
+
+	.footer-content p {
+		margin: 0 0 2vmin;
+		line-height: 1.6;
 	}
 
 	ul {
 		list-style: none;
 		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 1.5vmin;
 	}
 
 	li {
-		margin-bottom: 5px;
+		margin: 0;
 	}
 
 	a {
-		color: #333;
+		color: rgba(255, 255, 255, 0.3);
 		text-decoration: none;
+		transition: color 0.2s;
+	}
+
+	a:hover {
+		color: var(--color-bittersweet);
 	}
 </style>

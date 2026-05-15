@@ -41,10 +41,9 @@
 <style>
 	.main-container {
 		width: 100vw;
-		height: 100vh;
+		min-height: 100vh;
 		background: #09090b;
 		display: flex;
-		overflow: hidden;
 	}
 
 	.main-container.centered {
@@ -59,7 +58,7 @@
 		align-items: center;
 		justify-content: center;
 		width: 100%;
-		height: 100%;
+		min-height: 100vh;
 		padding: 4vmin;
 		overflow-y: auto;
 	}

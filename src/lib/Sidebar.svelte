@@ -109,7 +109,7 @@
 	/* Sidebar Styles */
 	.sidebar {
 		width: 32vmin;
-		height: 100%;
+		height: 100vh;
 		background: rgba(255, 255, 255, 0.02);
 		border-right: 1px solid rgba(255, 255, 255, 0.08);
 		display: flex;
@@ -118,7 +118,9 @@
 		backdrop-filter: blur(20px);
 		z-index: 100;
 		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-		position: relative;
+		position: sticky;
+		top: 0;
+		flex-shrink: 0;
 	}
 
 	.sidebar.collapsed {

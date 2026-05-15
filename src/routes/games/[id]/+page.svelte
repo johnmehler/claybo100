@@ -95,10 +95,9 @@
 <style>
 	.main-container {
 		width: 100vw;
-		height: 100vh;
+		min-height: 100vh;
 		background: #09090b;
 		display: flex;
-		overflow: hidden;
 	}
 
 	.main-container.in-game {
@@ -107,7 +106,6 @@
 
 	.view-content {
 		flex: 1;
-		height: 100%;
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -115,7 +113,7 @@
 
 	.game-mat {
 		flex: 1;
-		height: 100%;
+		min-height: 100vh;
 		display: flex;
 		align-items: center;
 		justify-content: center;
