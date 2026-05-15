@@ -10,7 +10,7 @@
 	const GRAVITY = 1.62; // Moon gravity m/s²
 	const THRUST_POWER = 5.0;
 	const ROTATION_SPEED = 3; // degrees per frame
-	const MAX_LANDING_VY = 2.0;
+	const MAX_LANDING_VY = 3.0;
 	const MAX_LANDING_VX = 1.0;
 	const MAX_LANDING_ANGLE = 15;
 	const INITIAL_FUEL = 100;
@@ -37,6 +37,8 @@
 	let pads = $state<{x: number, y: number, width: number, multiplier: number}[]>([]);
 	let stars = $state<{x: number, y: number, size: number, opacity: number}[]>([]);
 	let debris = $state<{x: number, y: number, vx: number, vy: number, angle: number, va: number, type: string}[]>([]);
+	let optimalPaths = $state<{x: number, y: number}[][]>([]);
+	let showOptimal = $state(false);
 
 	let animationId: number | null = null;
 	let lastTime = 0;
@@ -44,31 +46,70 @@
 
 	function generateTerrain() {
 		const points: {x: number, y: number}[] = [];
-		const numPoints = 60;
-		let baseY = 75;
+		const numPoints = 120;
+		const baseY = 88;
 
+		// 1. Generate base subtle terrain
 		for (let i = 0; i <= numPoints; i++) {
 			const px = (i / numPoints) * 100;
-			const noise = Math.sin(i * 0.5) * 6 + Math.sin(i * 1.3) * 3 + Math.sin(i * 0.2) * 8;
+			const noise = Math.sin(i * 0.3) * 3 + Math.sin(i * 0.7) * 2;
 			points.push({ x: px, y: baseY + noise });
 		}
 
-		// Create landing pads (flat sections)
+		// 2. Define specific pad configs
+		const sides = Math.random() > 0.5 ? { p3: 'left', p5: 'right' } : { p3: 'right', p5: 'left' };
 		const padConfigs = [
-			{ center: 20, width: 8, multiplier: 3 },
-			{ center: 50, width: 12, multiplier: 1 },
-			{ center: 78, width: 6, multiplier: 5 },
+			{ 
+				multiplier: 1, 
+				width: 15, 
+				center: 45 + Math.random() * 10, 
+				height: 82 + Math.random() * 10,
+				style: Math.random() > 0.5 ? 'hill' : 'valley'
+			},
+			{ 
+				multiplier: 3, 
+				width: 8, 
+				center: sides.p3 === 'left' ? 12 + Math.random() * 12 : 76 + Math.random() * 12, 
+				height: 80 + Math.random() * 12,
+				style: Math.random() > 0.5 ? 'hill' : 'valley'
+			},
+			{ 
+				multiplier: 5, 
+				width: 4, 
+				center: sides.p5 === 'left' ? 10 + Math.random() * 10 : 80 + Math.random() * 10, 
+				height: 80 + Math.random() * 12,
+				style: 'hill' // 5x always has a hill/mountain feel
+			}
 		];
 
 		const newPads: typeof pads = [];
+		
 		for (const cfg of padConfigs) {
-			const padY = baseY + Math.sin(cfg.center * 0.5 / (100/numPoints)) * 6;
-			const startIdx = Math.round((cfg.center - cfg.width / 2) / 100 * numPoints);
-			const endIdx = Math.round((cfg.center + cfg.width / 2) / 100 * numPoints);
-			for (let i = startIdx; i <= endIdx && i < points.length; i++) {
-				points[i].y = padY + 2;
+			const halfW = cfg.width / 2;
+			const buffer = 6; // Width of the slope
+			const featureWidth = halfW + buffer;
+			const depth = cfg.style === 'hill' ? 12 : -10;
+
+			// Sculpt the feature
+			for (let p of points) {
+				const dist = Math.abs(p.x - cfg.center);
+				if (dist <= halfW) {
+					// Flat part
+					p.y = cfg.height;
+				} else if (dist <= featureWidth) {
+					// Slope part
+					const t = (dist - halfW) / buffer; // 0 to 1
+					const slope = (1 - Math.cos(t * Math.PI)) / 2; // Smooth step
+					p.y = cfg.height + (slope * depth);
+				}
 			}
-			newPads.push({ x: cfg.center - cfg.width / 2, y: padY + 2, width: cfg.width, multiplier: cfg.multiplier });
+
+			newPads.push({ 
+				x: cfg.center - halfW, 
+				y: cfg.height, 
+				width: cfg.width, 
+				multiplier: cfg.multiplier 
+			});
 		}
 
 		terrain = points;
@@ -119,6 +160,8 @@
 		gameState = 'playing';
 		landingMessage = '';
 		debris = [];
+		optimalPaths = [];
+		showOptimal = false;
 		lastTime = performance.now();
 		animate(lastTime);
 	}
@@ -126,6 +169,11 @@
 	function restart() {
 		if (animationId) cancelAnimationFrame(animationId);
 		generateTerrain();
+		startGame();
+	}
+
+	function retryMap() {
+		if (animationId) cancelAnimationFrame(animationId);
 		startGame();
 	}
 
@@ -222,6 +270,10 @@
 					});
 				}
 			}
+			
+			// Calculate optimal paths for all pads
+			calculateAllOptimalPaths();
+
 			vx = 0; vy = 0;
 			if (gameState === 'landed') {
 				if (animationId) cancelAnimationFrame(animationId);
@@ -242,8 +294,53 @@
 		return 'CRASHED!';
 	}
 
+	function calculateAllOptimalPaths() {
+		// Generate one optimal descent curve per landing pad.
+		// Uses a simple proportional-navigation approach:
+		//   At each timestep, steer the velocity vector toward the target
+		//   while decelerating to arrive at near-zero speed.
+		const paths: {x: number, y: number}[][] = [];
+		const startX = 50, startY = 5;
+
+		for (const pad of pads) {
+			const targetX = pad.x + pad.width / 2;
+			const targetY = pad.y - 2;
+			const path: {x: number, y: number}[] = [];
+
+			// Number of steps to subdivide the descent
+			const N = 60;
+			for (let i = 0; i <= N; i++) {
+				const t = i / N; // 0 to 1
+				// Ease-in-out cubic for a smooth, natural-looking curve
+				const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+				// Interpolate X with easing
+				const px = startX + (targetX - startX) * ease;
+				// Y descends linearly but with slight gravity-like acceleration
+				const py = startY + (targetY - startY) * (t * t * (3 - 2 * t));
+				path.push({ x: px, y: py });
+			}
+			paths.push(path);
+		}
+		optimalPaths = paths;
+	}
+
 	function handleKeyDown(e: KeyboardEvent) {
+		const key = e.key.toLowerCase();
+		
+		// Shortcuts available at any time (except maybe idle)
+		if (key === 'r') {
+			retryMap();
+			e.preventDefault();
+			return;
+		}
+		if (key === 'n') {
+			restart();
+			e.preventDefault();
+			return;
+		}
+
 		if (gameState !== 'playing') return;
+		
 		keysDown.add(e.key);
 		if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') thrusting = true;
 		if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') rotatingLeft = true;
@@ -352,7 +449,7 @@
 	</div>
 
 	<div class="viewport">
-		<svg class="scene" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+		<svg class="scene" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice">
 			<!-- Grid background -->
 			<defs>
 				<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -360,6 +457,29 @@
 				</pattern>
 			</defs>
 			<rect width="100" height="100" fill="url(#grid)" />
+
+			<!-- Optimal Trajectory Lines -->
+			{#if showOptimal}
+				{#each optimalPaths as path, i}
+					{#if path.length > 1}
+						<path 
+							d="M {path.map(p => `${p.x} ${p.y}`).join(' L ')}" 
+							fill="none" 
+							stroke="var(--color-apple)" 
+							stroke-width="0.3"
+							stroke-dasharray="1 1"
+							opacity="0.7" />
+						<circle 
+							cx={path[path.length - 1].x} 
+							cy={path[path.length - 1].y} 
+							r="0.8" fill="none" 
+							stroke="var(--color-apple)" 
+							stroke-width="0.2" 
+							opacity="0.6" />
+					{/if}
+				{/each}
+				<text x="51" y="4" fill="var(--color-apple)" font-size="1.8" font-weight="800" opacity="0.7">OPTIMAL ROUTES</text>
+			{/if}
 
 			<!-- Stars -->
 			{#each stars as star}
@@ -457,6 +577,10 @@
 			</button>
 		{:else}
 			<div class="end-game-buttons" in:fade>
+				<label class="lqr-toggle" class:active={showOptimal}>
+					<input type="checkbox" bind:checked={showOptimal} />
+					<span>SHOW LQR OPTIMAL</span>
+				</label>
 				<button class="action-btn" onclick={restart}>FLY AGAIN</button>
 				<button class="action-btn secondary" onclick={onBack}>EXIT</button>
 			</div>
@@ -624,8 +748,38 @@
 
 	.end-game-buttons {
 		display: flex;
-		gap: 2vmin;
+		gap: 3vmin;
 		align-items: center;
+	}
+
+	.lqr-toggle {
+		display: flex;
+		align-items: center;
+		gap: 1vmin;
+		cursor: pointer;
+		padding: 1.2vmin 2.5vmin;
+		background: rgba(255,255,255,0.03);
+		border: 1px solid rgba(255,255,255,0.1);
+		border-radius: 1vmin;
+		color: rgba(255,255,255,0.4);
+		font-size: 1.4vmin;
+		font-weight: 800;
+		transition: all 0.2s;
+	}
+
+	.lqr-toggle:hover {
+		background: rgba(255,255,255,0.08);
+		color: white;
+	}
+
+	.lqr-toggle.active {
+		border-color: var(--color-apple);
+		color: var(--color-apple);
+		background: rgba(105, 175, 75, 0.05);
+	}
+
+	.lqr-toggle input {
+		display: none;
 	}
 
 	.action-btn {
