@@ -60,6 +60,7 @@
 	const guide = $derived(gameGuides[id] || '');
 	const seo = $derived(gameSEO[id]);
 	const canonical = $derived(`https://onlinemath.games/games/${id}`);
+	const ogImage = $derived(`https://onlinemath.games/og/${id}.png`);
 	const pageTitle = $derived(seo?.title ?? (game ? `${game.label} | onlinemath.games` : 'Game Not Found | onlinemath.games'));
 	const pageDescription = $derived(seo?.description ?? (game ? `${game.description} Play ${game.label} online for free at onlinemath.games.` : ''));
 	const schema = $derived(game && seo ? JSON.stringify({
@@ -76,6 +77,7 @@
 		isAccessibleForFree: true,
 		keywords: seo.keywords.join(', '),
 		publisher: { '@type': 'Organization', name: 'onlinemath.games', url: 'https://onlinemath.games' },
+		image: ogImage,
 		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 		...(game.updated ? { dateModified: game.updated } : {})
 	}) : '');
@@ -94,9 +96,14 @@
 		<meta property="og:description" content={pageDescription} />
 		<meta property="og:url" content={canonical} />
 		<meta property="og:site_name" content="onlinemath.games" />
-		<meta name="twitter:card" content="summary" />
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content={ogImage} />
 		<meta name="twitter:title" content={pageTitle} />
 		<meta name="twitter:description" content={pageDescription} />
+		<meta name="twitter:image:alt" content={pageTitle} />
 		{#if schema}
 			{@html `<script type="application/ld+json">${schema}<\/script>`}
 		{/if}
