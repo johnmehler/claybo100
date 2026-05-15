@@ -262,13 +262,7 @@
 		}, 0);
 	}
 
-	function reset() {
-		if (trackType === "random") {
-			generateRandomTrack();
-		} else {
-			generateTrack();
-		}
-
+	function restartCurrentMap() {
 		gameStarted = false;
 		gameWon = false;
 		crashed = false;
@@ -280,6 +274,23 @@
 		posX = 0;
 		posY = 0;
 		requestAnimationFrame(draw);
+	}
+
+	function reset() {
+		if (trackType === "random") {
+			generateRandomTrack();
+		} else {
+			generateTrack();
+		}
+		restartCurrentMap();
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key.toLowerCase() === 'r') {
+			restartCurrentMap();
+		} else if (e.key.toLowerCase() === 'n') {
+			reset();
+		}
 	}
 
 	function clickStart(cellIdx: number) {
@@ -360,6 +371,7 @@
 		ax: number;
 		ay: number;
 		clear: boolean;
+		won: boolean;
 	}[] {
 		if (!gameStarted || crashed || gameWon) return [];
 		const targets: {
@@ -368,13 +380,25 @@
 			ax: number;
 			ay: number;
 			clear: boolean;
+			won: boolean;
 		}[] = [];
 		for (const ax of accChoices) {
 			for (const ay of accChoices) {
 				const nx = posX + velX + ax;
 				const ny = posY + velY + ay;
 				const path = checkPath(posX, posY, nx, ny);
-				targets.push({ x: nx, y: ny, ax, ay, clear: path.clear });
+				
+				let tx = nx;
+				let ty = ny;
+				if (path.won || !path.clear) {
+					tx = path.cx;
+					ty = path.cy;
+				}
+				
+				tx = Math.max(0, Math.min(COLS - 1, tx));
+				ty = Math.max(0, Math.min(ROWS - 1, ty));
+				
+				targets.push({ x: tx, y: ty, ax, ay, clear: path.clear, won: path.won });
 			}
 		}
 		return targets;
@@ -735,6 +759,24 @@
 		// If game started, check if click on a valid target
 		if (gameStarted && !crashed && !gameWon) {
 			const targets = getTargets();
+			
+			// Priority 1: Winning targets
+			for (const t of targets) {
+				if (t.x === clickX && t.y === clickY && t.won) {
+					move(t.ax, t.ay);
+					return;
+				}
+			}
+			
+			// Priority 2: Clear targets
+			for (const t of targets) {
+				if (t.x === clickX && t.y === clickY && t.clear) {
+					move(t.ax, t.ay);
+					return;
+				}
+			}
+			
+			// Priority 3: Crash targets
 			for (const t of targets) {
 				if (t.x === clickX && t.y === clickY) {
 					move(t.ax, t.ay);
@@ -796,6 +838,8 @@
 
 	let speed = $derived(Math.sqrt(velX * velX + velY * velY).toFixed(1));
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="game-container">
 	<Instructions
