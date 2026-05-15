@@ -32,17 +32,18 @@
 	// Simulation Parameters (Controllable)
 	let mobilityFactor = $state(0.8);
 	let testingIsolation = $state(0);   // T: 0 to 1
-	let quarantineFines = $state(0);    // F: 0 to 1
+	let sanitaryProtocols = $state(0);  // P: 0 to 1
 
 	// Biological Parameters (Difficulty-locked)
 	let difficulty = $state<'EASY' | 'MED' | 'HARD'>('MED');
-	let transmissionChance = $derived(difficulty === 'EASY' ? 0.08 : (difficulty === 'MED' ? 0.15 : 0.25));
+	let transmissionBase = $derived(difficulty === 'EASY' ? 0.08 : (difficulty === 'MED' ? 0.15 : 0.25));
 	let immuneRate = $derived(difficulty === 'EASY' ? 0.50 : (difficulty === 'MED' ? 0.25 : 0.05));
 	let durationBase = $derived(difficulty === 'EASY' ? 180 : (difficulty === 'MED' ? 250 : 350));
 	let fatalityRate = $derived(difficulty === 'EASY' ? 0.01 : (difficulty === 'MED' ? 0.02 : 0.05));
 
 	// Derived System Stats
-	let effectiveMobility = $derived(Math.max(0.2, mobilityFactor - (0.15 * quarantineFines)));
+	let effectiveMobility = $derived(mobilityFactor);
+	let transmissionChance = $derived(transmissionBase * (1 - (0.50 * sanitaryProtocols)));
 	let recoveryDuration = $derived(durationBase * (1 - (0.50 * testingIsolation)));
 	
 	let stats = $derived.by(() => {
@@ -59,12 +60,12 @@
 
 	// Economic Variables
 	let budget = $state(INITIAL_BUDGET);
-	let costMobility = $derived(Math.floor(5500 - (5000 * effectiveMobility)));
+	let costMobility = $derived(Math.floor(5500 - (5000 * mobilityFactor)));
 	let costHealthDrain = $derived(stats.i * 100);
 	let costTesting = $derived(Math.floor(1500 * testingIsolation));
-	let revenueFines = $derived(Math.floor(3000 * quarantineFines * effectiveMobility));
+	let costSanitary = $derived(Math.floor(1000 * sanitaryProtocols));
 
-	let totalDailyDrain = $derived(costMobility + costHealthDrain + costTesting - revenueFines);
+	let totalDailyDrain = $derived(costMobility + costHealthDrain + costTesting + costSanitary);
 
 	let history = $state<{s: number, i: number, r: number, d: number}[]>([]);
 
@@ -197,9 +198,7 @@
 					<span>Mob: {costMobility}</span>
 					<span>Hlth: {costHealthDrain}</span>
 					<span>Test: {costTesting}</span>
-				{#if revenueFines > 0}
-					<span style="color: #69af4b;">Fines: +{revenueFines}</span>
-				{/if}
+					<span>Protocols: {costSanitary}</span>
 			</div>
 		</div>
 	</div>
@@ -293,15 +292,15 @@
 			</div>
 
 			<div class="control-group controllable">
-				<label>Testing & Isolation: {(testingIsolation * 100).toFixed(0)}%</label>
+				<label>Quarantine & Testing: {(testingIsolation * 100).toFixed(0)}%</label>
 				<input type="range" min="0" max="1" step="0.05" bind:value={testingIsolation} />
 				<div class="hint">Shortens Infectious Duration | -$1,500/day</div>
 			</div>
 
 			<div class="control-group controllable">
-				<label>Quarantine Fines: {(quarantineFines * 100).toFixed(0)}%</label>
-				<input type="range" min="0" max="1" step="0.05" bind:value={quarantineFines} />
-				<div class="hint">Revenue + Mobility suppression | +$3,000/day revenue</div>
+				<label>Sanitary Protocols: {(sanitaryProtocols * 100).toFixed(0)}%</label>
+				<input type="range" min="0" max="1" step="0.05" bind:value={sanitaryProtocols} />
+				<div class="hint">Reduces Transmission Chance | -$1,000/day</div>
 			</div>
 
 			<div class="history-chart">
