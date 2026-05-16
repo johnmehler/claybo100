@@ -24,6 +24,7 @@
 	import IceSlider from "$lib/IceSlider.svelte";
 	import EpidemicSim from "$lib/EpidemicSim.svelte";
 	import LaserMaze from "$lib/LaserMaze.svelte";
+	import BlockDude from "$lib/BlockDude.svelte";
 
 	const id = $derived($page.params.id);
 	const game = $derived(getGameById(id));
@@ -65,6 +66,7 @@
 		iceslider: IceSlider,
 		epidemicsim: EpidemicSim,
 		lasermaze: LaserMaze,
+		blockdude: BlockDude,
 	};
 
 	const GameComponent = $derived(gameComponents[id]);
@@ -178,7 +180,11 @@
 				in:fade={{ duration: 300 }}
 			>
 				<div class="game-frame-adaptive">
-					<svelte:component this={GameComponent} {registerActions} {onBack} />
+					<svelte:component
+						this={GameComponent}
+						{registerActions}
+						{onBack}
+					/>
 				</div>
 			</div>
 			{#if seo?.about}

@@ -192,6 +192,17 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 			{ name: 'Plan the path', text: 'Trace the path of the beam as it bounces off mirrors. Each mirror reflects the laser 90 degrees depending on its orientation.' },
 			{ name: 'Hit the target', text: 'Align the mirrors so the final segment of the laser beam lands on the circular target icon.' }
 		]
+	},
+	'blockdude': {
+		name: 'How to play Block Dude',
+		description: 'Stack and move blocks to navigate levels and reach the exit door.',
+		steps: [
+			{ name: 'Move Left and Right', text: 'Use the arrow keys to walk. You will automatically climb over blocks that are one unit high.' },
+			{ name: 'Pick up a block', text: 'Stand in front of a block and press Space to lift it onto your head. You can only carry one block at a time.' },
+			{ name: 'Drop a block', text: 'Press Space again to drop the block in front of you. You can drop it on the ground or on top of other blocks.' },
+			{ name: 'Build staircases', text: 'Use multiple blocks to build steps to reach high ledges that you cannot climb normally.' },
+			{ name: 'Reach the exit', text: 'Navigate to the green exit door to complete the level.' }
+		]
 	}
 };
 
@@ -307,5 +318,12 @@ export const gameSEO: Record<string, GameSEO> = {
 		keywords: ['laser maze online', 'laser mirror puzzle', 'physics laser game', 'mirror reflection game', 'light bounce puzzle', 'laser maze unblocked'],
 		genre: 'Puzzle',
 		about: 'Laser Maze is a logic puzzle based on the physics of reflection. Use 90-degree mirrors to guide a light beam through an obstacle course to a target.'
+	},
+	'blockdude': {
+		title: 'Block Dude Online — Play the Classic TI-84 Calculator Game Free',
+		description: 'Play Block Dude online free. The classic graphing calculator puzzle game. Stack blocks to reach the exit. No downloads, mobile friendly, school safe.',
+		keywords: ['block dude online', 'play block dude', 'ti-84 block dude', 'calculator games online', 'block dude unblocked', 'stacking block puzzle'],
+		genre: 'Puzzle',
+		about: 'Block Dude is a legendary puzzle game from the TI-83/84 calculator era. Move blocks, build staircases, and find your way to the exit in this grid-based logic classic.'
 	}
 };

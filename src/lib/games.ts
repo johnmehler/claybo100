@@ -128,12 +128,12 @@ export const games = [
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Laser Maze Icon"><path d="M3 21h18"/><path d="M4 4l8 8"/><path d="M12 12l8-8"/><path d="M7 4h4v4"/><path d="M17 20h3v-3"/></svg>`
 	},
 	{
-		id: 'heat-diffusion',
-		label: 'Heat Diffusion (Coming Soon)',
-		description: 'Physics placeholder. Coming soon.',
-		cardClass: 'heat-card',
+		id: 'blockdude',
+		label: 'Block Dude',
+		description: 'Classic calculator puzzle. Stack blocks to reach the exit.',
+		cardClass: 'blockdude-card',
 		updated: '2026-05-16',
-		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Heat Diffusion Icon"><path d="M12 3v8"/><path d="M8 7c0-2 1.5-3 4-4"/><path d="M16 7c0-2-1.5-3-4-4"/><rect x="5" y="12" width="14" height="8" rx="2"/><path d="M8 16h8"/></svg>`
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Block Dude Icon"><rect x="3" y="14" width="6" height="6" rx="1"/><rect x="15" y="14" width="6" height="6" rx="1"/><rect x="9" y="8" width="6" height="6" rx="1"/><path d="M12 8V2"/><path d="M9 2h6"/></svg>`
 	},
 	{
 		id: 'lemonade-stand',
@@ -170,12 +170,12 @@ export const gameCategories = [
 	{
 		name: 'Abstract Games',
 		delay: 400,
-		gameIds: ['dotsandboxes', 'nim', 'hex', 'set', 'vectorracing']
+		gameIds: ['dotsandboxes', 'nim', 'hex', 'set', 'vectorracing', 'blockdude']
 	},
 	{
 		name: 'Physics',
 		delay: 600,
-		gameIds: ['shotsim', 'tracksofgalileo', 'lunarlander', 'epidemicsim', 'lasermaze', 'heat-diffusion']
+		gameIds: ['shotsim', 'tracksofgalileo', 'lunarlander', 'epidemicsim', 'lasermaze']
 	},
 	{
 		name: 'Business Sims',

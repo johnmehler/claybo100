@@ -188,5 +188,17 @@ export const gameGuides: Record<string, string> = {
 <p>Advanced laser mazes include beam splitters, color filters that only let certain beams through, and "checkpoints" that must be hit in sequence. Some modern VR titles like <em>The Talos Principle</em> use these mechanics in 3D space to create some of the most challenging puzzles in the genre.</p>
 <h3>Is this game school-safe?</h3>
 <p>Yes. Like all games in the Math Museum, Laser Maze is ad-free, account-free, and runs entirely in the local browser. It's a perfect visual way to teach the law of reflection and spatial reasoning.</p>
+`,
+
+	'blockdude': `<h2>Block Dude: History, Rules &amp; Strategy</h2>
+<p>Block Dude is a legendary puzzle game that gained cult status as a staple of the TI-83 and TI-84 graphing calculators in the late 1990s and early 2000s. Originally created by Brandon Sterner as part of the "Block" series, it became the quintessential "bored in math class" game. Its simple mechanics — move, pick up, drop — mask a deep combinatorial complexity that requires careful planning and spatial reasoning.</p>
+<h3>How to Play</h3>
+<p>You control Block Dude on a 2D grid. Your goal is to reach the exit door. You can move left and right, and you will automatically climb up if there is a single block in your way. You can pick up a block in front of you and carry it on your head, then drop it to build staircases or fill gaps. You can only carry one block at a time.</p>
+<h3>Strategy Tips</h3>
+<p>Think about your <strong>block economy</strong>. Every block you move is a resource you might need later. Before you drop a block into a pit, ask yourself: "Can I ever get this back?" Often, you'll need to build "steps" to reach high ledges. If you're stuck, try working backwards from the exit — what's the last block you need to place to reach the door?</p>
+<h3>Variations</h3>
+<p>The original calculator version featured 11 levels, while modern clones often include level editors and hundreds of community-made puzzles. The game belongs to the "Sokoban" family of transport puzzles, which are PSPACE-complete in terms of computational complexity.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes. It's the ultimate school-safe classic. This version has no ads, no chat, and no logins. It runs on Chromebooks and phones, making it a perfect, quiet logic challenge for the classroom.</p>
 `
 };

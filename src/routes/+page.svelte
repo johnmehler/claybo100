@@ -42,10 +42,7 @@
 	.main-container {
 		width: 100vw;
 		min-height: 100vh;
-		background:
-			radial-gradient(circle at 15% 15%, rgba(255, 110, 97, 0.12), transparent 45%),
-			radial-gradient(circle at 85% 5%, rgba(182, 116, 255, 0.08), transparent 40%),
-			#09090b;
+		background: #09090b;
 		display: flex;
 	}
 
@@ -136,7 +133,7 @@
 		align-items: center;
 		gap: 0.8rem;
 		cursor: pointer;
-		transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+		transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 		text-align: left;
 		position: relative;
 		overflow: hidden;
@@ -150,7 +147,6 @@
 		background: rgba(255, 255, 255, 0.1);
 		border-color: var(--color-illusion);
 		transform: translateY(-1px);
-		box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.7);
 	}
 
 	.card-icon {

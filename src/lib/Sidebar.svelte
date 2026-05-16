@@ -168,7 +168,6 @@
 		background: var(--color-bittersweet);
 		border-color: var(--color-bittersweet);
 		color: black;
-		box-shadow: 0 0 20px rgba(255, 110, 97, 0.4);
 	}
 
 	.sidebar-toggle-floating svg {
@@ -298,7 +297,6 @@
 		background: rgba(255, 255, 255, 0.06);
 		color: white;
 		border-color: rgba(255, 255, 255, 0.05);
-		box-shadow: 0 4px 20px -5px rgba(255, 110, 97, 0.15);
 	}
 
 	.control-btn.help { color: var(--color-illusion); }
@@ -323,7 +321,6 @@
 
 	.active .nav-icon {
 		color: var(--color-bittersweet);
-		filter: drop-shadow(0 0 5px rgba(255, 110, 97, 0.4));
 	}
 
 	.nav-icon :global(svg) {
@@ -344,7 +341,6 @@
 		height: 3vmin;
 		background: var(--color-bittersweet);
 		border-radius: 0 1vmin 1vmin 0;
-		box-shadow: 0 0 15px var(--color-bittersweet);
 	}
 
 	.sidebar-footer {
