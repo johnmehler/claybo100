@@ -34,20 +34,21 @@
 	};
 
 	// Weather types
-	type Weather = "sunny" | "cloudy" | "rainy" | "hot";
+	type Weather = "sunny" | "cloudy" | "rainy" | "hot" | "cold";
 
 	interface WeatherInfo {
 		type: Weather;
-		demandMultiplier: number;
+		temperature: number;
 		icon: string;
 		description: string;
 	}
 
 	const weatherTypes: WeatherInfo[] = [
-		{ type: "sunny", demandMultiplier: 1.3, icon: "☀️", description: "Sunny - Good for sales!" },
-		{ type: "cloudy", demandMultiplier: 1.0, icon: "☁️", description: "Cloudy - Normal demand" },
-		{ type: "hot", demandMultiplier: 1.8, icon: "🔥", description: "Hot & Dry - High demand!" },
-		{ type: "rainy", demandMultiplier: 0.4, icon: "🌧️", description: "Rainy - Low demand" }
+		{ type: "sunny", temperature: 75, icon: "☀️", description: "Sunny" },
+		{ type: "cloudy", temperature: 68, icon: "☁️", description: "Cloudy" },
+		{ type: "hot", temperature: 95, icon: "🔥", description: "Hot" },
+		{ type: "rainy", temperature: 60, icon: "🌧️", description: "Rainy" },
+		{ type: "cold", temperature: 45, icon: "❄️", description: "Cold" }
 	];
 
 	// State
@@ -80,10 +81,21 @@
 
 	function generateWeather(): WeatherInfo {
 		const rand = Math.random();
-		if (rand < 0.4) return weatherTypes[0]; // 40% sunny
-		if (rand < 0.7) return weatherTypes[1]; // 30% cloudy
-		if (rand < 0.85) return weatherTypes[2]; // 15% hot
-		return weatherTypes[3]; // 15% rainy
+		let baseWeather: WeatherInfo;
+		
+		if (rand < 0.35) baseWeather = weatherTypes[0]; // 35% sunny
+		else if (rand < 0.60) baseWeather = weatherTypes[1]; // 25% cloudy
+		else if (rand < 0.75) baseWeather = weatherTypes[2]; // 15% hot
+		else if (rand < 0.90) baseWeather = weatherTypes[3]; // 15% rainy
+		else baseWeather = weatherTypes[4]; // 10% cold
+		
+		// Add temperature variation (+/- 10 degrees)
+		const tempVariation = Math.floor(Math.random() * 21) - 10;
+		
+		return {
+			...baseWeather,
+			temperature: baseWeather.temperature + tempVariation
+		};
 	}
 
 	function getBulkCost(quantity: number, unitCost: number, bulkPrices?: Record<number, number>): number {
@@ -172,27 +184,63 @@
 	}
 
 	function calculateDemand(): number {
-		// Base demand depends on weather
-		let baseDemand = 20 * currentWeather.demandMultiplier;
+		// Base demand depends on temperature (optimal around 75-85°F)
+		let tempFactor = 1.0;
+		if (currentWeather.temperature >= 75 && currentWeather.temperature <= 85) {
+			tempFactor = 1.5; // Ideal temperature for lemonade
+		} else if (currentWeather.temperature > 85) {
+			tempFactor = 1.8; // Hot weather increases demand
+		} else if (currentWeather.temperature < 50) {
+			tempFactor = 0.3; // Cold weather reduces demand significantly
+		} else if (currentWeather.temperature < 65) {
+			tempFactor = 0.7; // Cool weather reduces demand
+		}
+		
+		// Weather condition modifier
+		let conditionFactor = 1.0;
+		switch (currentWeather.type) {
+			case "sunny":
+				conditionFactor = 1.3;
+				break;
+			case "cloudy":
+				conditionFactor = 1.0;
+				break;
+			case "hot":
+				conditionFactor = 1.6;
+				break;
+			case "rainy":
+				conditionFactor = 0.4;
+				break;
+			case "cold":
+				conditionFactor = 0.3;
+				break;
+		}
 		
 		// Price affects demand - higher price = lower demand
 		const priceFactor = Math.max(0.1, 1 - (pricePerCup - 0.10) * 2);
 		
-		// Random variation
-		const randomFactor = 0.8 + Math.random() * 0.4;
+		// Random variation (±15%)
+		const randomFactor = 0.85 + Math.random() * 0.3;
 		
-		return Math.floor(baseDemand * priceFactor * randomFactor);
+		const baseDemand = 20;
+		return Math.floor(baseDemand * tempFactor * conditionFactor * priceFactor * randomFactor);
 	}
 
 	function startDay() {
-		if (cupsToMake <= 0) {
-			alert("Make at least 1 cup of lemonade!");
-			return;
-		}
-
 		if (showBuyMenu) {
 			return;
 		}
+
+		// Auto-calculate max cups possible based on supplies
+		const maxCups = Math.min(cups, lemons, sugar, Math.floor(ice / 2));
+		
+		if (maxCups <= 0) {
+			alert("Not enough supplies to make lemonade!");
+			return;
+		}
+		
+		// Use max cups available
+		cupsToMake = maxCups;
 		
 		if (!makeLemonade()) {
 			return;
@@ -205,10 +253,10 @@
 		customers = Math.min(demand, availableCups);
 		revenue = customers * pricePerCup;
 		
-		// Costs for the day
-		costs = (cupsToMake * CUP_COST) + (cupsToMake * LEMON_COST) + (cupsToMake * SUGAR_COST) + (cupsToMake * 2 * ICE_COST);
+		// No daily operating costs - costs are only when buying supplies
+		costs = 0;
 		
-		profit = revenue - costs;
+		profit = revenue;
 		money += revenue;
 		
 		dailyHistory.push({
@@ -279,36 +327,16 @@
 				</div>
 			</div>
 
-			<div class="controls-panel">
-				<div class="control-group">
-					<span class="label">Price per Cup</span>
-					<div class="price-control" role="group" aria-label="Price per cup controls">
-						<button onclick={() => pricePerCup = Math.max(0.20, pricePerCup - 0.10)}>-</button>
-						<span>${pricePerCup.toFixed(2)}</span>
-						<button onclick={() => pricePerCup = Math.min(5.00, pricePerCup + 0.10)}>+</button>
-					</div>
+			<div class="weather-panel">
+				<div class="weather-display">
+					<span class="weather-icon">{currentWeather.icon}</span>
+					<span class="weather-text">{currentWeather.description} — {currentWeather.temperature}°F</span>
 				</div>
+			</div>
 
-				<div class="control-group">
-					<span class="label">Cups to Make</span>
-					<div class="cups-control" role="group" aria-label="Cups to make controls">
-						<button onclick={() => cupsToMake = Math.max(1, cupsToMake - 5)}>-5</button>
-						<span>{cupsToMake}</span>
-						<button onclick={() => cupsToMake = cupsToMake + 5}>+5</button>
-					</div>
-				</div>
-
-				<div class="recipe-info">
-					<p>Recipe per cup: 1 🥤 + 1 🍋 + 1 🍬 + 2 🧊</p>
-					{#if !canMakeLemonade(cupsToMake)}
-						<p class="warning">⚠️ Not enough supplies!</p>
-					{/if}
-				</div>
-
-				<div class="action-buttons">
-					<button class="btn secondary-btn" onclick={() => showBuyMenu = true}>Buy Supplies</button>
-					<button class="btn start-btn" onclick={startDay} disabled={!canMakeLemonade(cupsToMake)}>Start Day</button>
-				</div>
+			<div class="action-buttons">
+				<button class="btn secondary-btn" onclick={() => showBuyMenu = true}>Buy Supplies</button>
+				<button class="btn start-btn" onclick={startDay} disabled={!canMakeLemonade(1)}>Start Day</button>
 			</div>
 		</div>
 	{:else if showResults && !gameOver}
@@ -316,7 +344,7 @@
 			<h2>Day {currentDay} Results</h2>
 			<div class="weather-display">
 				<span class="weather-icon">{currentWeather.icon}</span>
-				<span>{currentWeather.description}</span>
+				<span>{currentWeather.description} — {currentWeather.temperature}°F</span>
 			</div>
 			<div class="results-stats">
 				<div class="result">
@@ -325,23 +353,7 @@
 				</div>
 				<div class="result">
 					<span class="label">Revenue</span>
-					<span
-						class="value"
-						class:positive={revenue >= costs}
-						class:negative={revenue < costs}
-					>${revenue.toFixed(2)}</span>
-				</div>
-				<div class="result">
-					<span class="label">Costs</span>
-					<span class="value negative">${costs.toFixed(2)}</span>
-				</div>
-				<div class="result">
-					<span class="label">Profit</span>
-					<span
-						class="value"
-						class:positive={profit >= 0}
-						class:negative={profit < 0}
-					>${profit.toFixed(2)}</span>
+					<span class="value positive">${revenue.toFixed(2)}</span>
 				</div>
 			</div>
 			<button class="btn next-btn" onclick={nextDay}>Next Day →</button>
@@ -544,77 +556,32 @@
 		font-size: 1.1rem;
 	}
 
-	.controls-panel {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
+	.weather-panel {
+		margin-bottom: 2rem;
 	}
 
-	.control-group {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.control-group .label {
-		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.6);
-		font-weight: 600;
-	}
-
-	.price-control, .cups-control {
+	.weather-display {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
-	}
-
-	.price-control button,
-	.cups-control button {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: white;
-		padding: 0.45rem 0.85rem;
-		border-radius: 8px;
-		font-weight: 700;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.price-control button:hover,
-	.cups-control button:hover {
-		background: #3f3f46;
-	}
-
-	.price-control span, .cups-control span {
+		justify-content: center;
+		gap: 0.5rem;
 		font-size: 1.25rem;
-		font-weight: 700;
-		min-width: 80px;
-		text-align: center;
-	}
-
-	.recipe-info {
-		background: rgba(255, 255, 255, 0.05);
 		padding: 0.75rem;
+		background: rgba(255, 255, 255, 0.05);
 		border-radius: 8px;
-		font-size: 0.85rem;
 	}
 
-	.recipe-info p {
-		margin: 0;
-		color: rgba(255, 255, 255, 0.7);
+	.weather-icon {
+		font-size: 2rem;
 	}
 
-	.recipe-info .warning {
-		color: #f87171;
+	.weather-text {
 		font-weight: 600;
-		margin-top: 0.5rem;
 	}
 
 	.action-buttons {
 		display: flex;
 		gap: 1rem;
-		margin-top: 1rem;
 	}
 
 	.btn {
@@ -628,6 +595,15 @@
 		transition: all 0.2s;
 	}
 
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn:not(:disabled):hover {
+		transform: scale(1.02);
+	}
+
 	.start-btn {
 		background: #fbbf24;
 		color: black;
@@ -635,12 +611,6 @@
 
 	.start-btn:hover:not(:disabled) {
 		background: #f59e0b;
-		transform: scale(1.02);
-	}
-
-	.start-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 
 	.secondary-btn {
@@ -912,24 +882,16 @@
 	.buy-btn {
 		background: #10b981;
 		color: white;
-		flex: 1;
 	}
 
 	.buy-btn:hover:not(:disabled) {
 		background: #059669;
-		transform: scale(1.02);
-	}
-
-	.buy-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 
 	.close-btn {
 		background: #27272a;
 		border: 1px solid #3f3f46;
 		color: white;
-		flex: 1;
 	}
 
 	.close-btn:hover {
