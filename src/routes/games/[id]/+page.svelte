@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { getGameById } from '$lib/games';
 	import { gameGuides } from '$lib/guides';
-	import { gameSEO } from '$lib/seo';
+	import { gameSEO, gameHowTo, type HowToStep } from '$lib/seo';
 	import Sidebar from '$lib/Sidebar.svelte';
 	import { fade } from 'svelte/transition';
 
@@ -81,6 +81,23 @@
 		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 		...(game.updated ? { dateModified: game.updated } : {})
 	}) : '');
+	const howTo = $derived(gameHowTo[id]);
+	const howToSchema = $derived(game && howTo ? JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'HowTo',
+		name: howTo.name,
+		description: howTo.description,
+		inLanguage: 'en',
+		totalTime: 'PT5M',
+		image: ogImage,
+		step: howTo.steps.map((s: HowToStep, i: number) => ({
+			'@type': 'HowToStep',
+			position: i + 1,
+			name: s.name,
+			text: s.text,
+			url: `${canonical}#step-${i + 1}`
+		}))
+	}) : '');
 </script>
 
 <svelte:head>
@@ -106,6 +123,9 @@
 		<meta name="twitter:image:alt" content={pageTitle} />
 		{#if schema}
 			{@html `<script type="application/ld+json">${schema}<\/script>`}
+		{/if}
+		{#if howToSchema}
+			{@html `<script type="application/ld+json">${howToSchema}<\/script>`}
 		{/if}
 	{/if}
 </svelte:head>
