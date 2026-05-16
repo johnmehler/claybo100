@@ -25,6 +25,7 @@
 	import EpidemicSim from "$lib/EpidemicSim.svelte";
 	import LaserMaze from "$lib/LaserMaze.svelte";
 	import BlockDude from "$lib/BlockDude.svelte";
+	import LemonadeStand from "$lib/LemonadeStand.svelte";
 
 	const id = $derived($page.params.id);
 	const game = $derived(getGameById(id));
@@ -67,6 +68,7 @@
 		epidemicsim: EpidemicSim,
 		lasermaze: LaserMaze,
 		blockdude: BlockDude,
+		lemonadestand: LemonadeStand,
 	};
 
 	const GameComponent = $derived(gameComponents[id]);

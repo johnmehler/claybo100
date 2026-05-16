@@ -136,9 +136,9 @@ export const games = [
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Block Dude Icon"><rect x="3" y="14" width="6" height="6" rx="1"/><rect x="15" y="14" width="6" height="6" rx="1"/><rect x="9" y="8" width="6" height="6" rx="1"/><path d="M12 8V2"/><path d="M9 2h6"/></svg>`
 	},
 	{
-		id: 'lemonade-stand',
+		id: 'lemonadestand',
 		label: 'Lemonade Stand',
-		description: 'Business sim placeholder. Coming soon.',
+		description: 'Run your own lemonade business. Manage inventory, set prices, and deal with weather.',
 		cardClass: 'lemonade-card',
 		updated: '2026-05-16',
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Lemonade Stand Icon"><path d="M3 10h18"/><path d="M5 10l2 10h10l2-10"/><path d="M9 6h6"/><path d="M12 6V3"/></svg>`
@@ -180,7 +180,7 @@ export const gameCategories = [
 	{
 		name: 'Business Sims',
 		delay: 800,
-		gameIds: ['lemonade-stand', 'negosim', 'apex-industries']
+		gameIds: ['lemonadestand', 'negosim', 'apex-industries']
 	}
 ];
 
