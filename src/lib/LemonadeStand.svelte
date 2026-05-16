@@ -336,19 +336,20 @@
 			return;
 		}
 		
-		// Use max cups available
-		cupsToMake = maxCups;
+		// Calculate demand first to know how many cups to actually make
+		visitors = calculateVisitorCount();
+		customers = calculateDemand(visitors);
 		
-		if (!makeLemonade()) {
+		// Cap customers by both visitors and inventory
+		customers = Math.min(customers, visitors, maxCups);
+		
+		// Only make lemonade for cups that will be sold
+		cupsToMake = customers;
+		
+		if (customers > 0 && !makeLemonade()) {
 			return;
 		}
 		
-		visitors = calculateVisitorCount();
-		customers = calculateDemand(visitors);
-		const availableCups = cupsToMake;
-		
-		// Cap customers by both visitors and inventory
-		customers = Math.min(customers, visitors, availableCups);
 		revenue = customers * pricePerCup;
 		
 		// No daily operating costs - costs are only when buying supplies
