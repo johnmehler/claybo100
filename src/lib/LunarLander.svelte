@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import { goto } from '$app/navigation';
 	import Instructions from './Instructions.svelte';
 
-	let { onBack, registerActions } = $props<{ onBack: () => void, registerActions: any }>();
+	let { registerActions } = $props<{ registerActions: any }>();
 	let instructions: any;
 
 	// Physics constants
@@ -11,9 +12,10 @@
 	const THRUST_POWER = 5.0;
 	const ROTATION_SPEED = 3; // degrees per frame
 	const MAX_LANDING_VY = 3.0;
-	const MAX_LANDING_VX = 1.0;
+	const MAX_LANDING_VX = 1.5;
 	const MAX_LANDING_ANGLE = 15;
-	const INITIAL_FUEL = 100;
+	const INITIAL_FUEL = 120;
+	const TOTAL_ROUNDS = 5;
 	const FUEL_BURN_RATE = 0.3;
 
 	// Game state
@@ -28,6 +30,10 @@
 	let rotatingLeft = $state(false);
 	let rotatingRight = $state(false);
 	let score = $state(0);
+	let currentRound = $state(1);
+	let sessionComplete = $state(false);
+	let sessionSummary = $state<string | null>(null);
+	let showResultsPage = $state(false);
 	let landingMessage = $state('');
 	let altitude = $state(0);
 	let speed = $state(0);
@@ -49,11 +55,19 @@
 		const points: {x: number, y: number}[] = [];
 		const numPoints = 120;
 		const baseY = 88;
+		const noiseFreqA = 0.2 + Math.random() * 0.35;
+		const noiseFreqB = 0.45 + Math.random() * 0.5;
+		const noiseAmpA = 1.5 + Math.random() * 3.5;
+		const noiseAmpB = 0.8 + Math.random() * 2.8;
+		const noisePhaseA = Math.random() * Math.PI * 2;
+		const noisePhaseB = Math.random() * Math.PI * 2;
 
 		// 1. Generate base subtle terrain
 		for (let i = 0; i <= numPoints; i++) {
 			const px = (i / numPoints) * 100;
-			const noise = Math.sin(i * 0.3) * 3 + Math.sin(i * 0.7) * 2;
+			const noise =
+				Math.sin(i * noiseFreqA + noisePhaseA) * noiseAmpA +
+				Math.sin(i * noiseFreqB + noisePhaseB) * noiseAmpB;
 			points.push({ x: px, y: baseY + noise });
 		}
 
@@ -160,6 +174,8 @@
 		thrusting = false;
 		gameState = 'playing';
 		landingMessage = '';
+		sessionSummary = null;
+		showResultsPage = false;
 		debris = [];
 		optimalPaths = [];
 		playerTrail = [];
@@ -168,15 +184,42 @@
 		animate(lastTime);
 	}
 
-	function restart() {
+	function startSession() {
 		if (animationId) cancelAnimationFrame(animationId);
+		score = 0;
+		currentRound = 1;
+		sessionComplete = false;
+		sessionSummary = null;
+		showResultsPage = false;
 		generateTerrain();
 		startGame();
 	}
 
-	function retryMap() {
+	function restart() {
+		nextRound();
+	}
+
+	function nextRound() {
+		if (gameState === 'playing' || sessionComplete || currentRound >= TOTAL_ROUNDS) return;
 		if (animationId) cancelAnimationFrame(animationId);
+		thrusting = false;
+		rotatingLeft = false;
+		rotatingRight = false;
+		showResultsPage = false;
+		currentRound += 1;
+		generateTerrain();
 		startGame();
+	}
+
+	function openFinalScore() {
+		if (!sessionComplete) return;
+		if (animationId) cancelAnimationFrame(animationId);
+		showResultsPage = true;
+	}
+
+	function exitToMainMenu() {
+		if (animationId) cancelAnimationFrame(animationId);
+		void goto('/');
 	}
 
 	function animate(now: number) {
@@ -282,6 +325,14 @@
 			// Calculate optimal paths for all pads
 			calculateAllOptimalPaths();
 
+			if (currentRound >= TOTAL_ROUNDS) {
+				sessionComplete = true;
+				sessionSummary = `5-ROUND TOTAL: ${score}`;
+			} else {
+				sessionComplete = false;
+				sessionSummary = `ROUND ${currentRound}/${TOTAL_ROUNDS} COMPLETE`;
+			}
+
 			vx = 0; vy = 0;
 			if (gameState === 'landed') {
 				if (animationId) cancelAnimationFrame(animationId);
@@ -334,18 +385,6 @@
 
 	function handleKeyDown(e: KeyboardEvent) {
 		const key = e.key.toLowerCase();
-		
-		// Shortcuts available at any time (except maybe idle)
-		if (key === 'r') {
-			retryMap();
-			e.preventDefault();
-			return;
-		}
-		if (key === 'n') {
-			restart();
-			e.preventDefault();
-			return;
-		}
 
 		if (gameState !== 'playing') return;
 		
@@ -381,8 +420,7 @@
 	onMount(() => {
 		window.addEventListener('keydown', handleKeyDown);
 		window.addEventListener('keyup', handleKeyUp);
-		generateTerrain();
-		startGame();
+		startSession();
 	});
 
 	onDestroy(() => {
@@ -400,6 +438,8 @@
 		if (terrain.length < 2) return '';
 		return 'M ' + terrain.map(p => `${p.x} ${p.y}`).join(' L ') + ' L 100 100 L 0 100 Z';
 	});
+
+	let fuelPercent = $derived(Math.max(0, Math.min(100, (fuel / INITIAL_FUEL) * 100)));
 
 	// Flame particles
 	let flameFlicker = $state(0);
@@ -419,6 +459,10 @@
 
 	<div class="hud">
 		<div class="hud-group">
+			<div class="hud-item">
+				<span class="hud-label">ROUND</span>
+				<span class="hud-value">{currentRound}/{TOTAL_ROUNDS}</span>
+			</div>
 			<div class="hud-item">
 				<span class="hud-label">SCORE</span>
 				<span class="hud-value score-val">{score}</span>
@@ -449,15 +493,29 @@
 			<div class="hud-item fuel-item">
 				<span class="hud-label">FUEL</span>
 				<div class="fuel-bar-bg">
-					<div class="fuel-bar" style="width: {fuel}%" class:fuel-low={fuel < 25}></div>
+					<div class="fuel-bar" style="width: {fuelPercent}%" class:fuel-low={fuelPercent < 25}></div>
 				</div>
-				<span class="fuel-pct" class:fuel-low={fuel < 25}>{fuel.toFixed(0)}%</span>
+				<span class="fuel-pct" class:fuel-low={fuelPercent < 25}>{fuelPercent.toFixed(0)}%</span>
 			</div>
 		</div>
 	</div>
 
-	<div class="viewport">
-		<svg class="scene" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice">
+	{#if showResultsPage}
+		<div class="results-page" in:fade>
+			<div class="results-card">
+				<p class="results-kicker">LUNAR LANDER</p>
+				<h2 class="results-title">FINAL SCORE</h2>
+				<p class="results-score">{score}</p>
+				<p class="results-subtitle">5 rounds complete</p>
+				<div class="results-actions">
+					<button class="action-btn" onclick={startSession}>PLAY 5 MORE</button>
+					<button class="action-btn secondary" onclick={exitToMainMenu}>EXIT</button>
+				</div>
+			</div>
+		</div>
+	{:else}
+		<div class="viewport">
+			<svg class="scene" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax slice">
 			<!-- Grid background -->
 			<defs>
 				<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -571,38 +629,53 @@
 					in:fade>
 					{landingMessage}
 				</text>
+				{#if sessionSummary}
+					<text x="50" y="47" text-anchor="middle" font-size="2.6" font-weight="800"
+						fill={sessionComplete ? 'var(--color-golden)' : 'rgba(255,255,255,0.7)'}
+						style="filter: drop-shadow(0 2px 8px rgba(0,0,0,0.45))"
+						in:fade>
+						{sessionSummary}
+					</text>
+				{/if}
 			{/if}
-		</svg>
-	</div>
+			</svg>
+		</div>
 
-	<!-- Touch controls & Actions -->
-	<div class="touch-controls">
-		{#if gameState === 'playing'}
-			<button class="touch-btn rotate-btn"
-				onpointerdown={startRotateLeft} onpointerup={stopRotateLeft} onpointerleave={stopRotateLeft}>
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
-			</button>
-			<button class="touch-btn thrust-btn"
-				onpointerdown={startThrust} onpointerup={stopThrust} onpointerleave={stopThrust}
-				class:active-thrust={thrusting && fuel > 0}>
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
-				<span class="thrust-label">THRUST</span>
-			</button>
-			<button class="touch-btn rotate-btn"
-				onpointerdown={startRotateRight} onpointerup={stopRotateRight} onpointerleave={stopRotateRight}>
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
-			</button>
-		{:else}
-			<div class="end-game-buttons" in:fade>
-				<label class="lqr-toggle" class:active={showOptimal}>
-					<input type="checkbox" bind:checked={showOptimal} />
-					<span>SHOW LQR OPTIMAL</span>
-				</label>
-				<button class="action-btn" onclick={restart}>FLY AGAIN</button>
-				<button class="action-btn secondary" onclick={onBack}>EXIT</button>
-			</div>
-		{/if}
-	</div>
+		<!-- Touch controls & Actions -->
+		<div class="touch-controls">
+			{#if gameState === 'playing'}
+				<button class="touch-btn rotate-btn"
+					aria-label="Rotate left"
+					onpointerdown={startRotateLeft} onpointerup={stopRotateLeft} onpointerleave={stopRotateLeft}>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
+				</button>
+				<button class="touch-btn thrust-btn"
+					onpointerdown={startThrust} onpointerup={stopThrust} onpointerleave={stopThrust}
+					class:active-thrust={thrusting && fuel > 0}>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+					<span class="thrust-label">THRUST</span>
+				</button>
+				<button class="touch-btn rotate-btn"
+					aria-label="Rotate right"
+					onpointerdown={startRotateRight} onpointerup={stopRotateRight} onpointerleave={stopRotateRight}>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+				</button>
+			{:else}
+				<div class="end-game-buttons" in:fade>
+					<label class="lqr-toggle" class:active={showOptimal}>
+						<input type="checkbox" bind:checked={showOptimal} />
+						<span>SHOW LQR OPTIMAL</span>
+					</label>
+					{#if sessionComplete}
+						<button class="action-btn" onclick={openFinalScore}>FINAL SCORE</button>
+					{:else}
+						<button class="action-btn" onclick={nextRound}>NEXT ROUND</button>
+					{/if}
+					<button class="action-btn secondary" onclick={exitToMainMenu}>EXIT</button>
+				</div>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -738,29 +811,69 @@
 		border: 1px solid rgba(255,255,255,0.06);
 	}
 
+	.results-page {
+		flex: 1;
+		display: grid;
+		place-items: center;
+		margin: 0 2vmin;
+		border-radius: 2vmin;
+		background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.06), rgba(8, 8, 20, 0.96));
+		border: 1px solid rgba(255,255,255,0.08);
+	}
+
+	.results-card {
+		min-width: min(90vw, 56vmin);
+		padding: 5vmin;
+		border-radius: 1.6vmin;
+		background: rgba(255,255,255,0.03);
+		border: 1px solid rgba(255,255,255,0.1);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.5vmin;
+	}
+
+	.results-kicker {
+		margin: 0;
+		font-size: 1.4vmin;
+		letter-spacing: 0.25vmin;
+		font-weight: 800;
+		color: rgba(255,255,255,0.45);
+	}
+
+	.results-title {
+		margin: 0;
+		font-size: 4vmin;
+		font-weight: 900;
+		color: var(--color-golden);
+	}
+
+	.results-score {
+		margin: 0;
+		font-size: 9vmin;
+		font-weight: 900;
+		line-height: 1;
+		color: white;
+		text-shadow: 0 0 3vmin rgba(255,255,255,0.18);
+	}
+
+	.results-subtitle {
+		margin: 0;
+		font-size: 1.8vmin;
+		font-weight: 700;
+		color: rgba(255,255,255,0.6);
+	}
+
+	.results-actions {
+		display: flex;
+		gap: 2vmin;
+		margin-top: 1vmin;
+	}
+
 	.scene {
 		width: 100%;
 		height: 100%;
 		display: block;
-	}
-
-	/* Result overlay (Legacy - replaced by in-scene text) */
-	.result-message {
-		font-size: 3.5vmin;
-		font-weight: 900;
-		letter-spacing: 0.1vmin;
-		text-align: center;
-		padding: 0 4vmin;
-	}
-
-	.result-message.success {
-		color: var(--color-apple);
-		text-shadow: 0 0 30px rgba(105, 175, 75, 0.5);
-	}
-
-	.result-message.failure {
-		color: var(--color-bittersweet);
-		text-shadow: 0 0 30px rgba(255, 110, 97, 0.5);
 	}
 
 	.end-game-buttons {
