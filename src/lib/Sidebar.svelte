@@ -2,6 +2,7 @@
 	import { getGamesByCategory } from './games';
 	import { fade, fly } from 'svelte/transition';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 
 	let { 
 		activeGameActions = { restart: null, newShuffle: null, help: null }
@@ -12,6 +13,13 @@
 	let openCategories = $state(Object.fromEntries(gameCategories.map(c => [c.name, true])));
 
 	const currentPath = $derived($page.url.pathname);
+
+	onMount(() => {
+		// Hide sidebar by default on mobile
+		if (window.innerWidth <= 1024) {
+			isSidebarCollapsed = true;
+		}
+	});
 </script>
 
 <button 
@@ -116,38 +124,35 @@
 		flex-direction: column;
 		padding: 3vmin 2vmin;
 		backdrop-filter: blur(20px);
-		z-index: 100;
+		z-index: 1000;
 		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-		position: sticky;
+		position: fixed;
 		top: 0;
+		left: 0;
 		flex-shrink: 0;
 	}
 
 	.sidebar.collapsed {
-		width: 0;
-		padding-left: 0;
-		padding-right: 0;
+		transform: translateX(-100%);
 		opacity: 0;
 		pointer-events: none;
-		transform: translateX(-100%);
-		border-right: none;
 	}
 
 	.sidebar-toggle-floating {
 		position: fixed;
 		top: 3vmin;
 		left: 26vmin;
-		width: 4.5vmin;
-		height: 4.5vmin;
+		width: 6vmin;
+		height: 6vmin;
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 1.2vmin;
+		border-radius: 1.5vmin;
 		color: rgba(255, 255, 255, 0.6);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		z-index: 1000;
+		z-index: 1100;
 		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 		backdrop-filter: blur(10px);
 	}
@@ -159,7 +164,7 @@
 	}
 
 	.sidebar-toggle-floating.is-collapsed {
-		left: 2.5vmin;
+		left: 3vmin;
 		background: var(--color-bittersweet);
 		border-color: var(--color-bittersweet);
 		color: black;
@@ -167,8 +172,8 @@
 	}
 
 	.sidebar-toggle-floating svg {
-		width: 2.2vmin;
-		height: 2.2vmin;
+		width: 3vmin;
+		height: 3vmin;
 	}
 
 	.sidebar-header {

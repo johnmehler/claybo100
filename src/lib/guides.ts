@@ -177,5 +177,16 @@ export const gameGuides: Record<string, string> = {
 <p>The textbook SIR model has many extensions: SEIR adds an Exposed (incubating) compartment; SIRS allows reinfection; SIRV adds vaccination. Network-based models replace the well-mixed assumption with a contact graph and capture super-spreader dynamics that compartmental models miss.</p>
 <h3>Is this game school-safe?</h3>
 <p>Yes. No ads, no logins, no chat — it's a sandbox for understanding compartmental models and public-health tradeoffs, suitable for biology, statistics, or social-studies classrooms.</p>
+`,
+	'lasermaze': `<h2>Laser Maze: History, Rules &amp; Strategy</h2>
+<p>Laser and mirror puzzles have been a staple of video games since the 1980s, appearing in classics like <em>The Legend of Zelda</em> and dedicated puzzle games like <em>Deflector</em> (1987). These games are based on the Law of Reflection: the angle of incidence equals the angle of reflection. While simple in principle, the complexity grows exponentially as you add obstacles and multiple required bounces.</p>
+<h3>How to Play</h3>
+<p>A fixed laser source fires a beam across an 8×8 grid. You must rotate mirrors (marked with / or \\ symbols) to reflect the beam at 90-degree angles. Navigate the beam around black blockers to hit the circular target.</p>
+<h3>Strategy Tips</h3>
+<p>Trace the beam <strong>backwards</strong> from the target. There are usually only a few positions where a final mirror could hit the target; once you identify those, work your way back to the source. Look for bottlenecks where the beam <em>must</em> pass through a narrow gap between blockers. Rotating a mirror effectively "swaps" the output direction, so use clicks to test alternate paths quickly.</p>
+<h3>Variations</h3>
+<p>Advanced laser mazes include beam splitters, color filters that only let certain beams through, and "checkpoints" that must be hit in sequence. Some modern VR titles like <em>The Talos Principle</em> use these mechanics in 3D space to create some of the most challenging puzzles in the genre.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes. Like all games in the Math Museum, Laser Maze is ad-free, account-free, and runs entirely in the local browser. It's a perfect visual way to teach the law of reflection and spatial reasoning.</p>
 `
 };

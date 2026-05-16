@@ -181,6 +181,17 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 			{ name: 'Layer broad and narrow measures', text: 'Combine cheap, broad measures (testing, isolation) with more expensive, narrow ones (lockdowns) instead of relying on one lever.' },
 			{ name: 'Drive R below 1', text: 'When R₀ × susceptible fraction drops below 1, new cases shrink. Hold policies until the outbreak resolves.' }
 		]
+	},
+	'lasermaze': {
+		name: 'How to play Laser Maze',
+		description: 'Arrange and rotate mirrors to reflect a laser beam through a grid and hit the target.',
+		steps: [
+			{ name: 'Locate the laser source', text: 'Identify the starting point and direction of the laser beam on the 8×8 grid.' },
+			{ name: 'Rotate mirrors', text: 'Click or tap mirrors to rotate them 90 degrees. Mirrors can reflect the beam at right angles.' },
+			{ name: 'Avoid blockers', text: 'Laser beams cannot pass through solid black blocks. You must route the beam around them.' },
+			{ name: 'Plan the path', text: 'Trace the path of the beam as it bounces off mirrors. Each mirror reflects the laser 90 degrees depending on its orientation.' },
+			{ name: 'Hit the target', text: 'Align the mirrors so the final segment of the laser beam lands on the circular target icon.' }
+		]
 	}
 };
 
@@ -289,5 +300,12 @@ export const gameSEO: Record<string, GameSEO> = {
 		keywords: ['epidemic simulator', 'sir model game', 'virus spread simulation', 'pandemic simulator', 'disease spread game', 'flatten the curve game'],
 		genre: 'Simulation',
 		about: 'This epidemic simulator is built on the SIR (Susceptible–Infected–Recovered) model developed by Kermack and McKendrick in 1927 — the same math behind every "flatten the curve" chart you saw in 2020.'
+	},
+	'lasermaze': {
+		title: 'Laser Maze Online — Physics Mirror Puzzle Game Free',
+		description: 'Play Laser Maze online free. Rotate mirrors and dodge blocks to guide a laser beam to its target. A classic physics puzzle in your browser.',
+		keywords: ['laser maze online', 'laser mirror puzzle', 'physics laser game', 'mirror reflection game', 'light bounce puzzle', 'laser maze unblocked'],
+		genre: 'Puzzle',
+		about: 'Laser Maze is a logic puzzle based on the physics of reflection. Use 90-degree mirrors to guide a light beam through an obstacle course to a target.'
 	}
 };

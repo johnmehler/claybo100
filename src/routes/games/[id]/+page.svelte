@@ -1,27 +1,29 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { getGameById } from '$lib/games';
-	import { gameGuides } from '$lib/guides';
-	import { gameSEO, gameHowTo, type HowToStep } from '$lib/seo';
-	import Sidebar from '$lib/Sidebar.svelte';
-	import { fade } from 'svelte/transition';
+	import { page } from "$app/stores";
+	import { goto } from "$app/navigation";
+	import { getGameById } from "$lib/games";
+	import { gameGuides } from "$lib/guides";
+	import { gameSEO, gameHowTo, type HowToStep } from "$lib/seo";
+	import Sidebar from "$lib/Sidebar.svelte";
+	import { fade } from "svelte/transition";
 
 	// Component imports
-	import VectorRacing from '$lib/VectorRacing.svelte';
-	import SlidingTiles from '$lib/SlidingTiles.svelte';
-	import Pegboard from '$lib/Pegboard.svelte';
-	import Hanoi from '$lib/Hanoi.svelte';
-	import ShotSim from '$lib/ShotSim.svelte';
-	import Nim from '$lib/Nim.svelte';
-	import KnightsTour from '$lib/KnightsTour.svelte';
-	import Hex from '$lib/Hex.svelte';
-	import Krypto from '$lib/Krypto.svelte';
-	import SetGame from '$lib/SetGame.svelte';
-	import DotsAndBoxes from '$lib/DotsAndBoxes.svelte';
-	import TracksOfGalileo from '$lib/TracksOfGalileo.svelte';
-	import LunarLander from '$lib/LunarLander.svelte';
-	import IceSlider from '$lib/IceSlider.svelte';
-	import EpidemicSim from '$lib/EpidemicSim.svelte';
+	import VectorRacing from "$lib/VectorRacing.svelte";
+	import SlidingTiles from "$lib/SlidingTiles.svelte";
+	import Pegboard from "$lib/Pegboard.svelte";
+	import Hanoi from "$lib/Hanoi.svelte";
+	import ShotSim from "$lib/ShotSim.svelte";
+	import Nim from "$lib/Nim.svelte";
+	import KnightsTour from "$lib/KnightsTour.svelte";
+	import Hex from "$lib/Hex.svelte";
+	import Krypto from "$lib/Krypto.svelte";
+	import SetGame from "$lib/SetGame.svelte";
+	import DotsAndBoxes from "$lib/DotsAndBoxes.svelte";
+	import TracksOfGalileo from "$lib/TracksOfGalileo.svelte";
+	import LunarLander from "$lib/LunarLander.svelte";
+	import IceSlider from "$lib/IceSlider.svelte";
+	import EpidemicSim from "$lib/EpidemicSim.svelte";
+	import LaserMaze from "$lib/LaserMaze.svelte";
 
 	const id = $derived($page.params.id);
 	const game = $derived(getGameById(id));
@@ -32,72 +34,107 @@
 		help: null as (() => void) | null,
 	});
 
-	function registerActions(actions: { restart?: (() => void) | null, newShuffle?: (() => void) | null, help?: (() => void) | null }) {
+	function registerActions(actions: {
+		restart?: (() => void) | null;
+		newShuffle?: (() => void) | null;
+		help?: (() => void) | null;
+	}) {
 		activeGameActions.restart = actions.restart || null;
 		activeGameActions.newShuffle = actions.newShuffle || null;
 		activeGameActions.help = actions.help || null;
 	}
 
+	function onBack() {
+		goto("/");
+	}
+
 	const gameComponents: Record<string, any> = {
-		'sliding-tiles': SlidingTiles,
-		'pegboard': Pegboard,
-		'hanoi': Hanoi,
-		'shotsim': ShotSim,
-		'nim': Nim,
-		'knights-tour': KnightsTour,
-		'hex': Hex,
-		'krypto': Krypto,
-		'set': SetGame,
-		'dotsandboxes': DotsAndBoxes,
-		'vectorracing': VectorRacing,
-		'tracksofgalileo': TracksOfGalileo,
-		'lunarlander': LunarLander,
-		'iceslider': IceSlider,
-		'epidemicsim': EpidemicSim
+		"sliding-tiles": SlidingTiles,
+		pegboard: Pegboard,
+		hanoi: Hanoi,
+		shotsim: ShotSim,
+		nim: Nim,
+		"knights-tour": KnightsTour,
+		hex: Hex,
+		krypto: Krypto,
+		set: SetGame,
+		dotsandboxes: DotsAndBoxes,
+		vectorracing: VectorRacing,
+		tracksofgalileo: TracksOfGalileo,
+		lunarlander: LunarLander,
+		iceslider: IceSlider,
+		epidemicsim: EpidemicSim,
+		lasermaze: LaserMaze,
 	};
 
 	const GameComponent = $derived(gameComponents[id]);
-	const guide = $derived(gameGuides[id] || '');
+	const guide = $derived(gameGuides[id] || "");
 	const seo = $derived(gameSEO[id]);
 	const canonical = $derived(`https://onlinemath.games/games/${id}`);
 	const ogImage = $derived(`https://onlinemath.games/og/${id}.png`);
-	const pageTitle = $derived(seo?.title ?? (game ? `${game.label} | onlinemath.games` : 'Game Not Found | onlinemath.games'));
-	const pageDescription = $derived(seo?.description ?? (game ? `${game.description} Play ${game.label} online for free at onlinemath.games.` : ''));
-	const schema = $derived(game && seo ? JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'VideoGame',
-		name: game.label,
-		url: canonical,
-		description: seo.description,
-		genre: seo.genre,
-		applicationCategory: 'Game',
-		operatingSystem: 'Any (web browser)',
-		gamePlatform: ['Web browser', 'Mobile', 'Desktop'],
-		inLanguage: 'en',
-		isAccessibleForFree: true,
-		keywords: seo.keywords.join(', '),
-		publisher: { '@type': 'Organization', name: 'onlinemath.games', url: 'https://onlinemath.games' },
-		image: ogImage,
-		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-		...(game.updated ? { dateModified: game.updated } : {})
-	}) : '');
+	const pageTitle = $derived(
+		seo?.title ??
+			(game
+				? `${game.label} | onlinemath.games`
+				: "Game Not Found | onlinemath.games"),
+	);
+	const pageDescription = $derived(
+		seo?.description ??
+			(game
+				? `${game.description} Play ${game.label} online for free at onlinemath.games.`
+				: ""),
+	);
+	const schema = $derived(
+		game && seo
+			? JSON.stringify({
+					"@context": "https://schema.org",
+					"@type": "VideoGame",
+					name: game.label,
+					url: canonical,
+					description: seo.description,
+					genre: seo.genre,
+					applicationCategory: "Game",
+					operatingSystem: "Any (web browser)",
+					gamePlatform: ["Web browser", "Mobile", "Desktop"],
+					inLanguage: "en",
+					isAccessibleForFree: true,
+					keywords: seo.keywords.join(", "),
+					publisher: {
+						"@type": "Organization",
+						name: "onlinemath.games",
+						url: "https://onlinemath.games",
+					},
+					image: ogImage,
+					offers: {
+						"@type": "Offer",
+						price: "0",
+						priceCurrency: "USD",
+					},
+					...(game.updated ? { dateModified: game.updated } : {}),
+				})
+			: "",
+	);
 	const howTo = $derived(gameHowTo[id]);
-	const howToSchema = $derived(game && howTo ? JSON.stringify({
-		'@context': 'https://schema.org',
-		'@type': 'HowTo',
-		name: howTo.name,
-		description: howTo.description,
-		inLanguage: 'en',
-		totalTime: 'PT5M',
-		image: ogImage,
-		step: howTo.steps.map((s: HowToStep, i: number) => ({
-			'@type': 'HowToStep',
-			position: i + 1,
-			name: s.name,
-			text: s.text,
-			url: `${canonical}#step-${i + 1}`
-		}))
-	}) : '');
+	const howToSchema = $derived(
+		game && howTo
+			? JSON.stringify({
+					"@context": "https://schema.org",
+					"@type": "HowTo",
+					name: howTo.name,
+					description: howTo.description,
+					inLanguage: "en",
+					totalTime: "PT5M",
+					image: ogImage,
+					step: howTo.steps.map((s: HowToStep, i: number) => ({
+						"@type": "HowToStep",
+						position: i + 1,
+						name: s.name,
+						text: s.text,
+						url: `${canonical}#step-${i + 1}`,
+					})),
+				})
+			: "",
+	);
 </script>
 
 <svelte:head>
@@ -105,7 +142,7 @@
 	{#if game}
 		<meta name="description" content={pageDescription} />
 		{#if seo?.keywords?.length}
-			<meta name="keywords" content={seo.keywords.join(', ')} />
+			<meta name="keywords" content={seo.keywords.join(", ")} />
 		{/if}
 		<link rel="canonical" href={canonical} />
 		<meta property="og:type" content="website" />
@@ -135,9 +172,13 @@
 
 	<div class="view-content">
 		{#if GameComponent}
-			<div id="game-viewport" class="game-mat" in:fade={{ duration: 300 }}>
+			<div
+				id="game-viewport"
+				class="game-mat"
+				in:fade={{ duration: 300 }}
+			>
 				<div class="game-frame-adaptive">
-					<svelte:component this={GameComponent} {registerActions} />
+					<svelte:component this={GameComponent} {registerActions} {onBack} />
 				</div>
 			</div>
 			{#if seo?.about}
@@ -150,7 +191,13 @@
 			{/if}
 			{#if game?.updated}
 				<p class="updated-line">
-					Last updated <time datetime={game.updated}>{new Date(game.updated).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+					Last updated <time datetime={game.updated}
+						>{new Date(game.updated).toLocaleDateString("en-US", {
+							year: "numeric",
+							month: "long",
+							day: "numeric",
+						})}</time
+					>
 				</p>
 			{/if}
 		{:else}
@@ -189,7 +236,11 @@
 		justify-content: center;
 		position: relative;
 		overflow: hidden;
-		background: radial-gradient(circle at 50% 50%, rgba(255, 110, 97, 0.03) 0%, transparent 70%);
+		background: radial-gradient(
+			circle at 50% 50%,
+			rgba(255, 110, 97, 0.03) 0%,
+			transparent 70%
+		);
 	}
 
 	.game-frame-adaptive {
