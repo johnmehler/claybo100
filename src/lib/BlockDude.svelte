@@ -8,6 +8,9 @@
 	// Game Constants
 	const ROWS = 10;
 	const COLS = 16;
+	const PROGRESS_KEY = "blockdude-level-progress";
+	const HOLD_MOVE_DELAY_MS = 140;
+	const HOLD_REPEAT_MS = 110;
 
 	type CellType = "empty" | "wall" | "block" | "exit";
 
@@ -239,6 +242,40 @@
 	let playerFacing = $state(1); // 1 for right, -1 for left
 	let isCarrying = $state(false);
 	let isWon = $state(false);
+	let activeMoveDir: -1 | 1 | null = null;
+	let holdMoveTimeout: ReturnType<typeof setTimeout> | null = null;
+	let holdMoveInterval: ReturnType<typeof setInterval> | null = null;
+
+	function saveProgress() {
+		try {
+			localStorage.setItem(PROGRESS_KEY, String(currentLevelIndex));
+		} catch {
+			// Ignore storage failures in private mode or restricted contexts.
+		}
+	}
+
+	function getSavedProgress(): number {
+		try {
+			const raw = localStorage.getItem(PROGRESS_KEY);
+			if (raw === null) return 0;
+			const parsed = Number.parseInt(raw, 10);
+			if (!Number.isFinite(parsed)) return 0;
+			return Math.min(Math.max(parsed, 0), levels.length - 1);
+		} catch {
+			return 0;
+		}
+	}
+
+	function clearDirectionalTimers() {
+		if (holdMoveTimeout) {
+			clearTimeout(holdMoveTimeout);
+			holdMoveTimeout = null;
+		}
+		if (holdMoveInterval) {
+			clearInterval(holdMoveInterval);
+			holdMoveInterval = null;
+		}
+	}
 
 	function loadLevel(idx: number) {
 		const level = levels[idx];
@@ -265,12 +302,21 @@
 		});
 
 		applyGravity();
+		saveProgress();
 	}
 
 	function applyGravity() {
 		// Player gravity
-		while (playerPos.y < rows - 1 && grid[playerPos.y + 1][playerPos.x] === 'empty') {
+		while (
+			playerPos.y < rows - 1 &&
+			(grid[playerPos.y + 1][playerPos.x] === 'empty' ||
+				grid[playerPos.y + 1][playerPos.x] === 'exit')
+		) {
 			playerPos.y++;
+		}
+
+		if (grid[playerPos.y][playerPos.x] === 'exit') {
+			isWon = true;
 		}
 
 		// Block gravity
@@ -292,7 +338,11 @@
 
 	function move(dx: number) {
 		if (isWon) return;
-		playerFacing = dx > 0 ? 1 : -1;
+		const nextFacing = dx > 0 ? 1 : -1;
+		if (playerFacing !== nextFacing) {
+			playerFacing = nextFacing;
+			return;
+		}
 		
 		const nx = playerPos.x + dx;
 		if (nx < 0 || nx >= cols) return;
@@ -386,15 +436,47 @@
 		applyGravity();
 	}
 
-	function handleKey(e: KeyboardEvent) {
-		if (e.key === "ArrowLeft") move(-1);
-		if (e.key === "ArrowRight") move(1);
+	function startDirectionalHold(dx: -1 | 1) {
+		if (activeMoveDir === dx) return;
+		activeMoveDir = dx;
+		clearDirectionalTimers();
+		move(dx);
+		holdMoveTimeout = setTimeout(() => {
+			if (activeMoveDir !== dx) return;
+			move(dx);
+			holdMoveInterval = setInterval(() => {
+				if (activeMoveDir !== dx) return;
+				move(dx);
+			}, HOLD_REPEAT_MS);
+		}, HOLD_MOVE_DELAY_MS);
+	}
+
+	function stopDirectionalHold(dx?: -1 | 1) {
+		if (dx !== undefined && activeMoveDir !== dx) return;
+		activeMoveDir = null;
+		clearDirectionalTimers();
+	}
+
+	function handleKeyDown(e: KeyboardEvent) {
+		if (e.key === "ArrowLeft") {
+			e.preventDefault();
+			if (!e.repeat) startDirectionalHold(-1);
+		}
+		if (e.key === "ArrowRight") {
+			e.preventDefault();
+			if (!e.repeat) startDirectionalHold(1);
+		}
 		if (e.key === "ArrowDown") {
 			e.preventDefault();
-			action();
+			if (!e.repeat) action();
 		}
-		if (e.key === "r") resetLevel();
-		if (e.key === "n" && isWon) nextLevel();
+		if (e.key === "r" && !e.repeat) resetLevel();
+		if (e.key === "n" && !e.repeat && isWon) nextLevel();
+	}
+
+	function handleKeyUp(e: KeyboardEvent) {
+		if (e.key === "ArrowLeft") stopDirectionalHold(-1);
+		if (e.key === "ArrowRight") stopDirectionalHold(1);
 	}
 
 	function resetLevel() {
@@ -410,13 +492,18 @@
 	}
 
 	onMount(() => {
-		loadLevel(0);
-		window.addEventListener("keydown", handleKey);
+		loadLevel(getSavedProgress());
+		window.addEventListener("keydown", handleKeyDown);
+		window.addEventListener("keyup", handleKeyUp);
 		registerActions({
 			restart: resetLevel,
 			newShuffle: nextLevel,
 		});
-		return () => window.removeEventListener("keydown", handleKey);
+		return () => {
+			stopDirectionalHold();
+			window.removeEventListener("keydown", handleKeyDown);
+			window.removeEventListener("keyup", handleKeyUp);
+		};
 	});
 </script>
 
@@ -437,7 +524,9 @@
 								class="player"
 								class:facing-left={playerFacing === -1}
 							>
-								<div class="head"></div>
+								<div class="head">
+									<div class="face-eye"></div>
+								</div>
 								<div class="body"></div>
 								{#if isCarrying}
 									<div class="held-block" in:scale></div>
@@ -452,9 +541,29 @@
 
 	<div class="controls">
 		<div class="dpad">
-			<button class="btn" onclick={() => move(-1)}>←</button>
+			<button
+				class="btn"
+				onpointerdown={(e) => {
+					e.preventDefault();
+					startDirectionalHold(-1);
+				}}
+				onpointerup={() => stopDirectionalHold(-1)}
+				onpointercancel={() => stopDirectionalHold(-1)}
+				onpointerleave={() => stopDirectionalHold(-1)}
+			>←</button
+			>
 			<button class="btn" onclick={action}>↓</button>
-			<button class="btn" onclick={() => move(1)}>→</button>
+			<button
+				class="btn"
+				onpointerdown={(e) => {
+					e.preventDefault();
+					startDirectionalHold(1);
+				}}
+				onpointerup={() => stopDirectionalHold(1)}
+				onpointercancel={() => stopDirectionalHold(1)}
+				onpointerleave={() => stopDirectionalHold(1)}
+			>→</button
+			>
 		</div>
 		<p class="hint">Use Left/Right to move, Down to pick up/drop blocks.</p>
 	</div>
@@ -550,6 +659,30 @@
 		background: #10b981;
 		border-radius: 4px 4px 0 0;
 		box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.cell.exit::before {
+		content: "";
+		width: 56%;
+		height: 72%;
+		background: #064e3b;
+		border-radius: 2px 2px 0 0;
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+	}
+
+	.cell.exit::after {
+		content: "";
+		position: absolute;
+		width: 10%;
+		height: 10%;
+		right: 30%;
+		top: 54%;
+		background: #fef08a;
+		border-radius: 999px;
 	}
 
 	.player {
@@ -568,10 +701,21 @@
 	}
 
 	.player .head {
+		position: relative;
 		width: 60%;
 		height: 40%;
 		background: #60a5fa;
 		border-radius: 4px;
+	}
+
+	.player .face-eye {
+		position: absolute;
+		right: 22%;
+		top: 38%;
+		width: 18%;
+		height: 18%;
+		background: #0f172a;
+		border-radius: 999px;
 	}
 
 	.player .body {
