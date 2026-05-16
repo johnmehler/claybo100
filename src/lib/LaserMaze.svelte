@@ -12,16 +12,27 @@
 	let { registerActions }: Props = $props();
 
 	type Direction = "up" | "down" | "left" | "right";
-	type CellType = "empty" | "blocker" | "mirror" | "source" | "target";
+	type CellType = "empty" | "blocker" | "mirror" | "source" | "target" | "splitter" | "filter" | "prism";
+	type Color = "red" | "green" | "blue" | "white";
 
 	interface Cell {
 		type: CellType;
-		rotation?: number; // 0 (/) or 90 (\)
+		rotation?: number; // 0, 90, 180, 270
 		direction?: Direction; // For source
+		color?: Color; // For source, filter, prism
+		requirement?: Color; // For target, gate
 		fixed?: boolean;
 	}
 
 	const GRID_SIZE = 10;
+
+	interface LaserSegment {
+		x1: number;
+		y1: number;
+		x2: number;
+		y2: number;
+		color: Color;
+	}
 
 	let grid: (Cell | null)[][] = $state(
 		Array(GRID_SIZE)
@@ -33,58 +44,102 @@
 			),
 	);
 
-	let laserPath: { x: number; y: number }[] = $state([]);
+	let laserSegments: LaserSegment[] = $state([]);
+	let hitTargets: Set<string> = $state(new Set());
 	let isWon = $state(false);
-	let currentLevel = $state(0);
-	let inventory = $state({ mirror0: 0, mirror90: 0 });
-	let selectedReflector = $state<number | null>(null);
+	let currentLevel: number | "procedural" = $state(0);
+	let inventory = $state({ mirror0: 0, mirror90: 0, splitter0: 0, splitter90: 0 });
+	let selectedReflector = $state<{ type: CellType; rotation: number } | null>(null);
 
 	const levels = [
 		{
-			source: { x: 0, y: 5, dir: "right" as Direction },
-			target: { x: 9, y: 5 },
+			// Level 1: Introduction to Splitting
+			source: { x: 0, y: 5, dir: "right" as Direction, color: "white" as Color },
+			targets: [{ x: 9, y: 1 }, { x: 9, y: 9 }],
 			blockers: [
-				{ x: 5, y: 4 },
-				{ x: 5, y: 5 },
-				{ x: 5, y: 6 },
+				{ x: 4, y: 5 }, { x: 5, y: 5 }, { x: 6, y: 5 },
+				{ x: 9, y: 5 }
 			],
-			mirrors: [
-				{ x: 3, y: 5, rotation: 0, fixed: true },
-				{ x: 3, y: 2, rotation: 90, fixed: true },
-				{ x: 7, y: 2, rotation: 180, fixed: true },
-				{ x: 7, y: 5, rotation: 270, fixed: true },
-			],
-			inventory: { mirror0: 2, mirror90: 2 },
+			inventory: { mirror0: 2, mirror90: 2, splitter0: 1, splitter90: 1 },
 		},
 		{
-			source: { x: 2, y: 0, dir: "down" as Direction },
-			target: { x: 8, y: 9 },
+			// Level 2: Color Shifting (Prism)
+			source: { x: 0, y: 0, dir: "right" as Direction, color: "red" as Color },
+			targets: [{ x: 9, y: 9, requirement: "blue" as Color }],
 			blockers: [
-				{ x: 2, y: 5 },
-				{ x: 8, y: 4 },
-				{ x: 5, y: 5 },
+				{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 9 },
+				{ x: 5, y: 5 }, { x: 5, y: 6 }, { x: 5, y: 7 }
 			],
-			mirrors: [],
-			inventory: { mirror0: 4, mirror90: 4 },
+			prism: { x: 5, y: 0, color: "blue" as Color },
+			inventory: { mirror0: 3, mirror90: 3, splitter0: 0, splitter90: 0 },
 		},
 		{
-			source: { x: 0, y: 0, dir: "right" as Direction },
-			target: { x: 5, y: 5 },
-			blockers: [
-				{ x: 3, y: 0 },
-				{ x: 0, y: 3 },
-				{ x: 7, y: 7 },
+			// Level 3: Dual Color Requirement
+			source: { x: 5, y: 0, dir: "down" as Direction, color: "white" as Color },
+			targets: [
+				{ x: 1, y: 8, requirement: "red" as Color }, 
+				{ x: 8, y: 8, requirement: "green" as Color }
 			],
-			mirrors: [],
-			inventory: { mirror0: 5, mirror90: 5 },
+			blockers: [
+				{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 6, y: 5 }
+			],
+			prisms: [
+				{ x: 2, y: 2, color: "red" as Color },
+				{ x: 7, y: 2, color: "green" as Color }
+			],
+			inventory: { mirror0: 2, mirror90: 2, splitter0: 1, splitter90: 0 },
 		},
+		{
+			// Level 4: The Branching Maze
+			source: { x: 0, y: 2, dir: "right" as Direction, color: "white" as Color },
+			targets: [
+				{ x: 9, y: 0 }, { x: 9, y: 4 }, { x: 9, y: 8 }
+			],
+			blockers: [
+				{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 4 },
+				{ x: 6, y: 5 }, { x: 6, y: 6 }, { x: 6, y: 7 }, { x: 6, y: 9 }
+			],
+			inventory: { mirror0: 4, mirror90: 4, splitter0: 2, splitter90: 2 },
+		},
+		{
+			// Level 5: The Spectrum Challenge
+			source: { x: 5, y: 5, dir: "up" as Direction, color: "white" as Color },
+			targets: [
+				{ x: 0, y: 0, requirement: "red" as Color },
+				{ x: 9, y: 0, requirement: "green" as Color },
+				{ x: 0, y: 9, requirement: "blue" as Color },
+				{ x: 9, y: 9, requirement: "red" as Color }
+			],
+			prisms: [
+				{ x: 2, y: 5, color: "red" as Color },
+				{ x: 7, y: 5, color: "green" as Color },
+				{ x: 5, y: 2, color: "blue" as Color },
+				{ x: 5, y: 7, color: "red" as Color }
+			],
+			blockers: [
+				{ x: 1, y: 1 }, { x: 8, y: 1 }, { x: 1, y: 8 }, { x: 8, y: 8 }
+			],
+			inventory: { mirror0: 5, mirror90: 5, splitter0: 3, splitter90: 3 },
+		}
 	];
 
-	function loadLevel(idx: number) {
-		const level = levels[idx];
+	function loadLevel(idx: number | "procedural") {
 		isWon = false;
 		selectedReflector = null;
-		inventory = { ...level.inventory };
+		hitTargets = new Set();
+		
+		if (idx === "procedural") {
+			generateProceduralLevel();
+			return;
+		}
+
+		const level = levels[idx];
+		inventory = { 
+			mirror0: level.inventory.mirror0 || 0, 
+			mirror90: level.inventory.mirror90 || 0,
+			splitter0: level.inventory.splitter0 || 0,
+			splitter90: level.inventory.splitter90 || 0
+		};
 		
 		grid = Array(GRID_SIZE)
 			.fill(null)
@@ -97,121 +152,268 @@
 		grid[level.source.y][level.source.x] = {
 			type: "source",
 			direction: level.source.dir,
+			color: level.source.color,
 			fixed: true,
 		};
-		grid[level.target.y][level.target.x] = { type: "target", fixed: true };
+
+		level.targets.forEach((t) => {
+			grid[t.y][t.x] = { 
+				type: "target", 
+				requirement: t.requirement || "white",
+				fixed: true 
+			};
+		});
 
 		level.blockers.forEach((b) => {
 			grid[b.y][b.x] = { type: "blocker", fixed: true };
 		});
 
-		level.mirrors.forEach((m) => {
-			grid[m.y][m.x] = {
-				type: "mirror",
-				rotation: m.rotation,
-				fixed: m.fixed,
-			};
-		});
+		if ((level as any).prism) {
+			const p = (level as any).prism;
+			grid[p.y][p.x] = { type: "prism", color: p.color, fixed: true };
+		}
+		if ((level as any).prisms) {
+			(level as any).prisms.forEach((p: any) => {
+				grid[p.y][p.x] = { type: "prism", color: p.color, fixed: true };
+			});
+		}
 
 		calculateLaser();
 	}
 
+	function generateProceduralLevel() {
+		const MIN_COMPONENTS = 3;
+		let attempts = 0;
+		
+		while (attempts < 100) {
+			attempts++;
+			grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null).map(() => ({ type: "empty" })));
+			
+			const side = Math.floor(Math.random() * 4);
+			let sx = 0, sy = 0, sdir: Direction = "right";
+			if (side === 0) { sx = 0; sy = Math.floor(Math.random() * GRID_SIZE); sdir = "right"; }
+			else if (side === 1) { sx = GRID_SIZE - 1; sy = Math.floor(Math.random() * GRID_SIZE); sdir = "left"; }
+			else if (side === 2) { sx = Math.floor(Math.random() * GRID_SIZE); sy = 0; sdir = "down"; }
+			else { sx = Math.floor(Math.random() * GRID_SIZE); sy = GRID_SIZE - 1; sdir = "up"; }
+
+			grid[sy][sx] = { type: "source", direction: sdir, color: "white", fixed: true };
+
+			const queue: { x: number; y: number; dir: Direction; isInitial: boolean }[] = [{ x: sx, y: sy, dir: sdir, isInitial: true }];
+			const usedInventory = { mirror0: 0, mirror90: 0, splitter0: 0, splitter90: 0 };
+			const targets: { x: number; y: number }[] = [];
+			const pathCells = new Set<string>();
+			pathCells.add(`${sx},${sy}`);
+
+			let componentsCount = 0;
+			const MAX_COMPONENTS = 6 + Math.floor(Math.random() * 3);
+
+			while (queue.length > 0) {
+				let { x, y, dir, isInitial } = queue.shift()!;
+				let steps = 0;
+				let cx = x, cy = y;
+
+				while (true) {
+					let nx = cx, ny = cy;
+					if (dir === "right") nx++;
+					else if (dir === "left") nx--;
+					else if (dir === "up") ny--;
+					else if (dir === "down") ny++;
+
+					if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || grid[ny][nx].type !== "empty") {
+						if (!isInitial || componentsCount > 0) targets.push({ x: cx, y: cy });
+						break;
+					}
+
+					cx = nx; cy = ny;
+					pathCells.add(`${cx},${cy}`);
+					steps++;
+
+					const canPlace = steps >= 2 && componentsCount < MAX_COMPONENTS;
+					const mustPlace = isInitial && steps === 4 && componentsCount === 0;
+
+					if (mustPlace || (canPlace && Math.random() > 0.6)) {
+						const isSplitter = Math.random() > 0.65;
+						const rot = Math.random() > 0.5 ? 0 : 90;
+						
+						if (isSplitter) {
+							grid[cy][cx] = { type: "splitter", rotation: rot, fixed: false };
+							(usedInventory as any)[`splitter${rot}`]++;
+							let branchDir: Direction | null = null;
+							if (rot === 0) {
+								if (dir === "right") branchDir = "up";
+								else if (dir === "left") branchDir = "down";
+								else if (dir === "up") branchDir = "right";
+								else if (dir === "down") branchDir = "left";
+							} else {
+								if (dir === "right") branchDir = "down";
+								else if (dir === "left") branchDir = "up";
+								else if (dir === "up") branchDir = "left";
+								else if (dir === "down") branchDir = "right";
+							}
+							if (branchDir) queue.push({ x: cx, y: cy, dir: branchDir, isInitial: false });
+						} else {
+							grid[cy][cx] = { type: "mirror", rotation: rot, fixed: false };
+							(usedInventory as any)[`mirror${rot}`]++;
+							if (rot === 0) {
+								if (dir === "right") dir = "up";
+								else if (dir === "left") dir = "down";
+								else if (dir === "up") dir = "right";
+								else if (dir === "down") dir = "left";
+							} else {
+								if (dir === "right") dir = "down";
+								else if (dir === "left") dir = "up";
+								else if (dir === "up") dir = "left";
+								else if (dir === "down") dir = "right";
+							}
+							isInitial = false;
+						}
+						componentsCount++;
+						steps = 0;
+					}
+
+					if (steps > 6) {
+						if (!isInitial || componentsCount > 0) targets.push({ x: cx, y: cy });
+						break;
+					}
+				}
+			}
+
+			if (componentsCount >= MIN_COMPONENTS && targets.length > 0) {
+				targets.forEach(t => {
+					if (grid[t.y][t.x].type === "empty") {
+						grid[t.y][t.x] = { type: "target", requirement: "white", fixed: true };
+					}
+				});
+
+				inventory = { ...usedInventory };
+				for (let y = 0; y < GRID_SIZE; y++) {
+					for (let x = 0; x < GRID_SIZE; x++) {
+						if (grid[y][x].type === "mirror" || grid[y][x].type === "splitter") {
+							grid[y][x] = { type: "empty" };
+						}
+					}
+				}
+
+				for (let i = 0; i < 15; i++) {
+					const bx = Math.floor(Math.random() * GRID_SIZE), by = Math.floor(Math.random() * GRID_SIZE);
+					if (grid[by][bx].type === "empty" && !pathCells.has(`${bx},${by}`)) {
+						grid[by][bx] = { type: "blocker", fixed: true };
+					}
+				}
+				break;
+			}
+		}
+		calculateLaser();
+	}
+
 	function calculateLaser() {
-		const sourceCell = levels[currentLevel].source;
-		let cx = sourceCell.x;
-		let cy = sourceCell.y;
-		let dir = sourceCell.dir;
-
-		const path = [{ x: cx, y: cy }];
-		const visited = new Set();
-
-		isWon = false;
-
-		while (true) {
-			const key = `${cx},${cy},${dir}`;
-			if (visited.has(key)) break; // Infinite loop protection
-			visited.add(key);
-
-			let nx = cx;
-			let ny = cy;
-
-			if (dir === "right") nx++;
-			else if (dir === "left") nx--;
-			else if (dir === "up") ny--;
-			else if (dir === "down") ny++;
-
-			if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) {
-				// Out of bounds, but still show the last point if it's within one step
-				// path.push({ x: nx, y: ny });
-				break;
-			}
-
-			cx = nx;
-			cy = ny;
-			path.push({ x: cx, y: cy });
-
-			const cell = grid[cy][cx];
-			if (cell?.type === "blocker") break;
-			if (cell?.type === "target") {
-				isWon = true;
-				break;
-			}
-			if (cell?.type === "mirror") {
-				const rot = cell.rotation || 0;
-				// Mirror logic:
-				// 0 degrees: / (reflects right->up, down->left, up->right, left->down)
-				// 90 degrees: \ (reflects right->down, up->left, down->right, left->up)
-				// Simplified: diagonal mirrors.
-				// Let's use 45 and 135 for / and \.
-
-				if (rot === 0 || rot === 180) {
-					// /
-					if (dir === "right") dir = "up";
-					else if (dir === "left") dir = "down";
-					else if (dir === "up") dir = "right";
-					else if (dir === "down") dir = "left";
-				} else {
-					// \
-					if (dir === "right") dir = "down";
-					else if (dir === "left") dir = "up";
-					else if (dir === "up") dir = "left";
-					else if (dir === "down") dir = "right";
+		let sourceX = -1, sourceY = -1, sourceDir: Direction = "right", sourceColor: Color = "white";
+		for (let y = 0; y < GRID_SIZE; y++) {
+			for (let x = 0; x < GRID_SIZE; x++) {
+				if (grid[y][x]?.type === "source") {
+					sourceX = x; sourceY = y;
+					sourceDir = grid[y][x]?.direction || "right";
+					sourceColor = grid[y][x]?.color || "white";
+					break;
 				}
 			}
 		}
-		laserPath = path;
+
+		if (sourceX === -1) return;
+
+		const queue: { x: number; y: number; dir: Direction; color: Color }[] = [{ x: sourceX, y: sourceY, dir: sourceDir, color: sourceColor }];
+		const segments: LaserSegment[] = [];
+		const visited = new Set<string>();
+		const activeTargets = new Set<string>();
+
+		while (queue.length > 0) {
+			let { x, y, dir, color } = queue.shift()!;
+			let cx = x, cy = y;
+
+			while (true) {
+				const key = `${cx},${cy},${dir},${color}`;
+				if (visited.has(key)) break;
+				visited.add(key);
+
+				let nx = cx;
+				let ny = cy;
+
+				if (dir === "right") nx++;
+				else if (dir === "left") nx--;
+				else if (dir === "up") ny--;
+				else if (dir === "down") ny++;
+
+				if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) break;
+
+				segments.push({ x1: cx, y1: cy, x2: nx, y2: ny, color });
+				cx = nx;
+				cy = ny;
+
+				const cell = grid[cy][cx];
+				if (!cell) continue;
+
+				if (cell.type === "blocker") break;
+				if (cell.type === "target") {
+					if (cell.requirement === "white" || cell.requirement === color) activeTargets.add(`${cx},${cy}`);
+					break;
+				}
+				if (cell.type === "filter" && color !== cell.color && cell.color !== "white") break;
+				if (cell.type === "prism") color = cell.color || color;
+				if (cell.type === "mirror") {
+					const rot = cell.rotation || 0;
+					if (rot === 0 || rot === 180) {
+						if (dir === "right") dir = "up"; else if (dir === "left") dir = "down";
+						else if (dir === "up") dir = "right"; else if (dir === "down") dir = "left";
+					} else {
+						if (dir === "right") dir = "down"; else if (dir === "left") dir = "up";
+						else if (dir === "up") dir = "left"; else if (dir === "down") dir = "right";
+					}
+				}
+				if (cell.type === "splitter") {
+					const rot = cell.rotation || 0;
+					if (rot === 0 || rot === 180) {
+						let nDir: Direction | null = null;
+						if (dir === "right") nDir = "up"; else if (dir === "left") nDir = "down";
+						else if (dir === "up") nDir = "right"; else if (dir === "down") nDir = "left";
+						if (nDir) queue.push({ x: cx, y: cy, dir: nDir, color });
+					} else {
+						let nDir: Direction | null = null;
+						if (dir === "right") nDir = "down"; else if (dir === "left") nDir = "up";
+						else if (dir === "up") nDir = "left"; else if (dir === "down") nDir = "right";
+						if (nDir) queue.push({ x: cx, y: cy, dir: nDir, color });
+					}
+				}
+			}
+		}
+
+		laserSegments = segments;
+		hitTargets = activeTargets;
+		let total = 0;
+		for (let y = 0; y < GRID_SIZE; y++) for (let x = 0; x < GRID_SIZE; x++) if (grid[y][x]?.type === "target") total++;
+		isWon = total > 0 && hitTargets.size === total;
 	}
 
 	function handleCellClick(x: number, y: number) {
 		const cell = grid[y][x];
-		
 		if (cell?.type === "empty" && selectedReflector !== null) {
-			// Place reflector
-			const key = `mirror${selectedReflector}` as keyof typeof inventory;
-			if (inventory[key] > 0) {
-				grid[y][x] = {
-					type: "mirror",
-					rotation: selectedReflector,
-					fixed: false,
-				};
-				inventory[key]--;
+			const { type, rotation } = selectedReflector;
+			const key = `${type}${rotation}` as any;
+			if ((inventory as any)[key] > 0) {
+				grid[y][x] = { type: type, rotation: rotation, fixed: false };
+				(inventory as any)[key]--;
 				calculateLaser();
 			}
-		} else if (cell?.type === "mirror" && !cell.fixed) {
-			// Remove reflector
-			const key = `mirror${cell.rotation}` as keyof typeof inventory;
-			inventory[key]++;
+		} else if ((cell?.type === "mirror" || cell?.type === "splitter") && !cell.fixed) {
+			const key = `${cell.type}${cell.rotation}` as any;
+			(inventory as any)[key]++;
 			grid[y][x] = { type: "empty" };
 			calculateLaser();
 		}
 	}
 
-	function selectReflector(rotation: number) {
-		if (selectedReflector === rotation) {
-			selectedReflector = null;
-		} else {
-			selectedReflector = rotation;
-		}
+	function selectItem(type: CellType, rotation: number) {
+		if (selectedReflector?.type === type && selectedReflector?.rotation === rotation) selectedReflector = null;
+		else selectedReflector = { type, rotation };
 	}
 
 	onMount(() => {
@@ -219,48 +421,103 @@
 		registerActions({
 			restart: () => loadLevel(currentLevel),
 			newShuffle: () => {
-				currentLevel = (currentLevel + 1) % levels.length;
-				loadLevel(currentLevel);
+				if (currentLevel === "procedural") {
+					loadLevel("procedural");
+				} else {
+					const nextIdx = (currentLevel as number) + 1;
+					if (nextIdx >= levels.length) {
+						currentLevel = "procedural";
+						loadLevel("procedural");
+					} else {
+						currentLevel = nextIdx;
+						loadLevel(currentLevel);
+					}
+				}
 			},
 		});
 	});
 
 	function nextLevel() {
-		currentLevel = (currentLevel + 1) % levels.length;
-		loadLevel(currentLevel);
+		if (currentLevel === "procedural") loadLevel("procedural");
+		else {
+			const nextIdx = (currentLevel as number) + 1;
+			if (nextIdx >= levels.length) {
+				currentLevel = "procedural";
+				loadLevel("procedural");
+			} else {
+				currentLevel = nextIdx;
+				loadLevel(currentLevel);
+			}
+		}
 	}
 </script>
 
 <div class="lasermaze-container">
 	<div class="game-header">
-		<div class="level-badge">Level {currentLevel + 1}</div>
+		<div class="header-controls">
+			<div class="level-badge">{typeof currentLevel === 'string' ? currentLevel : `Level ${currentLevel + 1}`}</div>
+			<button class="random-btn" onclick={() => { currentLevel = 'procedural'; loadLevel('procedural'); }}>
+				<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17.65,6.35C16.2,4.9 14.21,4 12,4c-4.42,0-7.99,3.58-7.99,8s3.57,8,7.99,8c3.73,0,6.84-2.55,7.73-6h-2.08 c-0.82,2.33-3.04,4-5.65,4c-3.31,0-6-2.69-6-6s2.69-6,6-6c1.66,0,3.14,0.69,4.22,1.78L13,11h7V4L17.65,6.35z"/></svg>
+				Random Level
+			</button>
+		</div>
 		<h1>Laser Maze</h1>
 		<p>Place reflectors on the board to guide the laser to the target receptor.</p>
 	</div>
 
 	<div class="game-layout">
 		<div class="inventory-bar">
-			<h3>Reflectors</h3>
-			<div class="inventory-items">
-				<button 
-					class="inventory-item" 
-					class:active={selectedReflector === 0}
-					onclick={() => selectReflector(0)}
-				>
-					<div class="mirror-preview m0"></div>
-					<span class="count">{inventory.mirror0}</span>
-				</button>
-				<button 
-					class="inventory-item" 
-					class:active={selectedReflector === 90}
-					onclick={() => selectReflector(90)}
-				>
-					<div class="mirror-preview m90"></div>
-					<span class="count">{inventory.mirror90}</span>
-				</button>
+			<h3>Components</h3>
+			<div class="inventory-section">
+				<span class="section-label">Mirrors</span>
+				<div class="inventory-items">
+					<button 
+						class="inventory-item" 
+						class:active={selectedReflector?.type === "mirror" && selectedReflector?.rotation === 0}
+						onclick={() => selectItem("mirror", 0)}
+						disabled={inventory.mirror0 === 0}
+					>
+						<div class="component-preview mirror m0"></div>
+						<span class="count">{inventory.mirror0}</span>
+					</button>
+					<button 
+						class="inventory-item" 
+						class:active={selectedReflector?.type === "mirror" && selectedReflector?.rotation === 90}
+						onclick={() => selectItem("mirror", 90)}
+						disabled={inventory.mirror90 === 0}
+					>
+						<div class="component-preview mirror m90"></div>
+						<span class="count">{inventory.mirror90}</span>
+					</button>
+				</div>
 			</div>
+
+			<div class="inventory-section">
+				<span class="section-label">Splitters</span>
+				<div class="inventory-items">
+					<button 
+						class="inventory-item" 
+						class:active={selectedReflector?.type === "splitter" && selectedReflector?.rotation === 0}
+						onclick={() => selectItem("splitter", 0)}
+						disabled={inventory.splitter0 === 0}
+					>
+						<div class="component-preview splitter s0"></div>
+						<span class="count">{inventory.splitter0}</span>
+					</button>
+					<button 
+						class="inventory-item" 
+						class:active={selectedReflector?.type === "splitter" && selectedReflector?.rotation === 90}
+						onclick={() => selectItem("splitter", 90)}
+						disabled={inventory.splitter90 === 0}
+					>
+						<div class="component-preview splitter s90"></div>
+						<span class="count">{inventory.splitter90}</span>
+					</button>
+				</div>
+			</div>
+
 			<div class="inventory-hint">
-				{selectedReflector !== null ? "Click grid to place" : "Select a reflector"}
+				{selectedReflector !== null ? "Click grid to place" : "Select a component"}
 			</div>
 		</div>
 
@@ -272,22 +529,21 @@
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
 						<div
 							class="cell"
-							class:clickable={(grid[y][x]?.type === "empty" && selectedReflector !== null) || (grid[y][x]?.type === "mirror" && !grid[y][x]?.fixed)}
+							class:clickable={(grid[y][x]?.type === "empty" && selectedReflector !== null) || ((grid[y][x]?.type === "mirror" || grid[y][x]?.type === "splitter") && !grid[y][x]?.fixed)}
 							onclick={() => handleCellClick(x, y)}
 						>
 							{#if grid[y][x]?.type === "source"}
-								<div class="source-icon {grid[y][x]?.direction}">
+								<div class="source-icon {grid[y][x]?.direction}" style="--source-color: {grid[y][x]?.color}">
 									<div class="laser-dot"></div>
 								</div>
 							{:else if grid[y][x]?.type === "target"}
-								<div class="target-icon" class:active={isWon}>
+								<div class="target-icon" class:active={hitTargets.has(`${x},${y}`)}>
 									<div class="target-ring outer"></div>
 									<div class="target-ring middle"></div>
 									<div class="target-ring inner"></div>
-									<div class="target-core"></div>
+									<div class="target-core" style="--req-color: {grid[y][x]?.requirement}"></div>
 									<svg class="target-svg" viewBox="0 0 100 100">
 										<circle cx="50" cy="50" r="45" class="target-path" />
-										<path d="M50 5 L50 15 M95 50 L85 50 M50 95 L50 85 M5 50 L15 50" class="target-markers" />
 									</svg>
 								</div>
 							{:else if grid[y][x]?.type === "blocker"}
@@ -296,10 +552,22 @@
 								<div
 									class="mirror-icon"
 									class:placed={!grid[y][x]?.fixed}
-									style="transform: rotate({grid[y][x]
-										?.rotation}deg)"
+									style="transform: rotate({grid[y][x]?.rotation}deg)"
 								>
 									<div class="mirror-surface"></div>
+								</div>
+							{:else if grid[y][x]?.type === "splitter"}
+								<div
+									class="splitter-icon"
+									class:placed={!grid[y][x]?.fixed}
+									style="transform: rotate({grid[y][x]?.rotation}deg)"
+								>
+									<div class="splitter-surface"></div>
+									<div class="splitter-glass"></div>
+								</div>
+							{:else if grid[y][x]?.type === "prism"}
+								<div class="prism-icon" style="--prism-color: {grid[y][x]?.color}">
+									<div class="prism-shape"></div>
 								</div>
 							{/if}
 						</div>
@@ -307,15 +575,16 @@
 				{/each}
 
 				<svg class="laser-svg" viewBox="0 0 {GRID_SIZE} {GRID_SIZE}">
-					{#if laserPath.length > 1}
-						<polyline
-							points={laserPath
-								.map((p) => `${p.x + 0.5},${p.y + 0.5}`)
-								.join(" ")}
+					{#each laserSegments as seg}
+						<line
+							x1={seg.x1 + 0.5}
+							y1={seg.y1 + 0.5}
+							x2={seg.x2 + 0.5}
+							y2={seg.y2 + 0.5}
 							class="laser-line"
-							class:won={isWon}
+							style="--laser-color: {seg.color === 'white' ? '#ff6e61' : seg.color};"
 						/>
-					{/if}
+					{/each}
 				</svg>
 			</div>
 		</div>
@@ -324,7 +593,7 @@
 	{#if isWon}
 		<div class="win-overlay" in:fade>
 			<div class="win-content" in:scale>
-				<h2>Target Hit!</h2>
+				<h2>All Targets Hit!</h2>
 				<button onclick={nextLevel}>Next Level</button>
 			</div>
 		</div>
@@ -348,35 +617,86 @@
 
 	.game-header {
 		text-align: center;
-		margin-bottom: 3rem;
+		margin-bottom: 2.5rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.2rem;
+	}
+
+	.header-controls {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		background: rgba(255, 255, 255, 0.03);
+		padding: 0.5rem 0.5rem 0.5rem 1.2rem;
+		border-radius: 99px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.level-badge {
+		color: #ff6e61;
+		font-size: 0.8rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.1rem;
+	}
+
+	.random-btn {
+		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
+		color: white;
+		border: none;
+		padding: 0.6rem 1.4rem;
+		border-radius: 99px;
+		font-size: 0.85rem;
+		font-weight: 800;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		box-shadow: 0 4px 15px rgba(255, 110, 97, 0.3);
+	}
+
+	.random-btn:hover {
+		transform: translateY(-2px) scale(1.02);
+		box-shadow: 0 6px 20px rgba(255, 110, 97, 0.4);
+	}
+
+	.random-btn:active {
+		transform: translateY(0);
+	}
+
+	.random-btn svg {
+		transition: transform 0.4s;
+	}
+
+	.random-btn:hover svg {
+		transform: rotate(180deg);
 	}
 
 	.game-header h1 {
 		font-size: 3.5rem;
 		font-weight: 900;
-		margin: 0.5rem 0;
-		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
+		margin: 0;
+		background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.6) 100%);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
-		letter-spacing: -0.05rem;
+		letter-spacing: -0.1rem;
 	}
 
-	.level-badge {
-		background: rgba(255, 110, 97, 0.2);
-		color: #ff6e61;
-		padding: 0.4rem 1.2rem;
-		border-radius: 99px;
-		font-size: 0.9rem;
-		font-weight: 800;
-		text-transform: uppercase;
-		display: inline-block;
-		border: 1px solid rgba(255, 110, 97, 0.3);
+	.game-header p {
+		margin: 0;
+		color: rgba(255, 255, 255, 0.5);
+		font-size: 1rem;
+		max-width: 500px;
+		line-height: 1.6;
 	}
 
 	.game-layout {
 		display: flex;
-		gap: 3rem;
-		align-items: center;
+		gap: 2rem;
+		align-items: flex-start;
 		justify-content: center;
 		width: 100%;
 		max-width: 1400px;
@@ -384,15 +704,29 @@
 
 	.inventory-bar {
 		background: rgba(255, 255, 255, 0.05);
-		backdrop-filter: blur(10px);
+		backdrop-filter: blur(20px);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 2rem;
-		padding: 2rem;
+		padding: 1.5rem;
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
-		width: 240px;
+		gap: 1rem;
+		width: 260px;
 		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+	}
+
+	.inventory-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.section-label {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1rem;
+		color: rgba(255, 255, 255, 0.4);
+		margin-left: 0.5rem;
 	}
 
 	.inventory-bar h3 {
@@ -400,30 +734,38 @@
 		font-size: 0.9rem;
 		text-transform: uppercase;
 		letter-spacing: 0.2rem;
-		color: rgba(255, 255, 255, 0.4);
+		color: #ff6e61;
 		text-align: center;
+		margin-bottom: 0.5rem;
 	}
 
 	.inventory-items {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.8rem;
 	}
 
 	.inventory-item {
 		background: rgba(255, 255, 255, 0.03);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 1.5rem;
-		padding: 1.2rem;
+		border-radius: 1rem;
+		padding: 0.8rem;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		justify-content: space-between;
+		gap: 0.5rem;
 		cursor: pointer;
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		color: white;
 	}
 
-	.inventory-item:hover {
+	.inventory-item:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+		filter: grayscale(1);
+	}
+
+	.inventory-item:not(:disabled):hover {
 		background: rgba(255, 255, 255, 0.08);
 		border-color: #ff6e61;
 		transform: translateY(-2px);
@@ -432,65 +774,85 @@
 	.inventory-item.active {
 		background: rgba(255, 110, 97, 0.15);
 		border-color: #ff6e61;
-		box-shadow: 0 0 20px rgba(255, 110, 97, 0.3);
+		box-shadow: 0 0 15px rgba(255, 110, 97, 0.2);
 	}
 
-	.mirror-preview {
-		width: 50px;
-		height: 50px;
+	.component-preview {
+		width: 40px;
+		height: 40px;
 		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
-	.mirror-preview::before {
+	.mirror::before {
 		content: "";
 		position: absolute;
 		width: 3px;
 		height: 80%;
 		background: #00f2fe;
-		box-shadow: 0 0 15px #00f2fe;
+		box-shadow: 0 0 10px #00f2fe;
 		border-radius: 4px;
 	}
 
-	.mirror-preview.m0::before { transform: rotate(45deg); }
-	.mirror-preview.m90::before { transform: rotate(-45deg); }
+	.splitter::before {
+		content: "";
+		position: absolute;
+		width: 3px;
+		height: 80%;
+		background: #00f2fe;
+		box-shadow: 0 0 10px #00f2fe;
+		border-radius: 4px;
+	}
+	.splitter::after {
+		content: "";
+		position: absolute;
+		width: 20px;
+		height: 20px;
+		background: rgba(0, 242, 254, 0.2);
+		border: 1px solid rgba(0, 242, 254, 0.4);
+		border-radius: 2px;
+	}
+
+	.m0::before, .s0::before { transform: rotate(45deg); }
+	.m90::before, .s90::before { transform: rotate(-45deg); }
 
 	.count {
-		font-size: 2rem;
+		font-size: 1.2rem;
 		font-weight: 900;
 	}
 
 	.inventory-hint {
-		font-size: 0.85rem;
+		font-size: 0.75rem;
 		color: rgba(255, 255, 255, 0.3);
 		text-align: center;
 		font-style: italic;
+		margin-top: 0.5rem;
 	}
 
 	.grid-container {
 		position: relative;
-		padding: 2rem;
-		background: rgba(255, 255, 255, 0.02);
-		border-radius: 3rem;
+		padding: 1.5rem;
+		background: rgba(255, 255, 255, 0.01);
+		border-radius: 2rem;
 		border: 1px solid rgba(255, 255, 255, 0.05);
-		box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+		box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
 	}
 
 	.grid {
 		display: grid;
 		grid-template-columns: repeat(var(--grid-size), 1fr);
 		grid-template-rows: repeat(var(--grid-size), 1fr);
-		gap: 8px;
-		width: 75vmin;
-		height: 75vmin;
+		gap: 6px;
+		width: 70vmin;
+		height: 70vmin;
 		position: relative;
 	}
 
 	.cell {
-		background: rgba(255, 255, 255, 0.04);
-		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.03);
+		border-radius: 8px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -511,51 +873,51 @@
 		width: 70%;
 		height: 70%;
 		background: #000;
-		border-radius: 8px;
+		border-radius: 6px;
 		position: relative;
-		border: 2px solid #ff6e61;
-		box-shadow: 0 0 20px rgba(255, 110, 97, 0.5);
+		border: 2px solid var(--source-color, #ff6e61);
+		box-shadow: 0 0 15px var(--source-color, #ff6e61);
 	}
 
 	.source-icon.right::after {
 		content: "";
 		position: absolute;
-		right: -10px;
+		right: -8px;
 		top: 50%;
 		transform: translateY(-50%);
-		border-left: 12px solid #ff6e61;
-		border-top: 7px solid transparent;
-		border-bottom: 7px solid transparent;
+		border-left: 10px solid var(--source-color, #ff6e61);
+		border-top: 6px solid transparent;
+		border-bottom: 6px solid transparent;
 	}
 	.source-icon.left::after {
 		content: "";
 		position: absolute;
-		left: -10px;
+		left: -8px;
 		top: 50%;
 		transform: translateY(-50%);
-		border-right: 12px solid #ff6e61;
-		border-top: 7px solid transparent;
-		border-bottom: 7px solid transparent;
+		border-right: 10px solid var(--source-color, #ff6e61);
+		border-top: 6px solid transparent;
+		border-bottom: 6px solid transparent;
 	}
 	.source-icon.up::after {
 		content: "";
 		position: absolute;
-		top: -10px;
+		top: -8px;
 		left: 50%;
 		transform: translateX(-50%);
-		border-bottom: 12px solid #ff6e61;
-		border-left: 7px solid transparent;
-		border-right: 7px solid transparent;
+		border-bottom: 10px solid var(--source-color, #ff6e61);
+		border-left: 6px solid transparent;
+		border-right: 6px solid transparent;
 	}
 	.source-icon.down::after {
 		content: "";
 		position: absolute;
-		bottom: -10px;
+		bottom: -8px;
 		left: 50%;
 		transform: translateX(-50%);
-		border-top: 12px solid #ff6e61;
-		border-left: 7px solid transparent;
-		border-right: 7px solid transparent;
+		border-top: 10px solid var(--source-color, #ff6e61);
+		border-left: 6px solid transparent;
+		border-right: 6px solid transparent;
 	}
 
 	.laser-dot {
@@ -563,11 +925,11 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-		width: 8px;
-		height: 8px;
-		background: #ff6e61;
+		width: 6px;
+		height: 6px;
+		background: var(--source-color, #ff6e61);
 		border-radius: 50%;
-		box-shadow: 0 0 15px #ff6e61;
+		box-shadow: 0 0 10px var(--source-color, #ff6e61);
 	}
 
 	.target-icon {
@@ -596,6 +958,8 @@
 		background: rgba(255, 255, 255, 0.1);
 		border-radius: 50%;
 		transition: all 0.4s;
+		border: 2px solid var(--req-color, white);
+		box-shadow: 0 0 10px var(--req-color, transparent);
 	}
 
 	.target-svg {
@@ -608,9 +972,9 @@
 		pointer-events: none;
 	}
 
-	.target-icon.active .target-ring { border-color: #ff6e61; box-shadow: 0 0 20px rgba(255, 110, 97, 0.3); }
-	.target-icon.active .target-core { background: #ff6e61; box-shadow: 0 0 30px #ff6e61; transform: scale(1.2); }
-	.target-icon.active .target-svg { stroke: #ff6e61; }
+	.target-icon.active .target-ring { border-color: var(--req-color, #ff6e61); box-shadow: 0 0 15px var(--req-color, #ff6e61); }
+	.target-icon.active .target-core { background: var(--req-color, #ff6e61); box-shadow: 0 0 25px var(--req-color, #ff6e61); transform: scale(1.2); }
+	.target-icon.active .target-svg { stroke: var(--req-color, #ff6e61); }
 
 	@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
@@ -619,17 +983,15 @@
 		height: 85%;
 		background: #050505;
 		border: 1px solid #222;
-		border-radius: 10px;
+		border-radius: 8px;
 		background-image: 
 			linear-gradient(45deg, #111 25%, transparent 25%),
-			linear-gradient(-45deg, #111 25%, transparent 25%),
-			linear-gradient(45deg, transparent 75%, #111 75%),
-			linear-gradient(-45deg, transparent 75%, #111 75%);
-		background-size: 10px 10px;
-		box-shadow: inset 0 0 20px black;
+			linear-gradient(-45deg, #111 25%, transparent 25%);
+		background-size: 8px 8px;
+		box-shadow: inset 0 0 10px black;
 	}
 
-	.mirror-icon {
+	.mirror-icon, .splitter-icon {
 		width: 95%;
 		height: 95%;
 		display: flex;
@@ -638,15 +1000,54 @@
 		transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 	}
 
-	.mirror-icon.placed { filter: drop-shadow(0 0 15px rgba(0, 242, 254, 0.5)); }
+	.mirror-icon.placed, .splitter-icon.placed { filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.4)); }
 
 	.mirror-surface {
 		width: 4px;
 		height: 90%;
 		background: linear-gradient(to bottom, #00f2fe, #4facfe);
-		box-shadow: 0 0 25px rgba(0, 242, 254, 0.9), inset 0 0 5px white;
+		box-shadow: 0 0 20px rgba(0, 242, 254, 0.8), inset 0 0 5px white;
 		border-radius: 4px;
 		transform: rotate(45deg);
+	}
+
+	.splitter-surface {
+		width: 2px;
+		height: 90%;
+		background: #00f2fe;
+		box-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
+		border-radius: 4px;
+		transform: rotate(45deg);
+		z-index: 2;
+	}
+
+	.splitter-glass {
+		position: absolute;
+		width: 60%;
+		height: 60%;
+		background: rgba(0, 242, 254, 0.05);
+		border: 1px solid rgba(0, 242, 254, 0.2);
+		backdrop-filter: blur(2px);
+		border-radius: 4px;
+		transform: rotate(45deg);
+	}
+
+	.prism-icon {
+		width: 80%;
+		height: 80%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.prism-shape {
+		width: 0;
+		height: 0;
+		border-left: 18px solid transparent;
+		border-right: 18px solid transparent;
+		border-bottom: 30px solid var(--prism-color, white);
+		filter: drop-shadow(0 0 12px var(--prism-color, white));
+		opacity: 0.9;
 	}
 
 	.laser-svg {
@@ -661,19 +1062,14 @@
 
 	.laser-line {
 		fill: none;
-		stroke: #ff6e61;
-		stroke-width: 0.15;
+		stroke: var(--laser-color, #ff6e61);
+		stroke-width: 0.12;
 		stroke-linecap: round;
 		stroke-linejoin: round;
-		filter: drop-shadow(0 0 10px #ff6e61);
-		stroke-dasharray: 100;
-		stroke-dashoffset: 100;
-		animation: dash 1s linear forwards;
+		filter: drop-shadow(0 0 10px var(--laser-color, #ff6e61));
+		opacity: 0.9;
+		transition: stroke 0.3s, filter 0.3s;
 	}
-
-	.laser-line.won { stroke-width: 0.2; filter: drop-shadow(0 0 15px #ff6e61); }
-
-	@keyframes dash { to { stroke-dashoffset: 0; } }
 
 	.win-overlay {
 		position: absolute;
@@ -681,52 +1077,49 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: rgba(0, 0, 0, 0.9);
-		backdrop-filter: blur(15px);
+		background: rgba(0, 0, 0, 0.85);
+		backdrop-filter: blur(10px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		z-index: 100;
-		border-radius: 3rem;
+		border-radius: 2rem;
 	}
 
 	.win-content {
 		text-align: center;
 		background: #000;
-		padding: 5rem;
-		border-radius: 4rem;
+		padding: 3rem;
+		border-radius: 2rem;
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		box-shadow: 0 50px 150px rgba(0, 0, 0, 1);
 		display: flex;
 		flex-direction: column;
-		gap: 3rem;
+		gap: 2rem;
 	}
 
 	.win-content h2 {
-		font-size: 4rem;
+		font-size: 3rem;
 		margin: 0;
 		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		font-weight: 900;
-		letter-spacing: -0.1rem;
 	}
 
 	.win-content button {
 		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
 		color: white;
 		border: none;
-		padding: 1.5rem 4rem;
-		font-size: 1.6rem;
+		padding: 1rem 3rem;
+		font-size: 1.4rem;
 		font-weight: 800;
-		border-radius: 2rem;
+		border-radius: 1rem;
 		cursor: pointer;
 		transition: all 0.3s;
-		box-shadow: 0 15px 40px rgba(255, 110, 97, 0.4);
 	}
 
 	.win-content button:hover {
-		transform: translateY(-5px) scale(1.05);
-		box-shadow: 0 25px 50px rgba(255, 110, 97, 0.6);
+		transform: translateY(-3px);
+		box-shadow: 0 10px 30px rgba(255, 110, 97, 0.5);
 	}
 </style>
