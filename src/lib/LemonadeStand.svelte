@@ -350,13 +350,6 @@
 				<p>Available: ${money.toFixed(2)}</p>
 				
 				<table class="buy-table">
-					<thead>
-						<tr>
-							<th>Supply</th>
-							<th>Quantity</th>
-							<th>Price</th>
-						</tr>
-					</thead>
 					<tbody>
 						<tr>
 							<td>🥤 Cups</td>
@@ -786,18 +779,6 @@
 		border-radius: 8px;
 		overflow: hidden;
 		margin-bottom: 1rem;
-	}
-
-	.buy-table th {
-		padding: 0.75rem 1rem;
-		font-size: 0.8rem;
-		font-weight: 700;
-		color: rgba(255, 255, 255, 0.6);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		text-align: left;
-		background: rgba(255, 255, 255, 0.08);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
 	.buy-table td {
