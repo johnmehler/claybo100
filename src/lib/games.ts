@@ -143,22 +143,22 @@ export const games = [
 		updated: '2026-05-16',
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Lemonade Stand Icon"><path d="M3 10h18"/><path d="M5 10l2 10h10l2-10"/><path d="M9 6h6"/><path d="M12 6V3"/></svg>`
 	},
-	{
-		id: 'negosim',
-		label: 'NegoSim (Coming Soon)',
-		description: 'Business sim placeholder. Coming soon.',
-		cardClass: 'nego-card',
-		updated: '2026-05-16',
-		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="NegoSim Icon"><path d="M3 8h18"/><path d="M3 16h18"/><path d="M8 8v8"/><path d="M16 8v8"/><circle cx="12" cy="12" r="2"/></svg>`
-	},
-	{
-		id: 'apex-industries',
-		label: 'Apex Industries (Coming Soon)',
-		description: 'Business sim placeholder. Coming soon.',
-		cardClass: 'apex-card',
-		updated: '2026-05-16',
-		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Apex Industries Icon"><path d="M3 20h18"/><rect x="5" y="10" width="4" height="10"/><rect x="10" y="6" width="4" height="14"/><rect x="15" y="12" width="4" height="8"/></svg>`
-	}
+	// {
+	// 	id: 'negosim',
+	// 	label: 'NegoSim (Coming Soon)',
+	// 	description: 'Business sim placeholder. Coming soon.',
+	// 	cardClass: 'nego-card',
+	// 	updated: '2026-05-16',
+	// 	icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="NegoSim Icon"><path d="M3 8h18"/><path d="M3 16h18"/><path d="M8 8v8"/><path d="M16 8v8"/><circle cx="12" cy="12" r="2"/></svg>`
+	// },
+	// {
+	// 	id: 'apex-industries',
+	// 	label: 'Apex Industries (Coming Soon)',
+	// 	description: 'Business sim placeholder. Coming soon.',
+	// 	cardClass: 'apex-card',
+	// 	updated: '2026-05-16',
+	// 	icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Apex Industries Icon"><path d="M3 20h18"/><rect x="5" y="10" width="4" height="10"/><rect x="10" y="6" width="4" height="14"/><rect x="15" y="12" width="4" height="8"/></svg>`
+	// }
 ];
 
 export const gameCategories = [
@@ -180,7 +180,7 @@ export const gameCategories = [
 	{
 		name: 'Business Sims',
 		delay: 800,
-		gameIds: ['lemonadestand', 'negosim', 'apex-industries']
+		gameIds: ['lemonadestand']
 	}
 ];
 

@@ -6,7 +6,7 @@
 		$props();
 
 	// Game Constants (Classic MECC values scaled 10x)
-	const TOTAL_DAYS = 12;
+	const TOTAL_DAYS = 7;
 	const INITIAL_MONEY = 20.00;
 	const CUP_COST = 0.20;
 	const LEMON_COST = 0.30;
@@ -280,14 +280,13 @@
 		return Math.floor(baseVisitors * randomFactor);
 	}
 
-	function calculateDemand(): number {
-		const visitors = calculateVisitorCount();
+	function calculateDemand(visitorCount: number): number {
 		const tasteScore = calculateTasteScore();
 		
 		let customers = 0;
 		
 		// Each visitor makes a purchase decision
-		for (let i = 0; i < visitors; i++) {
+		for (let i = 0; i < visitorCount; i++) {
 			// Base willingness to buy based on taste score
 			let willingness = tasteScore / 100;
 			
@@ -344,13 +343,12 @@
 			return;
 		}
 		
-		currentWeather = generateWeather();
 		visitors = calculateVisitorCount();
-		customers = calculateDemand();
+		customers = calculateDemand(visitors);
 		const availableCups = cupsToMake;
 		
-		// Cap customers by inventory
-		customers = Math.min(customers, availableCups);
+		// Cap customers by both visitors and inventory
+		customers = Math.min(customers, visitors, availableCups);
 		revenue = customers * pricePerCup;
 		
 		// No daily operating costs - costs are only when buying supplies
@@ -380,6 +378,8 @@
 		currentDay++;
 		// All ice melts at the end of the day
 		ice = 0;
+		// Generate weather for the coming day
+		currentWeather = generateWeather();
 		showResults = false;
 	}
 
@@ -402,6 +402,9 @@
 	}
 
 	onMount(() => {
+		// Generate weather for day 1 at game start
+		currentWeather = generateWeather();
+		
 		registerActions({
 			restart: resetGame,
 			newShuffle: resetGame,
