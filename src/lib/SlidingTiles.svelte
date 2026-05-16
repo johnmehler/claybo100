@@ -14,18 +14,20 @@
 	let initialTiles = $state<number[]>([]);
 	let isWon = $state(false);
 	let moves = $state(0);
-	let optimalMoves = $state(0);
 	let currentRating = $derived.by(() => {
-		if (optimalMoves === 0) return "---";
-		const diff = moves / optimalMoves;
-		if (diff <= 1.1) return "BRILLIANT";
-		if (diff <= 1.35) return "AMAZING";
-		if (diff <= 1.7) return "GOOD";
-		return "LEARNING";
+		if (moves < 80) return "GENIUS";
+		if (moves <= 90) return "BRILLIANT";
+		return "GREAT WORK";
 	});
+
+	type SolveResult = {
+		path: number[];
+		isOptimal: boolean;
+	};
 
 	// Solver and playback state
 	let solutionPath = $state<number[]>([]);
+	let optimalPath = $state<number[] | null>(null);
 	let shufflePath = $state<number[]>([]);
 	let isSolutionMode = $state(false);
 	let isPlaying = $state(false);
@@ -95,7 +97,7 @@
 		return distance;
 	}
 
-	function solvePuzzle() {
+	function solvePuzzle(): SolveResult {
 		const startBoard = [...initialTiles];
 		const path: number[] = [];
 		const limit = 100;
@@ -140,40 +142,32 @@
 
 		while (threshold <= limit) {
 			const result = idaSearch(startBoard, 0, threshold, -1);
-			if (result === "found") return path;
+			if (result === "found") return { path: [...path], isOptimal: true };
 			if (result === "timeout" || result === Infinity) break;
 			threshold = result;
 		}
 		
 		// Fallback: If optimal fails or times out, use the reverse of the shuffle path
 		// It's not optimal, but it's guaranteed to work.
-		return [...shufflePath].reverse();
+		return { path: [...shufflePath].reverse(), isOptimal: false };
 	}
 
 	function enterSolutionMode() {
 		if (isSolutionMode || isCalculating) return;
-		
-		isCalculating = true;
-		
-		setTimeout(() => {
-			// Always solve from initialTiles
-			const path = solvePuzzle();
-			isCalculating = false;
-			
-			if (!path || path.length === 0) {
-				alert("Could not determine a solution path.");
-				return;
-			}
-			
-			// Reset to beginning of solution
-			tiles = [...initialTiles];
-			moves = 0;
-			isWon = false;
-			solutionPath = path;
-			currentStep = 0;
-			isSolutionMode = true;
-			startAutoPlayback();
-		}, 50);
+
+		if (!optimalPath || optimalPath.length === 0) {
+			alert("Exact optimal path is unavailable for this shuffle.");
+			return;
+		}
+
+		// Reset to beginning of solution
+		tiles = [...initialTiles];
+		moves = 0;
+		isWon = false;
+		solutionPath = [...optimalPath];
+		currentStep = 0;
+		isSolutionMode = true;
+		startAutoPlayback();
 	}
 
 	function startAutoPlayback() {
@@ -258,16 +252,9 @@
 			initialTiles = [...newTiles];
 			tiles = newTiles;
 			shufflePath = sPath;
+			optimalPath = null;
 			
-			// Background calculate optimal
-			setTimeout(() => {
-				const path = solvePuzzle();
-				if (path) {
-					optimalMoves = path.length;
-				} else {
-					optimalMoves = shufflePath.length;
-				}
-			}, 50);
+			// No target/optimal number shown in UI.
 		} else {
 			tiles = [...initialTiles];
 		}
@@ -342,10 +329,6 @@
 				<span class="label">MOVES</span>
 				<span class="value">{moves}</span>
 			</div>
-			<div class="stat">
-				<span class="label">OPTIMAL</span>
-				<span class="value">{optimalMoves || '...'}</span>
-			</div>
 			{#if isWon}
 				<div class="stat" transition:fade>
 					<span class="label">RATING</span>
@@ -414,7 +397,7 @@
 				</div>
 			</div>
 		{:else if isWon}
-			<GameOverMenu onPlayAgain={initGame} onMenu={onBack} onShowOptimal={enterSolutionMode} delay={800} />
+			<GameOverMenu onPlayAgain={initGame} onMenu={onBack} onShowOptimal={optimalPath ? enterSolutionMode : undefined} delay={800} />
 		{/if}
 	</div>
 </div>
