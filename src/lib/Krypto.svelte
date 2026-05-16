@@ -254,7 +254,7 @@
 
 	$effect(() => {
 		if (wonExpr && !status) {
-			status = "KRYPTO SOLVED!";
+			status = "SUCCESS";
 			winningExpr = wonExpr;
 		}
 	});
@@ -544,6 +544,21 @@
 		backdrop-filter: blur(8px);
 	}
 
+	.status-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2.5vmin;
+		padding: 5vmin 6vmin;
+		background: rgba(20, 20, 24, 0.85);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: 3vmin;
+		box-shadow: 0 2vmin 6vmin rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(20px);
+		animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+		max-width: min(90vmin, 560px);
+	}
+
 	.status-card.is-impossible {
 		padding: 4vmin 6vmin;
 		gap: 3vmin;
@@ -612,11 +627,16 @@
 	.status-text {
 		font-size: 5vmin;
 		font-weight: 900;
-		color: var(--color-golden);
+		color: #4ade80;
 		text-transform: uppercase;
 		letter-spacing: 0.8vmin;
-		text-shadow: 0 0 3vmin rgba(255, 230, 109, 0.4);
+		text-shadow: 0 0 3vmin rgba(74, 222, 128, 0.4);
 		margin: 0;
+	}
+
+	.status-card.is-impossible .status-text {
+		color: var(--color-golden);
+		text-shadow: 0 0 3vmin rgba(255, 230, 109, 0.4);
 	}
 
 	.winning-formula {
