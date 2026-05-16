@@ -38,6 +38,7 @@
 	let stars = $state<{x: number, y: number, size: number, opacity: number}[]>([]);
 	let debris = $state<{x: number, y: number, vx: number, vy: number, angle: number, va: number, type: string}[]>([]);
 	let optimalPaths = $state<{x: number, y: number}[][]>([]);
+	let playerTrail = $state<{x: number, y: number}[]>([]);
 	let showOptimal = $state(false);
 
 	let animationId: number | null = null;
@@ -161,6 +162,7 @@
 		landingMessage = '';
 		debris = [];
 		optimalPaths = [];
+		playerTrail = [];
 		showOptimal = false;
 		lastTime = performance.now();
 		animate(lastTime);
@@ -234,6 +236,12 @@
 		const terrainY = getTerrainYAtX(x);
 		altitude = Math.max(0, terrainY - y - 3);
 		speed = Math.sqrt(vx * vx + vy * vy);
+
+		// Record player trail (distance-throttled so we don't spam points)
+		const last = playerTrail[playerTrail.length - 1];
+		if (!last || Math.hypot(last.x - x, last.y - y) > 0.3) {
+			playerTrail = [...playerTrail, { x, y }];
+		}
 
 		// Collision detection
 		if (y + 3 >= terrainY) {
@@ -460,6 +468,15 @@
 
 			<!-- Optimal Trajectory Lines -->
 			{#if showOptimal}
+				{#if playerTrail.length > 1}
+					<path
+						d="M {playerTrail.map(p => `${p.x} ${p.y}`).join(' L ')}"
+						fill="none"
+						stroke="var(--color-bittersweet, #ff6e61)"
+						stroke-width="0.35"
+						opacity="0.85" />
+					<text x="51" y="7" fill="var(--color-bittersweet, #ff6e61)" font-size="1.6" font-weight="800" opacity="0.8">YOUR PATH</text>
+				{/if}
 				{#each optimalPaths as path, i}
 					{#if path.length > 1}
 						<path 

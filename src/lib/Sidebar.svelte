@@ -192,9 +192,9 @@
 	}
 
 	.sidebar-title {
-		font-size: 3vmin;
+		font-size: 2.2vmin;
 		font-weight: 900;
-		letter-spacing: -0.1vmin;
+		letter-spacing: -0.05vmin;
 		margin: 0;
 	}
 
