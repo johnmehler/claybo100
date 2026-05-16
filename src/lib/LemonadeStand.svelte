@@ -63,12 +63,13 @@
 	let cupsToMake = $state(10);
 	
 	let currentWeather = $state(weatherTypes[0]);
+	let visitors = $state(0);
 	let customers = $state(0);
 	let revenue = $state(0);
 	let costs = $state(0);
 	let profit = $state(0);
 	
-	let dailyHistory = $state<Array<{day: number, weather: Weather, customers: number, revenue: number, costs: number, profit: number}>>([]);
+	let dailyHistory = $state<Array<{day: number, weather: Weather, visitors: number, customers: number, revenue: number, costs: number, profit: number}>>([]);
 	
 	let showResults = $state(false);
 	let gameOver = $state(false);
@@ -78,6 +79,11 @@
 	let selectedLemons = $state(0);
 	let selectedSugar = $state(0);
 	let selectedIce = $state(0);
+	
+	// Recipe ratios (per cup)
+	let lemonsPerCup = $state(1);
+	let sugarPerCup = $state(1);
+	let icePerCup = $state(2);
 
 	function generateWeather(): WeatherInfo {
 		const rand = Math.random();
@@ -166,8 +172,8 @@
 	}
 
 	function canMakeLemonade(count: number): boolean {
-		// Recipe: 1 cup, 1 lemon, 1 sugar, 2 ice per cup
-		return cups >= count && lemons >= count && sugar >= count && ice >= count * 2;
+		// Recipe: 1 cup, lemonsPerCup lemons, sugarPerCup sugar, icePerCup ice per cup
+		return cups >= count && lemons >= count * lemonsPerCup && sugar >= count * sugarPerCup && ice >= count * icePerCup;
 	}
 
 	function makeLemonade(): boolean {
@@ -177,53 +183,140 @@
 		}
 		
 		cups -= cupsToMake;
-		lemons -= cupsToMake;
-		sugar -= cupsToMake;
-		ice -= cupsToMake * 2;
+		lemons -= cupsToMake * lemonsPerCup;
+		sugar -= cupsToMake * sugarPerCup;
+		ice -= cupsToMake * icePerCup;
 		return true;
 	}
 
-	function calculateDemand(): number {
-		// Base demand depends on temperature (optimal around 75-85°F)
-		let tempFactor = 1.0;
-		if (currentWeather.temperature >= 75 && currentWeather.temperature <= 85) {
-			tempFactor = 1.5; // Ideal temperature for lemonade
-		} else if (currentWeather.temperature > 85) {
-			tempFactor = 1.8; // Hot weather increases demand
-		} else if (currentWeather.temperature < 50) {
-			tempFactor = 0.3; // Cold weather reduces demand significantly
-		} else if (currentWeather.temperature < 65) {
-			tempFactor = 0.7; // Cool weather reduces demand
+	function calculateTasteScore(): number {
+		// Calculate taste score based on recipe proportions
+		// Ideal: 1 lemon, 1 sugar, 2 ice per cup
+		const idealLemons = 1;
+		const idealSugar = 1;
+		const idealIce = 2;
+		
+		// Deviation penalties
+		const lemonDeviation = Math.abs(lemonsPerCup - idealLemons);
+		const sugarDeviation = Math.abs(sugarPerCup - idealSugar);
+		const iceDeviation = Math.abs(icePerCup - idealIce);
+		
+		// Base score starts at 100
+		let score = 100;
+		
+		// Too many lemons = sour penalty
+		if (lemonsPerCup > idealLemons) {
+			score -= lemonDeviation * 20;
+		}
+		// Too few lemons = bland
+		else if (lemonsPerCup < idealLemons) {
+			score -= lemonDeviation * 15;
 		}
 		
-		// Weather condition modifier
-		let conditionFactor = 1.0;
+		// Too much sugar = cloying penalty
+		if (sugarPerCup > idealSugar) {
+			score -= sugarDeviation * 25;
+		}
+		// Too little sugar = bad
+		else if (sugarPerCup < idealSugar) {
+			score -= sugarDeviation * 20;
+		}
+		
+		// Ice penalty depends on temperature
+		// On hot days, ice is good. On cold days, too much ice hurts
+		if (currentWeather.temperature > 80) {
+			// Hot weather: more ice is better
+			if (icePerCup < idealIce) {
+				score -= iceDeviation * 10;
+			}
+		} else if (currentWeather.temperature < 60) {
+			// Cold weather: too much ice hurts
+			if (icePerCup > idealIce) {
+				score -= iceDeviation * 15;
+			}
+		}
+		
+		// Clamp score between 0 and 100
+		return Math.max(0, Math.min(100, score));
+	}
+
+	function calculateVisitorCount(): number {
+		// Calculate total visitors based on weather and temperature
+		let baseVisitors = 30;
+		
+		// Temperature effect
+		if (currentWeather.temperature >= 75 && currentWeather.temperature <= 85) {
+			baseVisitors *= 1.4;
+		} else if (currentWeather.temperature > 85) {
+			baseVisitors *= 1.8;
+		} else if (currentWeather.temperature < 50) {
+			baseVisitors *= 0.3;
+		} else if (currentWeather.temperature < 65) {
+			baseVisitors *= 0.6;
+		}
+		
+		// Weather condition effect
 		switch (currentWeather.type) {
 			case "sunny":
-				conditionFactor = 1.3;
+				baseVisitors *= 1.3;
 				break;
 			case "cloudy":
-				conditionFactor = 1.0;
+				baseVisitors *= 1.0;
 				break;
 			case "hot":
-				conditionFactor = 1.6;
+				baseVisitors *= 1.6;
 				break;
 			case "rainy":
-				conditionFactor = 0.4;
+				baseVisitors *= 0.4;
 				break;
 			case "cold":
-				conditionFactor = 0.3;
+				baseVisitors *= 0.3;
 				break;
 		}
 		
-		// Price affects demand - higher price = lower demand
-		const priceFactor = Math.max(0.1, 1 - (pricePerCup - 0.10) * 2);
+		// Random variation (±20%)
+		const randomFactor = 0.8 + Math.random() * 0.4;
 		
-		// Random variation (±15%)
-		const randomFactor = 0.85 + Math.random() * 0.3;
+		return Math.floor(baseVisitors * randomFactor);
+	}
+
+	function calculateDemand(): number {
+		const visitors = calculateVisitorCount();
+		const tasteScore = calculateTasteScore();
 		
-		const baseDemand = 20;
-		return Math.floor(baseDemand * tempFactor * conditionFactor * priceFactor * randomFactor);
+		let customers = 0;
+		
+		// Each visitor makes a purchase decision
+		for (let i = 0; i < visitors; i++) {
+			// Base willingness to buy based on taste score
+			let willingness = tasteScore / 100;
+			
+			// Price sensitivity depends on temperature
+			// Hot weather = higher price tolerance
+			// Cold weather = more price sensitive
+			let priceTolerance = 1.0;
+			if (currentWeather.temperature > 80) {
+				priceTolerance = 1.5;
+			} else if (currentWeather.temperature < 60) {
+				priceTolerance = 0.7;
+			}
+			
+			// Price affects willingness
+			const maxAcceptablePrice = 1.00 * priceTolerance;
+			if (pricePerCup > maxAcceptablePrice) {
+				willingness *= (maxAcceptablePrice / pricePerCup);
+			}
+			
+			// Random individual variation
+			willingness *= (0.8 + Math.random() * 0.4);
+			
+			// Decision
+			if (Math.random() < willingness) {
+				customers++;
+			}
+		}
+		
+		return customers;
 	}
 
 	function startDay() {
@@ -231,8 +324,13 @@
 			return;
 		}
 
-		// Auto-calculate max cups possible based on supplies
-		const maxCups = Math.min(cups, lemons, sugar, Math.floor(ice / 2));
+		// Auto-calculate max cups possible based on supplies and recipe ratios
+		const maxCups = Math.min(
+			cups,
+			Math.floor(lemons / lemonsPerCup),
+			Math.floor(sugar / sugarPerCup),
+			Math.floor(ice / icePerCup)
+		);
 		
 		if (maxCups <= 0) {
 			alert("Not enough supplies to make lemonade!");
@@ -247,10 +345,12 @@
 		}
 		
 		currentWeather = generateWeather();
-		const demand = calculateDemand();
+		visitors = calculateVisitorCount();
+		customers = calculateDemand();
 		const availableCups = cupsToMake;
 		
-		customers = Math.min(demand, availableCups);
+		// Cap customers by inventory
+		customers = Math.min(customers, availableCups);
 		revenue = customers * pricePerCup;
 		
 		// No daily operating costs - costs are only when buying supplies
@@ -262,6 +362,7 @@
 		dailyHistory.push({
 			day: currentDay,
 			weather: currentWeather.type,
+			visitors,
 			customers,
 			revenue,
 			costs,
@@ -277,6 +378,8 @@
 
 	function nextDay() {
 		currentDay++;
+		// All ice melts at the end of the day
+		ice = 0;
 		showResults = false;
 	}
 
@@ -289,6 +392,9 @@
 		ice = 0;
 		pricePerCup = 1.00;
 		cupsToMake = 10;
+		lemonsPerCup = 1;
+		sugarPerCup = 1;
+		icePerCup = 2;
 		dailyHistory = [];
 		showResults = false;
 		gameOver = false;
@@ -334,6 +440,50 @@
 				</div>
 			</div>
 
+			<div class="price-panel">
+				<div class="price-control">
+					<span class="label">Price per Cup</span>
+					<div class="price-buttons">
+						<button onclick={() => pricePerCup = Math.max(0.10, pricePerCup - 0.10)}>-</button>
+						<span>${pricePerCup.toFixed(2)}</span>
+						<button onclick={() => pricePerCup = Math.min(5.00, pricePerCup + 0.10)}>+</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="recipe-panel">
+				<h3>Recipe per Cup</h3>
+				<div class="recipe-controls">
+					<div class="recipe-item">
+						<span class="label">🍋 Lemons</span>
+						<div class="recipe-control">
+							<button onclick={() => lemonsPerCup = Math.max(0.5, lemonsPerCup - 0.5)}>-</button>
+							<span>{lemonsPerCup}</span>
+							<button onclick={() => lemonsPerCup = Math.min(3, lemonsPerCup + 0.5)}>+</button>
+						</div>
+					</div>
+					<div class="recipe-item">
+						<span class="label">🍬 Sugar</span>
+						<div class="recipe-control">
+							<button onclick={() => sugarPerCup = Math.max(0.5, sugarPerCup - 0.5)}>-</button>
+							<span>{sugarPerCup}</span>
+							<button onclick={() => sugarPerCup = Math.min(3, sugarPerCup + 0.5)}>+</button>
+						</div>
+					</div>
+					<div class="recipe-item">
+						<span class="label">🧊 Ice</span>
+						<div class="recipe-control">
+							<button onclick={() => icePerCup = Math.max(0, icePerCup - 1)}>-</button>
+							<span>{icePerCup}</span>
+							<button onclick={() => icePerCup = Math.min(5, icePerCup + 1)}>+</button>
+						</div>
+					</div>
+				</div>
+				<div class="taste-preview">
+					<span>Taste Score: {calculateTasteScore().toFixed(0)}/100</span>
+				</div>
+			</div>
+
 			<div class="action-buttons">
 				<button class="btn secondary-btn" onclick={() => showBuyMenu = true}>Buy Supplies</button>
 				<button class="btn start-btn" onclick={startDay} disabled={!canMakeLemonade(1)}>Start Day</button>
@@ -349,7 +499,7 @@
 			<div class="results-stats">
 				<div class="result">
 					<span class="label">Customers</span>
-					<span class="value">{customers}</span>
+					<span class="value">{customers} / {visitors}</span>
 				</div>
 				<div class="result">
 					<span class="label">Revenue</span>
@@ -577,6 +727,129 @@
 
 	.weather-text {
 		font-weight: 600;
+	}
+
+	.price-panel {
+		margin-bottom: 2rem;
+	}
+
+	.price-control {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: rgba(255, 255, 255, 0.05);
+		padding: 1rem;
+		border-radius: 8px;
+	}
+
+	.price-control .label {
+		font-size: 0.85rem;
+		color: rgba(255, 255, 255, 0.8);
+		font-weight: 600;
+	}
+
+	.price-buttons {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.price-buttons button {
+		background: #27272a;
+		border: 1px solid #3f3f46;
+		color: white;
+		padding: 0.45rem 0.85rem;
+		border-radius: 8px;
+		font-weight: 700;
+		font-size: 0.95rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.price-buttons button:hover {
+		background: #3f3f46;
+	}
+
+	.price-buttons span {
+		font-size: 1.25rem;
+		font-weight: 700;
+		min-width: 80px;
+		text-align: center;
+	}
+
+	.recipe-panel {
+		margin-bottom: 2rem;
+	}
+
+	.recipe-panel h3 {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.7);
+		margin: 0 0 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.recipe-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.recipe-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.recipe-item .label {
+		font-size: 0.85rem;
+		color: rgba(255, 255, 255, 0.8);
+		font-weight: 600;
+	}
+
+	.recipe-control {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.recipe-control button {
+		background: #27272a;
+		border: 1px solid #3f3f46;
+		color: white;
+		padding: 0.3rem 0.6rem;
+		border-radius: 6px;
+		font-weight: 700;
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition: all 0.2s;
+		width: 28px;
+		height: 28px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.recipe-control button:hover {
+		background: #3f3f46;
+	}
+
+	.recipe-control span {
+		font-size: 0.95rem;
+		font-weight: 700;
+		min-width: 30px;
+		text-align: center;
+	}
+
+	.taste-preview {
+		background: rgba(255, 255, 255, 0.05);
+		padding: 0.75rem;
+		border-radius: 8px;
+		text-align: center;
+		margin-top: 0.75rem;
+		font-weight: 700;
+		font-size: 0.9rem;
 	}
 
 	.action-buttons {
