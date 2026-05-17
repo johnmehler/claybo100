@@ -519,7 +519,7 @@
 					<input type="number" id="quality" bind:value={qualitySpending} min="0" max="16000" step="100" />
 					<div class="quality-preview">
 						<span class="quality-label">Resulting Quality:</span>
-						<span class="quality-value">{projectedQuality.toFixed(2)}</span>
+						<span class="quality-value">{previousQuality.toFixed(2)} → {projectedQuality.toFixed(2)}</span>
 					</div>
 				</div>
 				<div class="input-group">
