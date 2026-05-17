@@ -495,7 +495,7 @@
 	.stats-panel {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: 1rem;
+		gap: 0.75rem;
 		margin-bottom: 2rem;
 		padding-bottom: 1rem;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -505,20 +505,31 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		text-align: center;
+		background: rgba(255, 255, 255, 0.03);
+		padding: 0.75rem 0.5rem;
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
 	.stat .label {
-		font-size: 0.75rem;
+		font-size: 0.7rem;
 		color: rgba(255, 255, 255, 0.5);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
-		margin-bottom: 0.25rem;
+		margin-bottom: 0.3rem;
 	}
 
 	.stat .value {
-		font-size: 1.25rem;
+		font-size: 1.1rem;
 		font-weight: 900;
+	}
+
+	@media (max-width: 1024px) {
+		.stat .value {
+			font-size: 0.9rem;
+		}
 	}
 
 	.inputs-panel {
