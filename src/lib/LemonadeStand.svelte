@@ -1180,18 +1180,22 @@
 
 	@media (max-width: 768px) {
 		.lemonade-container {
-			padding: 0;
+			padding: 0.5rem;
+			min-height: 100dvh;
 			height: 100dvh;
-			overflow-y: auto;
+			justify-content: flex-start;
+			overflow: hidden;
 		}
 
 		.header {
-			margin-bottom: 1rem;
-			padding: 1rem;
+			margin-bottom: 0.5rem;
+			padding: 0.25rem 0.5rem;
+			flex: 0 0 auto;
 		}
 
 		h1 {
-			font-size: 1.5rem;
+			font-size: 1.35rem;
+			letter-spacing: -1px;
 		}
 
 		.game-viewport,
@@ -1199,10 +1203,22 @@
 		.game-over-panel,
 		.buy-menu {
 			min-width: unset;
-			width: 100%;
-			padding: 1rem;
-			border-radius: 0;
-			border: none;
+			width: 95vw;
+			max-width: 95vw;
+			padding: 0.9rem;
+			border-radius: 0.85rem;
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			margin: 0 auto;
+			box-sizing: border-box;
+		}
+
+		.game-viewport,
+		.results-panel,
+		.game-over-panel {
+			height: calc(95dvh - 3.4rem);
+			max-height: calc(95dvh - 3.4rem);
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
 		}
 
 		.game-viewport {
@@ -1213,57 +1229,101 @@
 		}
 
 		.stats-panel {
-			margin-bottom: 1rem;
-			padding-bottom: 0.75rem;
+			margin-bottom: 0.75rem;
+			padding-bottom: 0.5rem;
 		}
 
 		.stat .value {
-			font-size: 1.25rem;
+			font-size: 1.1rem;
 		}
 
 		.weather-panel,
 		.price-panel,
 		.recipe-panel {
-			margin-bottom: 1rem;
+			margin-bottom: 0.75rem;
 		}
 
 		.recipe-panel h3 {
-			font-size: 0.8rem;
+			font-size: 0.75rem;
+		}
+
+		.weather-display {
+			font-size: 1rem;
+			padding: 0.6rem;
+			margin-bottom: 0.75rem;
+		}
+
+		.weather-icon {
+			font-size: 1.5rem;
+		}
+
+		.price-control {
+			padding: 0.75rem;
+		}
+
+		.price-buttons span {
+			font-size: 1rem;
+			min-width: 62px;
+		}
+
+		.recipe-controls {
+			gap: 0.5rem;
 		}
 
 		.action-buttons {
 			margin-top: auto;
+			position: sticky;
+			bottom: 0;
+			padding-top: 0.5rem;
+			background: linear-gradient(to bottom, rgba(24, 24, 27, 0), #18181b 30%);
 		}
 
 		.btn {
-			padding: 0.875rem;
-			font-size: 0.9rem;
-		}
-
-		.buy-menu-overlay {
-			padding: 1rem;
-		}
-
-		.buy-menu {
-			width: 100%;
-			padding: 1.5rem;
-			max-height: 100vh;
-			overflow-y: auto;
-		}
-
-		.buy-table td {
-			padding: 0.625rem 0.375rem;
+			padding: 0.8rem;
 			font-size: 0.85rem;
 		}
 
-		.buy-table td:nth-child(2) button {
-			padding: 0.3rem 0.6rem;
+		.buy-menu-overlay {
+			padding: 0.5rem;
+		}
+
+		.buy-menu {
+			width: 95vw;
+			max-width: 95vw;
+			height: 95dvh;
+			max-height: 95dvh;
+			padding: 1rem;
+			overflow-y: auto;
+		}
+
+		.buy-menu h2 {
+			font-size: 1.2rem;
+		}
+
+		.buy-menu > p {
+			margin-bottom: 1rem;
+		}
+
+		.buy-table td {
+			padding: 0.5rem 0.3rem;
 			font-size: 0.75rem;
 		}
 
+		.buy-table td:nth-child(2) button {
+			padding: 0.25rem 0.45rem;
+			font-size: 0.7rem;
+		}
+
 		.buy-preview {
-			padding: 0.75rem;
-			font-size: 1rem;
+			padding: 0.65rem;
+			font-size: 0.9rem;
+		}
+
+		.buy-actions {
+			position: sticky;
+			bottom: 0;
+			background: #18181b;
+			padding-top: 0.5rem;
 		}
 
 		.history-list {
