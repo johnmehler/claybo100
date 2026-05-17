@@ -328,7 +328,7 @@
 			cups,
 			Math.floor(lemons / lemonsPerCup),
 			Math.floor(sugar / sugarPerCup),
-			Math.floor(ice / icePerCup)
+			icePerCup > 0 ? Math.floor(ice / icePerCup) : Infinity
 		);
 		
 		if (maxCups <= 0) {
