@@ -136,6 +136,8 @@
 
 	let isMoving = $state(false);
 	let bufferedMove = $state<{dx: number, dy: number, time: number} | null>(null);
+	let touchStartX = $state(0);
+	let touchStartY = $state(0);
 
 	function move(dx: number, dy: number) {
 		if (isGameOver) return;
@@ -234,6 +236,33 @@
 		}
 	}
 
+	function handleTouchStart(e: TouchEvent) {
+		touchStartX = e.touches[0].clientX;
+		touchStartY = e.touches[0].clientY;
+	}
+
+	function handleTouchEnd(e: TouchEvent) {
+		if (isGameOver) return;
+
+		const touchEndX = e.changedTouches[0].clientX;
+		const touchEndY = e.changedTouches[0].clientY;
+
+		const deltaX = touchEndX - touchStartX;
+		const deltaY = touchEndY - touchStartY;
+
+		const minSwipeDistance = 30;
+
+		if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+			return;
+		}
+
+		if (Math.abs(deltaX) > Math.abs(deltaY)) {
+			move(deltaX > 0 ? 1 : -1, 0);
+		} else {
+			move(0, deltaY > 0 ? 1 : -1);
+		}
+	}
+
 	$effect(() => {
 		registerActions({
 			restart: resetGame,
@@ -251,7 +280,7 @@
 <div class="game-inner">
 	<Instructions bind:this={instructions} gameId="ice_slider" title="Ice Slider Puzzle">
 		<p><strong>Goal:</strong> Slide the block to the goal.</p>
-		<p>Blocks slide until they hit a wall or an obstacle. Use the arrow keys or WASD to move.</p>
+		<p>Blocks slide until they hit a wall or an obstacle. Use the arrow keys, WASD, or swipe to move.</p>
 		<hr style="opacity: 0.1; margin: 1.5vmin 0;" />
 		<p><strong>Tile Types:</strong></p>
 		<ul style="font-size: 0.9em; opacity: 0.8; padding-left: 2.5vmin;">
@@ -294,7 +323,7 @@
 	</InGameMenu>
 
 	<div class="board-wrapper">
-		<div class="grid-container">
+		<div class="grid-container" role="application" ontouchstart={handleTouchStart} ontouchend={handleTouchEnd}>
 			<div class="grid" style="grid-template-columns: repeat({GRID_SIZE}, 1fr); grid-template-rows: repeat({GRID_SIZE}, 1fr);">
 				{#each grid as row, y}
 					{#each row as cell, x}
