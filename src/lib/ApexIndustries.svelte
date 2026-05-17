@@ -10,6 +10,7 @@
 	const INITIAL_CASH = 50000.00;
 	const BASE_COST = 5.00;
 	const BASE_REPUTATION = 5.0;
+	const UNITS_PER_EMPLOYEE = 10;
 
 	// Player inputs (5 per turn)
 	let price = $state(15.00);
@@ -17,10 +18,12 @@
 	let marketing = $state(1000);
 	let productionQuantity = $state(100);
 	let employeePay = $state(100);
+	let qualitySpending = $state(2000);
+	let previousQuality = $state(5);
 
 	// Input options
-	const priceOptions = [8, 10, 12, 15, 18, 20, 25, 30];
-	const qualityOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+	const priceOptions = Array.from({ length: 21 }, (_, i) => i + 5);
+	const qualitySpendingOptions = Array.from({ length: 161 }, (_, i) => i * 100);
 	const marketingOptions = [0, 500, 1000, 2000, 3000, 5000, 8000];
 	const productionOptions = [50, 100, 150, 200, 300, 500];
 	const payOptions = [80, 100, 120, 150, 180, 200];
@@ -39,6 +42,8 @@
 		name: string;
 		price: number;
 		quality: number;
+		qualitySpending: number;
+		previousQuality: number;
 		marketing: number;
 		production: number;
 		employeePay: number;
@@ -64,6 +69,8 @@
 			name,
 			price: 15.00,
 			quality: 5,
+			qualitySpending: 2000,
+			previousQuality: 5,
 			marketing: 1000,
 			production: 100,
 			employeePay: 100,
@@ -171,6 +178,28 @@
 		return Math.max(2, B + 0.4 * quality - 0.35 * E);
 	}
 
+	function calculateEmployeeCount(units: number): number {
+		return Math.max(1, Math.ceil(units / UNITS_PER_EMPLOYEE));
+	}
+
+	function calculateLaborCost(units: number, payPerEmployee: number): number {
+		const employeeCount = calculateEmployeeCount(units);
+		return employeeCount * (payPerEmployee / 10);
+	}
+
+	function calculateQualityFromSpending(spending: number, prevQuality: number): number {
+		const normalizedSpending = spending / 1000;
+
+		const spendingQuality = 1 + 8 * (1 - Math.exp(-normalizedSpending / 2.5));
+
+		const persistenceWeight = 0.4;
+		const spendingWeight = 1 - persistenceWeight;
+
+		const blendedQuality = persistenceWeight * prevQuality + spendingWeight * spendingQuality;
+
+		return Math.max(1, Math.min(9, blendedQuality));
+	}
+
 	function updateReputation(): void {
 		const Q = quality;
 		const M = marketing / 1000;
@@ -195,27 +224,27 @@
 		aiCompetitors.forEach(ai => {
 			// Get current index in options arrays
 			const priceIndex = priceOptions.indexOf(ai.price);
-			const qualityIndex = qualityOptions.indexOf(ai.quality);
+			const spendingIndex = qualitySpendingOptions.indexOf(ai.qualitySpending);
 			const marketingIndex = marketingOptions.indexOf(ai.marketing);
 			const productionIndex = productionOptions.indexOf(ai.production);
 			const payIndex = payOptions.indexOf(ai.employeePay);
 
 			// Move to adjacent option (+/- 1) or stay at current
 			const priceMove = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-			const qualityMove = Math.floor(Math.random() * 3) - 1;
+			const spendingMove = Math.floor(Math.random() * 3) - 1;
 			const marketingMove = Math.floor(Math.random() * 3) - 1;
 			const productionMove = Math.floor(Math.random() * 3) - 1;
 			const payMove = Math.floor(Math.random() * 3) - 1;
 
 			// Apply moves within bounds
 			const newPriceIndex = Math.max(0, Math.min(priceOptions.length - 1, priceIndex + priceMove));
-			const newQualityIndex = Math.max(0, Math.min(qualityOptions.length - 1, qualityIndex + qualityMove));
+			const newSpendingIndex = Math.max(0, Math.min(qualitySpendingOptions.length - 1, spendingIndex + spendingMove));
 			const newMarketingIndex = Math.max(0, Math.min(marketingOptions.length - 1, marketingIndex + marketingMove));
 			const newProductionIndex = Math.max(0, Math.min(productionOptions.length - 1, productionIndex + productionMove));
 			const newPayIndex = Math.max(0, Math.min(payOptions.length - 1, payIndex + payMove));
 
 			ai.price = priceOptions[newPriceIndex];
-			ai.quality = qualityOptions[newQualityIndex];
+			ai.qualitySpending = qualitySpendingOptions[newSpendingIndex];
 			ai.marketing = marketingOptions[newMarketingIndex];
 			ai.production = productionOptions[newProductionIndex];
 			ai.employeePay = payOptions[newPayIndex];
@@ -223,6 +252,8 @@
 	}
 
 	function executeAITurn(ai: AICompetitor, aiMarketShare: number): void {
+		const aiActualQuality = calculateQualityFromSpending(ai.qualitySpending, ai.previousQuality);
+		ai.quality = aiActualQuality;
 		const aiUnitCost = Math.max(2, BASE_COST + 0.4 * ai.quality - 0.35 * (ai.employeePay / 100));
 
 		// Production
@@ -255,10 +286,13 @@
 			0.8,
 			Math.min(1.6, 0.98 * ai.productionEfficiency + 0.02 * aiTargetEfficiency)
 		);
+
+		ai.previousQuality = ai.quality;
 	}
 
 	function executeTurn(): void {
-		quality = Math.max(1, Math.min(9, Math.round(Number(quality) || 1)));
+		const actualQuality = calculateQualityFromSpending(qualitySpending, previousQuality);
+		quality = actualQuality;
 		updateMarketPreference();
 
 		// Calculate demand
@@ -308,7 +342,7 @@
 		unitCost = calculateUnitCost();
 		const productionCost = actualProduction * unitCost;
 		const marketingCost = marketing;
-		const laborCost = (employeePay / 10) * (productionQuantity / 10);
+		const laborCost = calculateLaborCost(productionQuantity, employeePay);
 
 		costs = productionCost + marketingCost + laborCost;
 		profit = revenue - costs;
@@ -318,6 +352,8 @@
 		updateReputation();
 		updateProductionEfficiency();
 		simulateCompetitors();
+
+		previousQuality = quality;
 
 		// Generate feedback
 		generateFeedback();
@@ -385,6 +421,10 @@
 		feedback = messages.slice(0, 2).join(". ");
 	}
 
+	const plannedEmployeeCount = $derived(calculateEmployeeCount(productionQuantity));
+	const projectedLaborCost = $derived(calculateLaborCost(productionQuantity, employeePay));
+	const projectedQuality = $derived(calculateQualityFromSpending(qualitySpending, previousQuality));
+
 	function nextTurn(): void {
 		currentTurn++;
 		showResults = false;
@@ -400,6 +440,8 @@
 
 		price = 15.00;
 		quality = 5;
+		qualitySpending = 2000;
+		previousQuality = 5;
 		marketing = 1000;
 		productionQuantity = 100;
 		employeePay = 100;
@@ -463,6 +505,18 @@
 				<span class="label">Reputation</span>
 				<span class="value">{reputation.toFixed(2)}</span>
 			</div>
+			<div class="labor-clarity-card">
+				<h4>Workforce Model</h4>
+				<p>
+					{productionQuantity} units requires <strong>{plannedEmployeeCount}</strong>
+					employees at <strong>{UNITS_PER_EMPLOYEE} units/employee</strong> capacity.
+				</p>
+				<p>
+					Labor cost scales with both production and pay:
+					<strong>employees × (pay / 10)</strong> =
+					<strong>${formatMoney(projectedLaborCost)}</strong> this quarter.
+				</p>
+			</div>
 		</div>
 
 		<div class="inputs-panel">
@@ -470,15 +524,15 @@
 			<div class="input-grid">
 				<div class="input-group">
 					<label for="price">Price</label>
-					<select id="price" bind:value={price}>
-						{#each priceOptions as option}
-							<option value={option}>${option}</option>
-						{/each}
-					</select>
+					<input type="number" id="price" bind:value={price} min="5" max="25" step="1" />
 				</div>
 				<div class="input-group">
-					<label for="quality">Quality (1-9)</label>
-					<input type="number" id="quality" bind:value={quality} min="1" max="9" />
+					<label for="quality">Quality Spending</label>
+					<input type="number" id="quality" bind:value={qualitySpending} min="0" max="16000" step="100" />
+					<div class="quality-preview">
+						<span class="quality-label">Resulting Quality:</span>
+						<span class="quality-value">{projectedQuality.toFixed(2)}</span>
+					</div>
 				</div>
 				<div class="input-group">
 					<label for="marketing">Marketing</label>
@@ -982,11 +1036,57 @@
 
 	.research-card,
 	.insight-card,
-	.history-card {
+	.history-card,
+	.labor-clarity-card {
 		background: rgba(255, 255, 255, 0.03);
 		padding: 1rem;
 		border-radius: 8px;
 		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.labor-clarity-card {
+		margin-top: 1rem;
+	}
+
+	.labor-clarity-card h4 {
+		font-size: 0.85rem;
+		font-weight: 800;
+		color: rgba(255, 255, 255, 0.9);
+		margin: 0 0 0.5rem;
+	}
+
+	.labor-clarity-card p {
+		font-size: 0.82rem;
+		color: rgba(255, 255, 255, 0.75);
+		line-height: 1.5;
+		margin: 0 0 0.4rem;
+	}
+
+	.labor-clarity-card p:last-child {
+		margin-bottom: 0;
+	}
+
+	.quality-preview {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.4rem;
+		padding: 0.4rem 0.6rem;
+		background: rgba(59, 130, 246, 0.1);
+		border-radius: 6px;
+		border: 1px solid rgba(59, 130, 246, 0.2);
+	}
+
+	.quality-label {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.quality-value {
+		font-size: 0.9rem;
+		font-weight: 800;
+		color: #3b82f6;
 	}
 
 	.research-card h3,
