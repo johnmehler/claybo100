@@ -20,19 +20,28 @@
 	let employeePay = $state(100);
 	let qualitySpending = $state(2000);
 	let previousQuality = $state(5);
+	let previousMarketShare = $state(0.2);
+	let inventoryQuality = $state(5);
+
+	let previousPrice = $state(15.00);
+	let previousQualitySpending = $state(2000);
+	let previousMarketing = $state(1000);
+	let previousProductionQuantity = $state(100);
+	let previousEmployeePay = $state(100);
+	let payHistory = $state([100, 100, 100]);
 
 	// Input options
 	const priceOptions = Array.from({ length: 21 }, (_, i) => i + 5);
 	const qualitySpendingOptions = Array.from({ length: 161 }, (_, i) => i * 100);
 	const marketingOptions = [0, 500, 1000, 2000, 3000, 5000, 8000];
 	const productionOptions = [50, 100, 150, 200, 300, 500];
-	const payOptions = [80, 100, 120, 150, 180, 200];
+	const payOptions = Array.from({ length: 16 }, (_, i) => 50 + i * 10);
 
 	// Hidden state variables
 	let cash = $state(INITIAL_CASH);
 	let reputation = $state(BASE_REPUTATION);
 	let productionEfficiency = $state(1.0);
-	let inventory = $state(0);
+	let inventory = $state(100);
 	let marketDemand = $state(500);
 	let marketShare = $state(0.2);
 	let playerTeam = $state("");
@@ -51,9 +60,11 @@
 		reputation: number;
 		productionEfficiency: number;
 		inventory: number;
+		inventoryQuality: number;
+		payHistory: number[];
 	};
 
-	const allTeams = ["Abner", "Baxter", "Cuthbert", "Dexter", "Edgar"];
+	const allTeams = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon"];
 	const teamColors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#a855f7"];
 
 	let aiCompetitors = $state<AICompetitor[]>([]);
@@ -77,7 +88,9 @@
 			cash: INITIAL_CASH,
 			reputation: BASE_REPUTATION,
 			productionEfficiency: 1.0,
-			inventory: 0
+			inventory: 100,
+			inventoryQuality: 5,
+			payHistory: [100, 100, 100]
 		}));
 	}
 
@@ -261,7 +274,15 @@
 		if (ai.employeePay < 100 && Math.random() < (100 - ai.employeePay) / 160) {
 			aiActualProduction = Math.floor(aiActualProduction * (0.6 + Math.random() * 0.25));
 		}
-		ai.inventory += aiActualProduction;
+
+		if (ai.inventory === 0) {
+			ai.inventory = aiActualProduction;
+			ai.inventoryQuality = ai.quality;
+		} else {
+			const totalUnits = ai.inventory + aiActualProduction;
+			ai.inventoryQuality = (ai.inventory * ai.inventoryQuality + aiActualProduction * ai.quality) / totalUnits;
+			ai.inventory = totalUnits;
+		}
 
 		// Sales (AI gets their share of market demand)
 		const aiActualDemand = Math.floor(marketDemand * aiMarketShare);
@@ -281,16 +302,25 @@
 		const aiClampedReputation = Math.max(0, Math.min(10, aiNextReputation));
 		ai.reputation = ai.quality >= 5 ? Math.max(BASE_REPUTATION, aiClampedReputation) : aiClampedReputation;
 
-		const aiTargetEfficiency = 0.9 + 0.25 * (ai.employeePay / 100);
+		const aiAveragePayHistory = ai.payHistory.reduce((sum, pay) => sum + pay, 0) / ai.payHistory.length;
+		const aiTargetEfficiency = 0.9 + 0.25 * ((ai.employeePay + aiAveragePayHistory) / 200);
 		ai.productionEfficiency = Math.max(
 			0.8,
 			Math.min(1.6, 0.98 * ai.productionEfficiency + 0.02 * aiTargetEfficiency)
 		);
 
 		ai.previousQuality = ai.quality;
+		ai.payHistory = [ai.employeePay, ...ai.payHistory.slice(0, 2)];
 	}
 
 	function executeTurn(): void {
+		// Save previous input values
+		previousPrice = price;
+		previousQualitySpending = qualitySpending;
+		previousMarketing = marketing;
+		previousProductionQuantity = productionQuantity;
+		previousEmployeePay = employeePay;
+
 		const actualQuality = calculateQualityFromSpending(qualitySpending, previousQuality);
 		quality = actualQuality;
 		updateMarketPreference();
@@ -330,7 +360,15 @@
 		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
 			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
 		}
-		inventory += actualProduction;
+
+		if (inventory === 0) {
+			inventory = actualProduction;
+			inventoryQuality = quality;
+		} else {
+			const totalUnits = inventory + actualProduction;
+			inventoryQuality = (inventory * inventoryQuality + actualProduction * quality) / totalUnits;
+			inventory = totalUnits;
+		}
 
 		// Sales
 		const availableUnits = Math.min(inventory, actualDemand);
@@ -354,6 +392,10 @@
 		simulateCompetitors();
 
 		previousQuality = quality;
+		previousMarketShare = marketShare;
+
+		// Update pay history
+		payHistory = [employeePay, ...payHistory.slice(0, 2)];
 
 		// Generate feedback
 		generateFeedback();
@@ -425,6 +467,20 @@
 	const projectedLaborCost = $derived(calculateLaborCost(productionQuantity, employeePay));
 	const projectedQuality = $derived(calculateQualityFromSpending(qualitySpending, previousQuality));
 
+	const averagePayHistory = $derived(payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length);
+	const currentEfficiency = $derived(0.9 + 0.25 * ((employeePay + averagePayHistory) / 200));
+	const previousEfficiency = $derived(0.9 + 0.25 * ((previousEmployeePay + averagePayHistory) / 200));
+
+	const projectedUnitCost = $derived(BASE_COST + 0.4 * projectedQuality - 0.35 * (employeePay / 100));
+	const projectedProductionCost = $derived(productionQuantity * projectedUnitCost);
+	const projectedTotalCost = $derived(projectedProductionCost + marketing + projectedLaborCost);
+	const projectedBreakeven = $derived(Math.ceil(projectedTotalCost / price));
+
+	function dumpInventory(): void {
+		inventory = 0;
+		inventoryQuality = 5;
+	}
+
 	function nextTurn(): void {
 		currentTurn++;
 		showResults = false;
@@ -435,16 +491,25 @@
 		cash = INITIAL_CASH;
 		reputation = BASE_REPUTATION;
 		productionEfficiency = 1.0;
-		inventory = 0;
+		inventory = 100;
+		inventoryQuality = 5;
 		marketDemand = 500;
 
 		price = 15.00;
 		quality = 5;
 		qualitySpending = 2000;
 		previousQuality = 5;
+		previousMarketShare = 0.2;
 		marketing = 1000;
 		productionQuantity = 100;
 		employeePay = 100;
+
+		previousPrice = 15.00;
+		previousQualitySpending = 2000;
+		previousMarketing = 1000;
+		previousProductionQuantity = 100;
+		previousEmployeePay = 100;
+		payHistory = [100, 100, 100];
 		marketPreference = {
 			priceWeight: 1,
 			qualityWeight: 1,
@@ -513,6 +578,10 @@
 				<div class="input-group">
 					<label for="price">Price</label>
 					<input type="number" id="price" bind:value={price} min="5" max="25" step="1" />
+					<div class="input-preview">
+						<span class="preview-label">Change:</span>
+						<span class="preview-value">${previousPrice.toFixed(2)} → ${price.toFixed(2)}</span>
+					</div>
 				</div>
 				<div class="input-group">
 					<label for="quality">Quality Spending</label>
@@ -529,6 +598,10 @@
 							<option value={option}>${option}</option>
 						{/each}
 					</select>
+					<div class="input-preview">
+						<span class="preview-label">Change:</span>
+						<span class="preview-value">${previousMarketing} → ${marketing}</span>
+					</div>
 				</div>
 				<div class="input-group">
 					<label for="production">Production</label>
@@ -537,14 +610,51 @@
 							<option value={option}>{option} units</option>
 						{/each}
 					</select>
+					<div class="inventory-preview">
+						<span class="inventory-label">Current Inventory:</span>
+						<span class="inventory-value">{inventory} units @ {inventoryQuality.toFixed(2)}</span>
+					</div>
+					{#if inventory > 0}
+						<button class="dump-btn" onclick={dumpInventory}>Dump Inventory</button>
+					{/if}
 				</div>
 				<div class="input-group">
 					<label for="pay">Employee Pay</label>
-					<select id="pay" bind:value={employeePay}>
-						{#each payOptions as option}
-							<option value={option}>${option}</option>
-						{/each}
-					</select>
+					<input type="number" id="pay" bind:value={employeePay} min="50" max="200" step="10" />
+					<div class="efficiency-preview">
+						<span class="efficiency-label">Efficiency (avg pay: ${averagePayHistory.toFixed(0)}):</span>
+						<span class="efficiency-value">{previousEfficiency.toFixed(2)} → {currentEfficiency.toFixed(2)}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="projections-panel">
+			<h3>Quarter Projections</h3>
+			<div class="projection-grid">
+				<div class="projection-item">
+					<span class="projection-label">Unit Cost</span>
+					<span class="projection-value">${projectedUnitCost.toFixed(2)}</span>
+				</div>
+				<div class="projection-item">
+					<span class="projection-label">Production Cost</span>
+					<span class="projection-value">${formatMoney(projectedProductionCost)}</span>
+				</div>
+				<div class="projection-item">
+					<span class="projection-label">Marketing Cost</span>
+					<span class="projection-value">${formatMoney(marketing)}</span>
+				</div>
+				<div class="projection-item">
+					<span class="projection-label">Labor Cost</span>
+					<span class="projection-value">${formatMoney(projectedLaborCost)}</span>
+				</div>
+				<div class="projection-item total">
+					<span class="projection-label">Total Cost</span>
+					<span class="projection-value">${formatMoney(projectedTotalCost)}</span>
+				</div>
+				<div class="projection-item breakeven">
+					<span class="projection-label">Breakeven Sales</span>
+					<span class="projection-value">{projectedBreakeven} units</span>
 				</div>
 			</div>
 		</div>
@@ -600,6 +710,10 @@
 				<span class="value">{unitsSold}</span>
 			</div>
 			<div class="result">
+				<span class="label">Inventory</span>
+				<span class="value">{inventory} units</span>
+			</div>
+			<div class="result">
 				<span class="label">Revenue</span>
 				<span class="value positive">${formatMoney(revenue)}</span>
 			</div>
@@ -619,12 +733,15 @@
 			</div>
 		</div>
 		<div class="market-share-arrow">
-			{#if marketShare > 0.5}
+			{#if marketShare > previousMarketShare}
 				<span class="arrow up">↑</span>
 				<span>Gaining market share</span>
-			{:else}
+			{:else if marketShare < previousMarketShare}
 				<span class="arrow down">↓</span>
 				<span>Losing market share</span>
+			{:else}
+				<span class="arrow stable">→</span>
+				<span>Market share stable</span>
 			{/if}
 		</div>
 		<button class="btn next-btn" onclick={nextTurn}>Next Quarter →</button>
@@ -704,7 +821,7 @@
 				<div class="chart-container">
 					{#if activeChart === "quality"}
 						<div class="chart-card">
-							<h3>Quality Comparison (All Teams)</h3>
+							<h3>Quality Comparison (Current Quarter)</h3>
 							<div class="chart">
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
@@ -712,73 +829,45 @@
 										<line x1="40" y1={200 - (y / 9) * 160} x2="380" y2={200 - (y / 9) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
 										<text x="30" y={200 - (y / 9) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">{y}</text>
 									{/each}
-									{#each history[0].teams as team, teamIndex}
-										{@const teamPoints = history.map((entry, i) => `${40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)},${200 - (entry.teams[teamIndex].quality / 9) * 160}`).join(' ')}
-										<polyline
-											fill="none"
-											stroke={teamColors[teamIndex % teamColors.length]}
-											stroke-width="2"
-											points={teamPoints}
-										/>
-										{#if history.length === 1}
-											<circle cx={40 + 170} cy={200 - (history[0].teams[teamIndex].quality / 9) * 160} r="4" fill={teamColors[teamIndex % teamColors.length]} />
-										{/if}
+									{#each history[history.length - 1].teams as team, teamIndex}
+										{@const barHeight = (team.quality / 9) * 160}
+										{@const barX = 60 + teamIndex * 70}
+										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">{team.quality.toFixed(1)}</text>
 									{/each}
 									<!-- X-axis labels -->
-									{#each history as entry, i}
-										<text x={40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)} y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">Q{entry.turn}</text>
+									{#each history[history.length - 1].teams as team, teamIndex}
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
-								<div class="chart-legend">
-									{#each history[0].teams as team, teamIndex}
-										<span class="legend-item">
-											<span class="legend-color" style={`background: ${teamColors[teamIndex % teamColors.length]}`}></span>
-											{team.name}
-										</span>
-									{/each}
-								</div>
 							</div>
 						</div>
 					{:else if activeChart === "price"}
 						<div class="chart-card">
-							<h3>Price Comparison (All Teams)</h3>
+							<h3>Price Comparison (Current Quarter)</h3>
 							<div class="chart">
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
-									{#each [8, 12, 16, 20, 24, 28, 32] as y}
-										<line x1="40" y1={200 - ((y - 8) / 24) * 160} x2="380" y2={200 - ((y - 8) / 24) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-										<text x="30" y={200 - ((y - 8) / 24) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">${y}</text>
+									{#each [5, 10, 15, 20, 25, 30] as y}
+										<line x1="40" y1={200 - ((y - 5) / 25) * 160} x2="380" y2={200 - ((y - 5) / 25) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+										<text x="30" y={200 - ((y - 5) / 25) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">${y}</text>
 									{/each}
-									{#each history[0].teams as team, teamIndex}
-										{@const teamPoints = history.map((entry, i) => `${40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)},${200 - ((entry.teams[teamIndex].price - 8) / 24) * 160}`).join(' ')}
-										<polyline
-											fill="none"
-											stroke={teamColors[teamIndex % teamColors.length]}
-											stroke-width="2"
-											points={teamPoints}
-										/>
-										{#if history.length === 1}
-											<circle cx={40 + 170} cy={200 - ((history[0].teams[teamIndex].price - 8) / 24) * 160} r="4" fill={teamColors[teamIndex % teamColors.length]} />
-										{/if}
+									{#each history[history.length - 1].teams as team, teamIndex}
+										{@const barHeight = ((team.price - 5) / 25) * 160}
+										{@const barX = 60 + teamIndex * 70}
+										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">${team.price.toFixed(0)}</text>
 									{/each}
 									<!-- X-axis labels -->
-									{#each history as entry, i}
-										<text x={40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)} y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">Q{entry.turn}</text>
+									{#each history[history.length - 1].teams as team, teamIndex}
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
-								<div class="chart-legend">
-									{#each history[0].teams as team, teamIndex}
-										<span class="legend-item">
-											<span class="legend-color" style={`background: ${teamColors[teamIndex % teamColors.length]}`}></span>
-											{team.name}
-										</span>
-									{/each}
-								</div>
 							</div>
 						</div>
 					{:else if activeChart === "market"}
 						<div class="chart-card">
-							<h3>Market Share (All Teams)</h3>
+							<h3>Market Share (Current Quarter)</h3>
 							<div class="chart">
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
@@ -786,31 +875,17 @@
 										<line x1="40" y1={200 - y * 160} x2="380" y2={200 - y * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
 										<text x="30" y={200 - y * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">{(y * 100).toFixed(0)}%</text>
 									{/each}
-									{#each history[0].teams as team, teamIndex}
-										{@const teamPoints = history.map((entry, i) => `${40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)},${200 - entry.teams[teamIndex].marketShare * 160}`).join(' ')}
-										<polyline
-											fill="none"
-											stroke={teamColors[teamIndex % teamColors.length]}
-											stroke-width="2"
-											points={teamPoints}
-										/>
-										{#if history.length === 1}
-											<circle cx={40 + 170} cy={200 - history[0].teams[teamIndex].marketShare * 160} r="4" fill={teamColors[teamIndex % teamColors.length]} />
-										{/if}
+									{#each history[history.length - 1].teams as team, teamIndex}
+										{@const barHeight = team.marketShare * 160}
+										{@const barX = 60 + teamIndex * 70}
+										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">{(team.marketShare * 100).toFixed(0)}%</text>
 									{/each}
 									<!-- X-axis labels -->
-									{#each history as entry, i}
-										<text x={40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)} y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">Q{entry.turn}</text>
+									{#each history[history.length - 1].teams as team, teamIndex}
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
-								<div class="chart-legend">
-									{#each history[0].teams as team, teamIndex}
-										<span class="legend-item">
-											<span class="legend-color" style={`background: ${teamColors[teamIndex % teamColors.length]}`}></span>
-											{team.name}
-										</span>
-									{/each}
-								</div>
 							</div>
 						</div>
 					{/if}
@@ -1052,6 +1127,147 @@
 		color: #3b82f6;
 	}
 
+	.inventory-preview {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.4rem;
+		padding: 0.4rem 0.6rem;
+		background: rgba(16, 185, 129, 0.1);
+		border-radius: 6px;
+		border: 1px solid rgba(16, 185, 129, 0.2);
+	}
+
+	.inventory-label {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.inventory-value {
+		font-size: 0.9rem;
+		font-weight: 800;
+		color: #10b981;
+	}
+
+	.dump-btn {
+		margin-top: 0.5rem;
+		padding: 0.4rem 0.8rem;
+		font-size: 0.75rem;
+		background: rgba(239, 68, 68, 0.1);
+		color: rgba(255, 255, 255, 0.8);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.dump-btn:hover {
+		background: rgba(239, 68, 68, 0.2);
+		border-color: rgba(239, 68, 68, 0.5);
+		color: white;
+	}
+
+	.input-preview {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.4rem;
+		padding: 0.4rem 0.6rem;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 6px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.preview-label {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.preview-value {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.efficiency-preview {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.4rem;
+		padding: 0.4rem 0.6rem;
+		background: rgba(245, 158, 11, 0.1);
+		border-radius: 6px;
+		border: 1px solid rgba(245, 158, 11, 0.2);
+	}
+
+	.efficiency-label {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.efficiency-value {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: #f59e0b;
+	}
+
+	.projections-panel {
+		margin-bottom: 2rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.projections-panel h3 {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
+		margin: 0 0 1rem;
+	}
+
+	.projection-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.75rem;
+	}
+
+	.projection-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.5rem 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+		border-radius: 6px;
+	}
+
+	.projection-item.total {
+		grid-column: span 2;
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.2);
+	}
+
+	.projection-item.breakeven {
+		grid-column: span 2;
+		background: rgba(16, 185, 129, 0.1);
+		border: 1px solid rgba(16, 185, 129, 0.2);
+	}
+
+	.projection-label {
+		font-size: 0.8rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.projection-value {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
+	}
+
 	.research-card p,
 	.insight-card p {
 		font-size: 0.85rem;
@@ -1210,27 +1426,6 @@
 	.line-chart {
 		width: 100%;
 		height: auto;
-	}
-
-	.chart-legend {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
-		margin-top: 0.5rem;
-	}
-
-	.legend-item {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.7);
-	}
-
-	.legend-color {
-		width: 12px;
-		height: 12px;
-		border-radius: 2px;
 	}
 
 	.game-viewport {
