@@ -1177,4 +1177,102 @@
 	.close-btn:hover {
 		background: #3f3f46;
 	}
+
+	@media (max-width: 768px) {
+		.lemonade-container {
+			padding: 0;
+			height: 100dvh;
+			overflow-y: auto;
+		}
+
+		.header {
+			margin-bottom: 1rem;
+			padding: 1rem;
+		}
+
+		h1 {
+			font-size: 1.5rem;
+		}
+
+		.game-viewport,
+		.results-panel,
+		.game-over-panel,
+		.buy-menu {
+			min-width: unset;
+			width: 100%;
+			padding: 1rem;
+			border-radius: 0;
+			border: none;
+		}
+
+		.game-viewport {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+		}
+
+		.stats-panel {
+			margin-bottom: 1rem;
+			padding-bottom: 0.75rem;
+		}
+
+		.stat .value {
+			font-size: 1.25rem;
+		}
+
+		.weather-panel,
+		.price-panel,
+		.recipe-panel {
+			margin-bottom: 1rem;
+		}
+
+		.recipe-panel h3 {
+			font-size: 0.8rem;
+		}
+
+		.action-buttons {
+			margin-top: auto;
+		}
+
+		.btn {
+			padding: 0.875rem;
+			font-size: 0.9rem;
+		}
+
+		.buy-menu-overlay {
+			padding: 1rem;
+		}
+
+		.buy-menu {
+			width: 100%;
+			padding: 1.5rem;
+			max-height: 100vh;
+			overflow-y: auto;
+		}
+
+		.buy-table td {
+			padding: 0.625rem 0.375rem;
+			font-size: 0.85rem;
+		}
+
+		.buy-table td:nth-child(2) button {
+			padding: 0.3rem 0.6rem;
+			font-size: 0.75rem;
+		}
+
+		.buy-preview {
+			padding: 0.75rem;
+			font-size: 1rem;
+		}
+
+		.history-list {
+			max-height: 150px;
+		}
+
+		.history-entry {
+			font-size: 0.75rem;
+			gap: 0.25rem;
+		}
+	}
 </style>

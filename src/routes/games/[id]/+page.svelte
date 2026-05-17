@@ -26,6 +26,7 @@
 	import LaserMaze from "$lib/LaserMaze.svelte";
 	import BlockDude from "$lib/BlockDude.svelte";
 	import LemonadeStand from "$lib/LemonadeStand.svelte";
+	import ApexIndustries from "$lib/ApexIndustries.svelte";
 
 	const id = $derived($page.params.id);
 	const game = $derived(getGameById(id));
@@ -69,6 +70,7 @@
 		lasermaze: LaserMaze,
 		blockdude: BlockDude,
 		lemonadestand: LemonadeStand,
+		"apex-industries": ApexIndustries,
 	};
 
 	const GameComponent = $derived(gameComponents[id]);
