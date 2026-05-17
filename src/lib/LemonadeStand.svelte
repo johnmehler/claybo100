@@ -355,10 +355,10 @@
 		
 		revenue = customers * pricePerCup;
 		
-		// No daily operating costs - costs are only when buying supplies
-		costs = 0;
+		// Calculate cost of supplies actually used this day
+		costs = customers * (CUP_COST + lemonsPerCup * LEMON_COST + sugarPerCup * SUGAR_COST + icePerCup * ICE_COST);
 		
-		profit = revenue;
+		profit = revenue - costs;
 		money += revenue;
 		
 		dailyHistory.push({
