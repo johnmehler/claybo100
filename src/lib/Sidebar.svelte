@@ -15,6 +15,12 @@
 
 	const currentPath = $derived($page.url.pathname);
 
+	const handleGameSelect = () => {
+		if (isMobile) {
+			isSidebarCollapsed = true;
+		}
+	};
+
 	onMount(() => {
 		const syncViewportState = () => {
 			isMobile = window.innerWidth <= 1024;
@@ -109,6 +115,7 @@
 									href="/games/{game.id}"
 									class="nav-button" 
 									class:active={currentPath === `/games/${game.id}`}
+									onclick={handleGameSelect}
 								>
 									<div class="nav-icon">{@html game.icon}</div>
 									<span class="nav-label-text">{game.label}</span>
