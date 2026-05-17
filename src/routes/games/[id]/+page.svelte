@@ -245,12 +245,12 @@
 		align-items: center;
 		justify-content: center;
 		position: relative;
-		overflow: hidden;
 		background: radial-gradient(
 			circle at 50% 50%,
 			rgba(255, 110, 97, 0.03) 0%,
 			transparent 70%
 		);
+		overflow: hidden;
 	}
 
 	.game-frame-adaptive {
@@ -265,7 +265,9 @@
 		align-items: center;
 		justify-content: center;
 		position: relative;
-		overflow: hidden;
+		overflow-x: auto;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 		max-width: 98%;
 		max-height: 98%;
 		transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -365,6 +367,9 @@
 			border-radius: 0;
 			border: none;
 			box-shadow: none;
+			overflow-x: auto;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
 		}
 
 		.game-frame-adaptive :global(*) {

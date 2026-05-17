@@ -30,11 +30,54 @@
 	let reputation = $state(BASE_REPUTATION);
 	let productionEfficiency = $state(1.0);
 	let inventory = $state(0);
-	let marketDemand = $state(1000);
-	let competitorPrice = $state(15.00);
-	let competitorQuality = $state(5);
-	let competitorMarketing = $state(1000);
-	let marketShare = $state(0.1);
+	let marketDemand = $state(500);
+	let marketShare = $state(0.2);
+	let playerTeam = $state("");
+
+	// AI Competitors (4 competitors with names)
+	type AICompetitor = {
+		name: string;
+		price: number;
+		quality: number;
+		marketing: number;
+		production: number;
+		employeePay: number;
+		cash: number;
+		reputation: number;
+		productionEfficiency: number;
+		inventory: number;
+	};
+
+	const allTeams = ["Abner", "Baxter", "Cuthbert", "Dexter", "Edgar"];
+	const teamColors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#a855f7"];
+
+	let aiCompetitors = $state<AICompetitor[]>([]);
+
+	function initializeTeams(): void {
+		// Randomly assign player a team
+		const shuffledTeams = [...allTeams].sort(() => Math.random() - 0.5);
+		playerTeam = shuffledTeams[0];
+		const aiTeamNames = shuffledTeams.slice(1);
+
+		// Initialize AI competitors
+		aiCompetitors = aiTeamNames.map(name => ({
+			name,
+			price: 15.00,
+			quality: 5,
+			marketing: 1000,
+			production: 100,
+			employeePay: 100,
+			cash: INITIAL_CASH,
+			reputation: BASE_REPUTATION,
+			productionEfficiency: 1.0,
+			inventory: 0
+		}));
+	}
+
+	// Initialize teams on mount
+	onMount(() => {
+		initializeTeams();
+	});
 
 	// Turn tracking
 	let currentTurn = $state(1);
@@ -43,11 +86,7 @@
 
 	// Tab state
 	let activeTab = $state("game");
-
-	// Competitor display ranges
-	const allowedPriceRange = { min: 8, max: 30 };
-	const allowedQualityRange = { min: 1, max: 9 };
-	const allowedMarketingRange = { min: 0, max: 8000 };
+	let activeChart = $state("quality");
 
 	// Results
 	let demandScore = $state(0);
@@ -63,7 +102,13 @@
 		cash: number,
 		marketShare: number,
 		reputation: number,
-		profit: number
+		profit: number,
+		teams: Array<{
+			name: string,
+			quality: number,
+			price: number,
+			marketShare: number
+		}>
 	}>>([]);
 
 	// Core equations
@@ -78,12 +123,15 @@
 	}
 
 	function calculateCompetitorDemandScore(): number {
-		const Q = competitorQuality;
-		const M = competitorMarketing;
-		const P = competitorPrice;
-		const R = 1.0; // Competitors have neutral reputation
-
-		return (Math.pow(Q, 0.7) * Math.pow(M, 0.5) / Math.pow(P, 1.2)) * R;
+		// Calculate average demand score across all AI competitors
+		const totalScore = aiCompetitors.reduce((sum, ai) => {
+			const Q = ai.quality;
+			const M = ai.marketing;
+			const P = ai.price;
+			const R = ai.reputation;
+			return sum + (Math.pow(Q, 0.7) * Math.pow(M, 0.5) / Math.pow(P, 1.2)) * R;
+		}, 0);
+		return totalScore / aiCompetitors.length;
 	}
 
 	function calculateUnitCost(): number {
@@ -108,23 +156,87 @@
 	}
 
 	function simulateCompetitors(): void {
-		// Simple AI: competitors randomly adjust their strategies
-		competitorPrice = competitorPrice * (0.9 + Math.random() * 0.2);
-		competitorMarketing = competitorMarketing * (0.8 + Math.random() * 0.4);
-		competitorQuality = Math.max(1, Math.min(9, competitorQuality + (Math.random() - 0.5) * 2));
+		// AI strategy: use base values +/- one option in each direction
+		aiCompetitors.forEach(ai => {
+			// Get current index in options arrays
+			const priceIndex = priceOptions.indexOf(ai.price);
+			const qualityIndex = qualityOptions.indexOf(ai.quality);
+			const marketingIndex = marketingOptions.indexOf(ai.marketing);
+			const productionIndex = productionOptions.indexOf(ai.production);
+			const payIndex = payOptions.indexOf(ai.employeePay);
+
+			// Move to adjacent option (+/- 1) or stay at current
+			const priceMove = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
+			const qualityMove = Math.floor(Math.random() * 3) - 1;
+			const marketingMove = Math.floor(Math.random() * 3) - 1;
+			const productionMove = Math.floor(Math.random() * 3) - 1;
+			const payMove = Math.floor(Math.random() * 3) - 1;
+
+			// Apply moves within bounds
+			const newPriceIndex = Math.max(0, Math.min(priceOptions.length - 1, priceIndex + priceMove));
+			const newQualityIndex = Math.max(0, Math.min(qualityOptions.length - 1, qualityIndex + qualityMove));
+			const newMarketingIndex = Math.max(0, Math.min(marketingOptions.length - 1, marketingIndex + marketingMove));
+			const newProductionIndex = Math.max(0, Math.min(productionOptions.length - 1, productionIndex + productionMove));
+			const newPayIndex = Math.max(0, Math.min(payOptions.length - 1, payIndex + payMove));
+
+			ai.price = priceOptions[newPriceIndex];
+			ai.quality = qualityOptions[newQualityIndex];
+			ai.marketing = marketingOptions[newMarketingIndex];
+			ai.production = productionOptions[newProductionIndex];
+			ai.employeePay = payOptions[newPayIndex];
+		});
+	}
+
+	function executeAITurn(ai: AICompetitor, aiMarketShare: number): void {
+		// Calculate AI demand score
+		// Calculate unit cost for AI
+		const aiUnitCost = BASE_COST + 0.4 * ai.quality - 0.2 * (ai.employeePay / 100);
+
+		// Production
+		const aiActualProduction = Math.min(ai.production, Math.floor(ai.production * ai.productionEfficiency));
+		ai.inventory += aiActualProduction;
+
+		// Sales (AI gets their share of market demand)
+		const aiActualDemand = Math.floor(marketDemand * aiMarketShare);
+		const aiAvailableUnits = Math.min(ai.inventory, aiActualDemand);
+		ai.inventory -= aiAvailableUnits;
+
+		// Revenue and costs
+		const aiRevenue = aiAvailableUnits * ai.price;
+		const aiProductionCost = aiActualProduction * aiUnitCost;
+		const aiMarketingCost = ai.marketing;
+		const aiLaborCost = (ai.employeePay / 10) * (ai.production / 10);
+		const aiCosts = aiProductionCost + aiMarketingCost + aiLaborCost;
+		const aiProfit = aiRevenue - aiCosts;
+		ai.cash += aiProfit;
+
+		// Update AI reputation
+		ai.reputation = Math.max(0, Math.min(10, 0.9 * ai.reputation + 0.05 * ai.quality + 0.03 * (ai.marketing / 1000)));
+
+		// Update AI production efficiency
+		ai.productionEfficiency = 1.0 + 0.05 * (ai.employeePay / 100);
 	}
 
 	function executeTurn(): void {
+		quality = Math.max(1, Math.min(9, Math.round(Number(quality) || 1)));
+
 		// Calculate demand
 		const playerDemandScore = calculateDemandScore();
-		const competitorDemandScore = calculateCompetitorDemandScore();
-		const totalDemandScore = playerDemandScore + competitorDemandScore;
+		const aiDemandScores = aiCompetitors.map(ai =>
+			(Math.pow(ai.quality, 0.7) * Math.pow(ai.marketing, 0.5) / Math.pow(ai.price, 1.2)) * ai.reputation
+		);
+		const totalAIDemandScore = aiDemandScores.reduce((sum, score) => sum + score, 0);
+		const totalDemandScore = playerDemandScore + totalAIDemandScore;
 
 		demandScore = playerDemandScore;
 
-		// Market share
+		// Market share (player vs 4 AI competitors)
 		marketShare = totalDemandScore > 0 ? playerDemandScore / totalDemandScore : 0;
+		const aiMarketShares = aiDemandScores.map(score => (totalDemandScore > 0 ? score / totalDemandScore : 0));
 		const actualDemand = Math.floor(marketDemand * marketShare);
+
+		// Execute AI competitors for this quarter
+		aiCompetitors.forEach((ai, index) => executeAITurn(ai, aiMarketShares[index]));
 
 		// Production and inventory
 		const actualProduction = Math.min(productionQuantity, Math.floor(productionQuantity * productionEfficiency));
@@ -155,12 +267,23 @@
 		generateFeedback();
 
 		// Record history
+		const teamSnapshots = [
+			{ name: playerTeam, quality, price, marketShare },
+			...aiCompetitors.map((ai, index) => ({
+				name: ai.name,
+				quality: ai.quality,
+				price: ai.price,
+				marketShare: aiMarketShares[index]
+			}))
+		];
+
 		history.push({
 			turn: currentTurn,
 			cash,
 			marketShare,
 			reputation,
-			profit
+			profit,
+			teams: teamSnapshots
 		});
 
 		showResults = true;
@@ -173,17 +296,22 @@
 	function generateFeedback(): void {
 		const messages: string[] = [];
 
+		// Calculate average competitor values
+		const avgPrice = aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / aiCompetitors.length;
+		const avgQuality = aiCompetitors.reduce((sum, ai) => sum + ai.quality, 0) / aiCompetitors.length;
+		const avgMarketing = aiCompetitors.reduce((sum, ai) => sum + ai.marketing, 0) / aiCompetitors.length;
+
 		if (marketShare < 0.3) messages.push("Struggling to compete in the market");
 		else if (marketShare > 0.6) messages.push("Dominating market share!");
 
-		if (price > competitorPrice * 1.2) messages.push("Customers think you're overpriced");
-		else if (price < competitorPrice * 0.8) messages.push("Aggressive pricing strategy");
+		if (price > avgPrice * 1.2) messages.push("Customers think you're overpriced");
+		else if (price < avgPrice * 0.8) messages.push("Aggressive pricing strategy");
 
-		if (quality < competitorQuality - 2) messages.push("Quality concerns hurting reputation");
-		else if (quality > competitorQuality + 2) messages.push("Premium quality building brand loyalty");
+		if (quality < avgQuality - 2) messages.push("Quality concerns hurting reputation");
+		else if (quality > avgQuality + 2) messages.push("Premium quality building brand loyalty");
 
-		if (marketing < competitorMarketing * 0.5) messages.push("Marketing budget too low");
-		else if (marketing > competitorMarketing * 2) messages.push("Heavy marketing spend");
+		if (marketing < avgMarketing * 0.5) messages.push("Marketing budget too low");
+		else if (marketing > avgMarketing * 2) messages.push("Heavy marketing spend");
 
 		if (productionEfficiency < 1.1) messages.push("Low production efficiency");
 		else if (productionEfficiency > 1.3) messages.push("Highly efficient production");
@@ -208,16 +336,16 @@
 		reputation = BASE_REPUTATION;
 		productionEfficiency = 1.0;
 		inventory = 0;
-		marketDemand = 1000;
-		competitorPrice = 15.00;
-		competitorQuality = 5;
-		competitorMarketing = 1000;
+		marketDemand = 500;
 
 		price = 15.00;
 		quality = 5;
 		marketing = 1000;
 		productionQuantity = 100;
 		employeePay = 100;
+
+		// Reinitialize teams
+		initializeTeams();
 
 		showResults = false;
 		gameOver = false;
@@ -243,7 +371,7 @@
 <div class="apex-container">
 	<div class="header">
 		<div class="turn-badge">Quarter {currentTurn}/{TOTAL_TURNS}</div>
-		<h1>🏭 Apex Industries</h1>
+		<h1>🏭 Apex Industries - Team: {playerTeam}</h1>
 	</div>
 
 	<!-- Tab Navigation -->
@@ -284,11 +412,7 @@
 				</div>
 				<div class="input-group">
 					<label for="quality">Quality (1-9)</label>
-					<select id="quality" bind:value={quality}>
-						{#each qualityOptions as option}
-							<option value={option}>{option}</option>
-						{/each}
-					</select>
+					<input type="number" id="quality" bind:value={quality} min="1" max="9" />
 				</div>
 				<div class="input-group">
 					<label for="marketing">Marketing</label>
@@ -318,34 +442,34 @@
 		</div>
 
 		<div class="competitor-panel">
-			<h3>Competitors</h3>
+			<h3>Competitors (Average)</h3>
 			<table class="competitor-table">
 				<tbody>
 					{#if currentTurn === 1}
 						<tr>
-							<td>Price Range</td>
-							<td>${allowedPriceRange.min}-${allowedPriceRange.max}</td>
+							<td>Price</td>
+							<td>$15.00</td>
 						</tr>
 						<tr>
-							<td>Quality Range</td>
-							<td>{allowedQualityRange.min}-{allowedQualityRange.max}</td>
+							<td>Quality</td>
+							<td>5</td>
 						</tr>
 						<tr>
-							<td>Marketing Range</td>
-							<td>${allowedMarketingRange.min}-${allowedMarketingRange.max}</td>
+							<td>Marketing</td>
+							<td>$1,000</td>
 						</tr>
 					{:else}
 						<tr>
 							<td>Price</td>
-							<td>${competitorPrice.toFixed(2)}</td>
+							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / aiCompetitors.length).toFixed(2)}</td>
 						</tr>
 						<tr>
 							<td>Quality</td>
-							<td>{competitorQuality}</td>
+							<td>{(aiCompetitors.reduce((sum, ai) => sum + ai.quality, 0) / aiCompetitors.length).toFixed(1)}</td>
 						</tr>
 						<tr>
 							<td>Marketing</td>
-							<td>${competitorMarketing}</td>
+							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.marketing, 0) / aiCompetitors.length).toFixed(0)}</td>
 						</tr>
 					{/if}
 				</tbody>
@@ -469,6 +593,127 @@
 			{#if history.length === 0}
 				<p class="no-data">No quarterly data available yet. Complete a quarter to see results.</p>
 			{:else}
+				<div class="chart-container">
+					{#if activeChart === "quality"}
+						<div class="chart-card">
+							<h3>Quality Comparison (All Teams)</h3>
+							<div class="chart">
+								<svg viewBox="0 0 400 200" class="line-chart">
+									<!-- Grid lines -->
+									{#each [1, 3, 5, 7, 9] as y}
+										<line x1="40" y1={200 - (y / 9) * 160} x2="380" y2={200 - (y / 9) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+										<text x="30" y={200 - (y / 9) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">{y}</text>
+									{/each}
+									{#each history[0].teams as team, teamIndex}
+										{@const teamPoints = history.map((entry, i) => `${40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)},${200 - (entry.teams[teamIndex].quality / 9) * 160}`).join(' ')}
+										<polyline
+											fill="none"
+											stroke={teamColors[teamIndex % teamColors.length]}
+											stroke-width="2"
+											points={teamPoints}
+										/>
+										{#if history.length === 1}
+											<circle cx={40 + 170} cy={200 - (history[0].teams[teamIndex].quality / 9) * 160} r="4" fill={teamColors[teamIndex % teamColors.length]} />
+										{/if}
+									{/each}
+									<!-- X-axis labels -->
+									{#each history as entry, i}
+										<text x={40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)} y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">Q{entry.turn}</text>
+									{/each}
+								</svg>
+								<div class="chart-legend">
+									{#each history[0].teams as team, teamIndex}
+										<span class="legend-item">
+											<span class="legend-color" style={`background: ${teamColors[teamIndex % teamColors.length]}`}></span>
+											{team.name}
+										</span>
+									{/each}
+								</div>
+							</div>
+						</div>
+					{:else if activeChart === "price"}
+						<div class="chart-card">
+							<h3>Price Comparison (All Teams)</h3>
+							<div class="chart">
+								<svg viewBox="0 0 400 200" class="line-chart">
+									<!-- Grid lines -->
+									{#each [8, 12, 16, 20, 24, 28, 32] as y}
+										<line x1="40" y1={200 - ((y - 8) / 24) * 160} x2="380" y2={200 - ((y - 8) / 24) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+										<text x="30" y={200 - ((y - 8) / 24) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">${y}</text>
+									{/each}
+									{#each history[0].teams as team, teamIndex}
+										{@const teamPoints = history.map((entry, i) => `${40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)},${200 - ((entry.teams[teamIndex].price - 8) / 24) * 160}`).join(' ')}
+										<polyline
+											fill="none"
+											stroke={teamColors[teamIndex % teamColors.length]}
+											stroke-width="2"
+											points={teamPoints}
+										/>
+										{#if history.length === 1}
+											<circle cx={40 + 170} cy={200 - ((history[0].teams[teamIndex].price - 8) / 24) * 160} r="4" fill={teamColors[teamIndex % teamColors.length]} />
+										{/if}
+									{/each}
+									<!-- X-axis labels -->
+									{#each history as entry, i}
+										<text x={40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)} y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">Q{entry.turn}</text>
+									{/each}
+								</svg>
+								<div class="chart-legend">
+									{#each history[0].teams as team, teamIndex}
+										<span class="legend-item">
+											<span class="legend-color" style={`background: ${teamColors[teamIndex % teamColors.length]}`}></span>
+											{team.name}
+										</span>
+									{/each}
+								</div>
+							</div>
+						</div>
+					{:else if activeChart === "market"}
+						<div class="chart-card">
+							<h3>Market Share (All Teams)</h3>
+							<div class="chart">
+								<svg viewBox="0 0 400 200" class="line-chart">
+									<!-- Grid lines -->
+									{#each [0, 0.2, 0.4, 0.6, 0.8, 1.0] as y}
+										<line x1="40" y1={200 - y * 160} x2="380" y2={200 - y * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+										<text x="30" y={200 - y * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">{(y * 100).toFixed(0)}%</text>
+									{/each}
+									{#each history[0].teams as team, teamIndex}
+										{@const teamPoints = history.map((entry, i) => `${40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)},${200 - entry.teams[teamIndex].marketShare * 160}`).join(' ')}
+										<polyline
+											fill="none"
+											stroke={teamColors[teamIndex % teamColors.length]}
+											stroke-width="2"
+											points={teamPoints}
+										/>
+										{#if history.length === 1}
+											<circle cx={40 + 170} cy={200 - history[0].teams[teamIndex].marketShare * 160} r="4" fill={teamColors[teamIndex % teamColors.length]} />
+										{/if}
+									{/each}
+									<!-- X-axis labels -->
+									{#each history as entry, i}
+										<text x={40 + (history.length > 1 ? (i / (history.length - 1)) * 340 : 170)} y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="10">Q{entry.turn}</text>
+									{/each}
+								</svg>
+								<div class="chart-legend">
+									{#each history[0].teams as team, teamIndex}
+										<span class="legend-item">
+											<span class="legend-color" style={`background: ${teamColors[teamIndex % teamColors.length]}`}></span>
+											{team.name}
+										</span>
+									{/each}
+								</div>
+							</div>
+						</div>
+					{/if}
+
+					<div class="chart-buttons">
+						<button class="chart-btn" class:active={activeChart === "quality"} onclick={() => activeChart = "quality"}>Quality</button>
+						<button class="chart-btn" class:active={activeChart === "price"} onclick={() => activeChart = "price"}>Price</button>
+						<button class="chart-btn" class:active={activeChart === "market"} onclick={() => activeChart = "market"}>Market Share</button>
+					</div>
+				</div>
+
 				<div class="results-history">
 					{#each history as entry}
 						<div class="history-card">
@@ -500,40 +745,49 @@
 			<h2>🔍 Competitors</h2>
 			<div class="competitor-insights">
 				<div class="insight-card">
-					<h3>Current Competitor Position</h3>
+					<h3>Team: {playerTeam}</h3>
+					<p>You are competing against 4 AI teams: {aiCompetitors.map(ai => ai.name).join(", ")}</p>
+				</div>
+				<div class="insight-card">
+					<h3>AI Team Details</h3>
 					{#if currentTurn === 1}
-						<p>Competitor ranges are being analyzed...</p>
+						<p>AI teams are initializing their strategies...</p>
 					{:else}
-						<table class="insight-table">
-							<tbody>
-								<tr>
-									<td>Price</td>
-									<td>${competitorPrice.toFixed(2)}</td>
-									<td class:positive={price < competitorPrice} class:negative={price > competitorPrice}>
-										{price < competitorPrice ? "Lower ✓" : price > competitorPrice ? "Higher ✗" : "Equal"}
-									</td>
-								</tr>
-								<tr>
-									<td>Quality</td>
-									<td>{competitorQuality}</td>
-									<td class:positive={quality > competitorQuality} class:negative={quality < competitorQuality}>
-										{quality > competitorQuality ? "Higher ✓" : quality < competitorQuality ? "Lower ✗" : "Equal"}
-									</td>
-								</tr>
-								<tr>
-									<td>Marketing</td>
-									<td>${competitorMarketing}</td>
-									<td class:positive={marketing > competitorMarketing} class:negative={marketing < competitorMarketing}>
-										{marketing > competitorMarketing ? "Higher ✓" : marketing < competitorMarketing ? "Lower ✗" : "Equal"}
-									</td>
-								</tr>
-							</tbody>
-						</table>
+						{#each aiCompetitors as ai}
+							<div class="ai-team-detail">
+								<strong>{ai.name}</strong>
+								<table class="insight-table">
+									<tbody>
+										<tr>
+											<td>Price</td>
+											<td>${ai.price.toFixed(2)}</td>
+											<td class:positive={price < ai.price} class:negative={price > ai.price}>
+												{price < ai.price ? "Lower ✓" : price > ai.price ? "Higher ✗" : "Equal"}
+											</td>
+										</tr>
+										<tr>
+											<td>Quality</td>
+											<td>{ai.quality}</td>
+											<td class:positive={quality > ai.quality} class:negative={quality < ai.quality}>
+												{quality > ai.quality ? "Higher ✓" : quality < ai.quality ? "Lower ✗" : "Equal"}
+											</td>
+										</tr>
+										<tr>
+											<td>Marketing</td>
+											<td>${ai.marketing}</td>
+											<td class:positive={marketing > ai.marketing} class:negative={marketing < ai.marketing}>
+												{marketing > ai.marketing ? "Higher ✓" : marketing < ai.marketing ? "Lower ✗" : "Equal"}
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						{/each}
 					{/if}
 				</div>
 				<div class="insight-card">
 					<h3>Competitor Behavior</h3>
-					<p>Competitors adjust strategies randomly each quarter, simulating market dynamics.</p>
+					<p>AI teams adjust strategies each quarter using base values +/- one option in each direction.</p>
 					<p class="insight-note">Monitor their moves and adapt your strategy accordingly.</p>
 				</div>
 				<div class="insight-card">
@@ -544,13 +798,11 @@
 					</div>
 					<p class="insight-note">
 						{#if marketShare > 0.6}
-							You're dominating the market!
-						{:else if marketShare > 0.4}
-							Strong competitive position.
-						{:else if marketShare > 0.2}
-							Moderate market presence.
+							Dominating the market
+						{:else if marketShare < 0.2}
+							Struggling to gain traction
 						{:else}
-							Struggling to compete.
+							Competitive position
 						{/if}
 					</p>
 				</div>
@@ -562,7 +814,8 @@
 <style>
 	.apex-container {
 		width: 100%;
-		height: 100%;
+		height: auto;
+		min-height: 100%;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -572,7 +825,7 @@
 		background: #09090b;
 		padding: 2rem;
 		position: relative;
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.header {
@@ -765,6 +1018,101 @@
 		color: rgba(255, 255, 255, 0.9);
 	}
 
+	.ai-team-detail {
+		padding: 0.5rem;
+		margin-bottom: 0.5rem;
+		background: rgba(255, 255, 255, 0.02);
+		border-radius: 6px;
+	}
+
+	.ai-team-detail:last-child {
+		margin-bottom: 0;
+	}
+
+	.ai-team-detail strong {
+		display: block;
+		margin-bottom: 0.3rem;
+		font-size: 0.85rem;
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.chart-container {
+		margin-bottom: 2rem;
+	}
+
+	.chart-buttons {
+		display: flex;
+		gap: 0.5rem;
+		justify-content: center;
+		margin-top: 1rem;
+	}
+
+	.chart-btn {
+		padding: 0.5rem 1rem;
+		font-size: 0.85rem;
+		background: rgba(255, 255, 255, 0.05);
+		color: rgba(255, 255, 255, 0.7);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.chart-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.chart-btn.active {
+		background: #3b82f6;
+		border-color: #3b82f6;
+		color: white;
+	}
+
+	.chart-card {
+		background: rgba(255, 255, 255, 0.03);
+		padding: 1rem;
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.chart-card h3 {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
+		margin: 0 0 1rem;
+	}
+
+	.chart {
+		position: relative;
+	}
+
+	.line-chart {
+		width: 100%;
+		height: auto;
+	}
+
+	.chart-legend {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		margin-top: 0.5rem;
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	.legend-color {
+		width: 12px;
+		height: 12px;
+		border-radius: 2px;
+	}
+
 	.game-viewport {
 		background: #18181b;
 		padding: 2rem;
@@ -774,6 +1122,7 @@
 		min-width: 500px;
 		max-width: 600px;
 		width: 100%;
+		overflow: visible;
 	}
 
 	.stats-panel {
@@ -847,7 +1196,8 @@
 		font-weight: 600;
 	}
 
-	.input-group select {
+	.input-group select,
+	.input-group input[type="number"] {
 		background: #27272a;
 		border: 1px solid #3f3f46;
 		color: white;
@@ -859,12 +1209,14 @@
 		transition: all 0.2s;
 	}
 
-	.input-group select:hover {
+	.input-group select:hover,
+	.input-group input[type="number"]:hover {
 		background: #3f3f46;
 		border-color: #52525b;
 	}
 
-	.input-group select:focus {
+	.input-group select:focus,
+	.input-group input[type="number"]:focus {
 		outline: none;
 		border-color: #3b82f6;
 	}
@@ -936,6 +1288,7 @@
 		max-width: 500px;
 		width: 100%;
 		text-align: center;
+		overflow: visible;
 	}
 
 	.results-panel h2, .game-over-panel h2 {
@@ -1061,8 +1414,8 @@
 	}
 
 	.history-list {
-		max-height: 200px;
-		overflow-y: auto;
+		max-height: none;
+		overflow: visible;
 		background: rgba(255, 255, 255, 0.03);
 		border-radius: 8px;
 		padding: 0.5rem;
@@ -1086,7 +1439,7 @@
 			padding: 0.75rem;
 			align-items: stretch;
 			justify-content: flex-start;
-			overflow-x: auto;
+			overflow: visible;
 		}
 
 		.header {
@@ -1107,6 +1460,8 @@
 			padding: 0.85rem;
 			border-radius: 0.75rem;
 			box-sizing: border-box;
+			max-height: none;
+			overflow: visible;
 		}
 
 		.stats-panel,
