@@ -505,18 +505,6 @@
 				<span class="label">Reputation</span>
 				<span class="value">{reputation.toFixed(2)}</span>
 			</div>
-			<div class="labor-clarity-card">
-				<h4>Workforce Model</h4>
-				<p>
-					{productionQuantity} units requires <strong>{plannedEmployeeCount}</strong>
-					employees at <strong>{UNITS_PER_EMPLOYEE} units/employee</strong> capacity.
-				</p>
-				<p>
-					Labor cost scales with both production and pay:
-					<strong>employees × (pay / 10)</strong> =
-					<strong>${formatMoney(projectedLaborCost)}</strong> this quarter.
-				</p>
-			</div>
 		</div>
 
 		<div class="inputs-panel">
@@ -934,18 +922,18 @@
 <style>
 	.apex-container {
 		width: 100%;
-		height: auto;
-		min-height: 100%;
+		height: 100%;
+		max-height: 100%;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
 		color: white;
 		font-family: "Outfit", "Inter", sans-serif;
 		background: #09090b;
 		padding: 2rem;
 		position: relative;
-		overflow: visible;
+		overflow-y: auto;
 	}
 
 	.header {
@@ -1036,45 +1024,20 @@
 
 	.research-card,
 	.insight-card,
-	.history-card,
-	.labor-clarity-card {
+	.history-card {
 		background: rgba(255, 255, 255, 0.03);
 		padding: 1rem;
 		border-radius: 8px;
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
-	.labor-clarity-card {
-		margin-top: 1rem;
-	}
-
-	.labor-clarity-card h4 {
-		font-size: 0.85rem;
-		font-weight: 800;
+	.research-card h3,
+	.insight-card h3,
+	.history-header {
+		font-size: 0.9rem;
+		font-weight: 700;
 		color: rgba(255, 255, 255, 0.9);
 		margin: 0 0 0.5rem;
-	}
-
-	.labor-clarity-card p {
-		font-size: 0.82rem;
-		color: rgba(255, 255, 255, 0.75);
-		line-height: 1.5;
-		margin: 0 0 0.4rem;
-	}
-
-	.labor-clarity-card p:last-child {
-		margin-bottom: 0;
-	}
-
-	.quality-preview {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-top: 0.4rem;
-		padding: 0.4rem 0.6rem;
-		background: rgba(59, 130, 246, 0.1);
-		border-radius: 6px;
-		border: 1px solid rgba(59, 130, 246, 0.2);
 	}
 
 	.quality-label {
@@ -1087,15 +1050,6 @@
 		font-size: 0.9rem;
 		font-weight: 800;
 		color: #3b82f6;
-	}
-
-	.research-card h3,
-	.insight-card h3,
-	.history-header {
-		font-size: 0.9rem;
-		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
-		margin: 0 0 0.5rem;
 	}
 
 	.research-card p,
