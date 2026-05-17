@@ -809,4 +809,56 @@
 		border: none;
 		cursor: pointer;
 	}
+
+	@media (max-width: 1024px) {
+		.blockdude-container {
+			padding: 0.75rem;
+			height: 100%;
+			min-height: 100%;
+			justify-content: flex-start;
+			overflow-y: auto;
+		}
+
+		.header {
+			margin-bottom: 0.75rem;
+		}
+
+		h1 {
+			font-size: 1.6rem;
+			letter-spacing: -1px;
+		}
+
+		.game-viewport {
+			width: 100%;
+			max-width: 100%;
+			padding: 0.6rem;
+			box-sizing: border-box;
+		}
+
+		.grid {
+			width: 100%;
+			max-width: 100%;
+		}
+
+		.controls {
+			margin-top: 0.85rem;
+			width: 100%;
+		}
+
+		.dpad {
+			gap: 0.6rem;
+			margin-bottom: 0.65rem;
+		}
+
+		.btn {
+			padding: 0.65rem 1rem;
+			font-size: 1rem;
+			min-width: 3rem;
+		}
+
+		.hint {
+			font-size: 0.72rem;
+			padding-bottom: 0.4rem;
+		}
+	}
 </style>

@@ -333,4 +333,36 @@
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
 	}
+
+	@media (max-width: 1024px) {
+		.main-container,
+		.main-container.in-game,
+		.view-content,
+		.game-mat {
+			min-height: 100dvh;
+			height: 100dvh;
+		}
+
+		.game-mat {
+			align-items: stretch;
+			justify-content: flex-start;
+			overflow: hidden;
+		}
+
+		.game-frame-adaptive {
+			width: 100vw;
+			height: 100dvh;
+			max-width: 100vw;
+			max-height: 100dvh;
+			border-radius: 0;
+			border: none;
+			box-shadow: none;
+		}
+
+		.game-about,
+		.game-guide,
+		.updated-line {
+			display: none;
+		}
+	}
 </style>

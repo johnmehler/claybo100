@@ -9,16 +9,26 @@
 	} = $props();
 
 	let isSidebarCollapsed = $state(false);
+	let isMobile = $state(false);
 	const gameCategories = getGamesByCategory();
 	let openCategories = $state(Object.fromEntries(gameCategories.map(c => [c.name, true])));
 
 	const currentPath = $derived($page.url.pathname);
 
 	onMount(() => {
-		// Hide sidebar by default on mobile
-		if (window.innerWidth <= 1024) {
-			isSidebarCollapsed = true;
-		}
+		const syncViewportState = () => {
+			isMobile = window.innerWidth <= 1024;
+			if (isMobile) {
+				isSidebarCollapsed = true;
+			}
+		};
+
+		syncViewportState();
+		window.addEventListener("resize", syncViewportState);
+
+		return () => {
+			window.removeEventListener("resize", syncViewportState);
+		};
 	});
 </script>
 
@@ -36,6 +46,15 @@
 		{/if}
 	</svg>
 </button>
+
+{#if isMobile && !isSidebarCollapsed}
+	<button
+		type="button"
+		class="sidebar-backdrop"
+		onclick={() => (isSidebarCollapsed = true)}
+		aria-label="Close sidebar"
+	></button>
+{/if}
 
 <aside class="sidebar" class:collapsed={isSidebarCollapsed} in:fly={{ x: -100, duration: 600 }}>
 	<div class="sidebar-header">
@@ -136,6 +155,16 @@
 		transform: translateX(-100%);
 		opacity: 0;
 		pointer-events: none;
+	}
+
+	.sidebar-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(9, 9, 11, 0.58);
+		border: none;
+		padding: 0;
+		margin: 0;
+		z-index: 990;
 	}
 
 	.sidebar-toggle-floating {
@@ -382,5 +411,83 @@
 
 	.highlight {
 		color: var(--color-bittersweet);
+	}
+
+	@media (max-width: 1024px) {
+		.sidebar {
+			width: min(82vw, 360px);
+			padding: 1.25rem 1rem;
+		}
+
+		.sidebar-toggle-floating {
+			top: 1rem;
+			left: min(82vw, 360px);
+			transform: translateX(-0.75rem);
+			width: 2.8rem;
+			height: 2.8rem;
+			border-radius: 0.8rem;
+		}
+
+		.sidebar-toggle-floating.is-collapsed {
+			left: 1rem;
+			transform: none;
+		}
+
+		.sidebar-toggle-floating svg {
+			width: 1.4rem;
+			height: 1.4rem;
+		}
+
+		.sidebar-header {
+			margin-bottom: 1rem;
+		}
+
+		.sidebar-title {
+			font-size: 1rem;
+		}
+
+		.sidebar-nav {
+			padding-right: 0.5rem;
+		}
+
+		.controls-label,
+		.sidebar-category-label {
+			font-size: 0.78rem;
+			letter-spacing: 0.08em;
+		}
+
+		.dropdown-toggle {
+			padding: 0.7rem 0.75rem;
+		}
+
+		.nav-list {
+			gap: 0.45rem;
+		}
+
+		.nav-button {
+			padding: 0.75rem;
+			gap: 0.65rem;
+		}
+
+		.nav-icon {
+			width: 1.25rem;
+			height: 1.25rem;
+		}
+
+		.nav-label-text {
+			font-size: 0.98rem;
+			font-weight: 700;
+		}
+
+		.menu-back-btn {
+			padding: 0.9rem;
+			font-size: 0.82rem;
+			gap: 0.6rem;
+		}
+
+		.menu-back-btn svg {
+			width: 1rem;
+			height: 1rem;
+		}
 	}
 </style>

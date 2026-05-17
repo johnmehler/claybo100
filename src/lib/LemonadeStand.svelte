@@ -1181,8 +1181,8 @@
 	@media (max-width: 768px) {
 		.lemonade-container {
 			padding: 0.5rem;
-			min-height: 100dvh;
-			height: 100dvh;
+			min-height: 100%;
+			height: 100%;
 			justify-content: flex-start;
 			overflow: hidden;
 		}
@@ -1215,8 +1215,10 @@
 		.game-viewport,
 		.results-panel,
 		.game-over-panel {
-			height: calc(95dvh - 3.4rem);
-			max-height: calc(95dvh - 3.4rem);
+			flex: 1;
+			min-height: 0;
+			height: auto;
+			max-height: none;
 			overflow-y: auto;
 			-webkit-overflow-scrolling: touch;
 		}

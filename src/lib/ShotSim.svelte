@@ -393,6 +393,7 @@
 
 	input[type="range"] {
 		flex: 1;
+		appearance: none;
 		-webkit-appearance: none;
 		height: 0.6vmin;
 		background: rgba(255,255,255,0.1);
@@ -492,4 +493,86 @@
 	.ball { position: absolute; width: 3vmin; height: 3vmin; background: #ff8c00; border-radius: 50%; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 	.trajectory-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
 	.feedback { position: absolute; top: 20%; left: 0; right: 0; text-align: center; font-size: 6vmin; font-weight: 900; color: var(--color-golden); text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+
+	@media (max-width: 1024px) {
+		.board-wrapper {
+			padding: 0.5rem 0.75rem;
+		}
+
+		.game-stats {
+			gap: 1.25rem;
+			margin-bottom: 0.6rem;
+		}
+
+		.label {
+			font-size: 0.62rem;
+			letter-spacing: 0.08em;
+		}
+
+		.value {
+			font-size: 1.35rem;
+		}
+
+		.bottom-bar {
+			height: auto;
+			padding: 0.6rem 0.75rem 0.9rem;
+		}
+
+		.controls {
+			width: 100%;
+			gap: 0.65rem;
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.control-group {
+			width: 100%;
+			gap: 0.2rem;
+		}
+
+		.control-group label {
+			font-size: 0.72rem;
+			font-weight: 700;
+		}
+
+		.input-row {
+			gap: 0.45rem;
+		}
+
+		.step-btn {
+			width: 2rem;
+			height: 2rem;
+			font-size: 1rem;
+			border-radius: 0.5rem;
+			flex-shrink: 0;
+		}
+
+		input[type="range"] {
+			height: 0.28rem;
+		}
+
+		input[type="range"]::-webkit-slider-thumb {
+			width: 1rem;
+			height: 1rem;
+		}
+
+		.shoot-btn {
+			width: 100%;
+			height: 2.4rem;
+			padding: 0;
+			font-size: 0.86rem;
+			letter-spacing: 0.08em;
+			border-radius: 0.7rem;
+		}
+
+		.telemetry-toggle {
+			font-size: 0.6rem;
+			gap: 0.4rem;
+		}
+
+		.telemetry-toggle input {
+			width: 0.8rem;
+			height: 0.8rem;
+		}
+	}
 </style>
