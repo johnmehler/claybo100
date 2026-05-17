@@ -43,6 +43,9 @@
 	let showResults = $state(false);
 	let gameOver = $state(false);
 
+	// Tab state
+	let activeTab = $state("game");
+
 	// Competitor display ranges
 	const allowedPriceRange = { min: 8, max: 30 };
 	const allowedQualityRange = { min: 1, max: 9 };
@@ -249,195 +252,323 @@
 		<h1>🏭 Apex Industries</h1>
 	</div>
 
-	{#if !showResults && !gameOver}
-		<div class="game-viewport">
-			<div class="stats-panel">
-				<div class="stat">
-					<span class="label">Cash</span>
-					<span class="value">${formatMoney(cash)}</span>
-				</div>
-				<div class="stat">
-					<span class="label">Market Share</span>
-					<span class="value">{formatPercent(marketShare)}</span>
-				</div>
-				<div class="stat">
-					<span class="label">Reputation</span>
-					<span class="value">{reputation.toFixed(2)}</span>
-				</div>
-			</div>
+	<!-- Tab Navigation -->
+	<div class="tab-nav">
+		<button class="tab-btn" class:active={activeTab === "game"} onclick={() => activeTab = "game"}>Inputs</button>
+		<button class="tab-btn" class:active={activeTab === "market"} onclick={() => activeTab = "market"}>Projections</button>
+		<button class="tab-btn" class:active={activeTab === "results"} onclick={() => activeTab = "results"}>Results</button>
+		<button class="tab-btn" class:active={activeTab === "competitor"} onclick={() => activeTab = "competitor"}>Competitors</button>
+	</div>
 
-			<div class="inputs-panel">
-				<h3>Your Strategy</h3>
-				<div class="input-grid">
-					<div class="input-group">
-						<label for="price">Price</label>
-						<select id="price" bind:value={price}>
-							{#each priceOptions as option}
-								<option value={option}>${option}</option>
-							{/each}
-						</select>
-					</div>
-					<div class="input-group">
-						<label for="quality">Quality (1-9)</label>
-						<select id="quality" bind:value={quality}>
-							{#each qualityOptions as option}
-								<option value={option}>{option}</option>
-							{/each}
-						</select>
-					</div>
-					<div class="input-group">
-						<label for="marketing">Marketing</label>
-						<select id="marketing" bind:value={marketing}>
-							{#each marketingOptions as option}
-								<option value={option}>${option}</option>
-							{/each}
-						</select>
-					</div>
-					<div class="input-group">
-						<label for="production">Production</label>
-						<select id="production" bind:value={productionQuantity}>
-							{#each productionOptions as option}
-								<option value={option}>{option} units</option>
-							{/each}
-						</select>
-					</div>
-					<div class="input-group">
-						<label for="investment">Factory Investment</label>
-						<select id="investment" bind:value={factoryInvestment}>
-							{#each investmentOptions as option}
-								<option value={option}>${option}</option>
-							{/each}
-						</select>
-					</div>
-					<div class="input-group">
-						<label for="pay">Employee Pay</label>
-						<select id="pay" bind:value={employeePay}>
-							{#each payOptions as option}
-								<option value={option}>${option}</option>
-							{/each}
-						</select>
-					</div>
-				</div>
+	{#if activeTab === "game" && !showResults && !gameOver}
+	<div class="game-viewport">
+		<div class="stats-panel">
+			<div class="stat">
+				<span class="label">Cash</span>
+				<span class="value">${formatMoney(cash)}</span>
 			</div>
-
-			<div class="competitor-panel">
-				<h3>Competitors</h3>
-				<table class="competitor-table">
-					<tbody>
-						{#if currentTurn === 1}
-							<tr>
-								<td>Price Range</td>
-								<td>${allowedPriceRange.min}-${allowedPriceRange.max}</td>
-							</tr>
-							<tr>
-								<td>Quality Range</td>
-								<td>{allowedQualityRange.min}-{allowedQualityRange.max}</td>
-							</tr>
-							<tr>
-								<td>Marketing Range</td>
-								<td>${allowedMarketingRange.min}-${allowedMarketingRange.max}</td>
-							</tr>
-						{:else}
-							<tr>
-								<td>Price</td>
-								<td>${competitorPrice.toFixed(2)}</td>
-							</tr>
-							<tr>
-								<td>Quality</td>
-								<td>{competitorQuality}</td>
-							</tr>
-							<tr>
-								<td>Marketing</td>
-								<td>${competitorMarketing}</td>
-							</tr>
-						{/if}
-					</tbody>
-				</table>
+			<div class="stat">
+				<span class="label">Market Share</span>
+				<span class="value">{formatPercent(marketShare)}</span>
 			</div>
-
-			<button class="btn execute-btn" onclick={executeTurn}>Execute Quarter</button>
+			<div class="stat">
+				<span class="label">Reputation</span>
+				<span class="value">{reputation.toFixed(2)}</span>
+			</div>
 		</div>
-	{:else if showResults && !gameOver}
-		<div class="results-panel">
-			<h2>Quarter {currentTurn} Results</h2>
-			<div class="feedback-message">{feedback}</div>
-			<div class="results-stats">
-				<div class="result">
-					<span class="label">Market Share</span>
-					<span class="value">{formatPercent(marketShare)}</span>
+
+		<div class="inputs-panel">
+			<h3>Your Strategy</h3>
+			<div class="input-grid">
+				<div class="input-group">
+					<label for="price">Price</label>
+					<select id="price" bind:value={price}>
+						{#each priceOptions as option}
+							<option value={option}>${option}</option>
+						{/each}
+					</select>
 				</div>
-				<div class="result">
-					<span class="label">Units Sold</span>
-					<span class="value">{unitsSold}</span>
+				<div class="input-group">
+					<label for="quality">Quality (1-9)</label>
+					<select id="quality" bind:value={quality}>
+						{#each qualityOptions as option}
+							<option value={option}>{option}</option>
+						{/each}
+					</select>
 				</div>
-				<div class="result">
-					<span class="label">Revenue</span>
-					<span class="value positive">${formatMoney(revenue)}</span>
+				<div class="input-group">
+					<label for="marketing">Marketing</label>
+					<select id="marketing" bind:value={marketing}>
+						{#each marketingOptions as option}
+							<option value={option}>${option}</option>
+						{/each}
+					</select>
 				</div>
-				<div class="result">
-					<span class="label">Costs</span>
-					<span class="value negative">${formatMoney(costs)}</span>
+				<div class="input-group">
+					<label for="production">Production</label>
+					<select id="production" bind:value={productionQuantity}>
+						{#each productionOptions as option}
+							<option value={option}>{option} units</option>
+						{/each}
+					</select>
 				</div>
-				<div class="result">
-					<span class="label">Profit</span>
-					<span class="value" class:positive={profit >= 0} class:negative={profit < 0}>
-						${formatMoney(profit)}
-					</span>
+				<div class="input-group">
+					<label for="investment">Factory Investment</label>
+					<select id="investment" bind:value={factoryInvestment}>
+						{#each investmentOptions as option}
+							<option value={option}>${option}</option>
+						{/each}
+					</select>
 				</div>
-				<div class="result">
-					<span class="label">Cash</span>
-					<span class="value">${formatMoney(cash)}</span>
+				<div class="input-group">
+					<label for="pay">Employee Pay</label>
+					<select id="pay" bind:value={employeePay}>
+						{#each payOptions as option}
+							<option value={option}>${option}</option>
+						{/each}
+					</select>
 				</div>
 			</div>
-			<div class="market-share-arrow">
-				{#if marketShare > 0.5}
-					<span class="arrow up">↑</span>
-					<span>Gaining market share</span>
-				{:else}
-					<span class="arrow down">↓</span>
-					<span>Losing market share</span>
-				{/if}
-			</div>
-			<button class="btn next-btn" onclick={nextTurn}>Next Quarter →</button>
 		</div>
-	{:else if gameOver}
-		<div class="game-over-panel">
-			<h2>🎉 Game Over!</h2>
-			<div class="final-stats">
-				<div class="final-stat">
-					<span class="label">Final Cash</span>
-					<span class="value">${formatMoney(cash)}</span>
+
+		<div class="competitor-panel">
+			<h3>Competitors</h3>
+			<table class="competitor-table">
+				<tbody>
+					{#if currentTurn === 1}
+						<tr>
+							<td>Price Range</td>
+							<td>${allowedPriceRange.min}-${allowedPriceRange.max}</td>
+						</tr>
+						<tr>
+							<td>Quality Range</td>
+							<td>{allowedQualityRange.min}-{allowedQualityRange.max}</td>
+						</tr>
+						<tr>
+							<td>Marketing Range</td>
+							<td>${allowedMarketingRange.min}-${allowedMarketingRange.max}</td>
+						</tr>
+					{:else}
+						<tr>
+							<td>Price</td>
+							<td>${competitorPrice.toFixed(2)}</td>
+						</tr>
+						<tr>
+							<td>Quality</td>
+							<td>{competitorQuality}</td>
+						</tr>
+						<tr>
+							<td>Marketing</td>
+							<td>${competitorMarketing}</td>
+						</tr>
+					{/if}
+				</tbody>
+			</table>
+		</div>
+
+		<button class="btn execute-btn" onclick={executeTurn}>Execute Quarter</button>
+	</div>
+{:else if activeTab === "game" && showResults && !gameOver}
+	<div class="results-panel">
+		<h2>Quarter {currentTurn} Results</h2>
+		<div class="feedback-message">{feedback}</div>
+		<div class="results-stats">
+			<div class="result">
+				<span class="label">Market Share</span>
+				<span class="value">{formatPercent(marketShare)}</span>
+			</div>
+			<div class="result">
+				<span class="label">Units Sold</span>
+				<span class="value">{unitsSold}</span>
+			</div>
+			<div class="result">
+				<span class="label">Revenue</span>
+				<span class="value positive">${formatMoney(revenue)}</span>
+			</div>
+			<div class="result">
+				<span class="label">Costs</span>
+				<span class="value negative">${formatMoney(costs)}</span>
+			</div>
+			<div class="result">
+				<span class="label">Profit</span>
+				<span class="value" class:positive={profit >= 0} class:negative={profit < 0}>
+					${formatMoney(profit)}
+				</span>
+			</div>
+			<div class="result">
+				<span class="label">Cash</span>
+				<span class="value">${formatMoney(cash)}</span>
+			</div>
+		</div>
+		<div class="market-share-arrow">
+			{#if marketShare > 0.5}
+				<span class="arrow up">↑</span>
+				<span>Gaining market share</span>
+			{:else}
+				<span class="arrow down">↓</span>
+				<span>Losing market share</span>
+			{/if}
+		</div>
+		<button class="btn next-btn" onclick={nextTurn}>Next Quarter →</button>
+	</div>
+{:else if activeTab === "game" && gameOver}
+	<div class="game-over-panel">
+		<h2>🎉 Game Over!</h2>
+		<div class="final-stats">
+			<div class="final-stat">
+				<span class="label">Final Cash</span>
+				<span class="value">${formatMoney(cash)}</span>
+			</div>
+			<div class="final-stat">
+				<span class="label">Total Profit</span>
+				<span class="value" class:positive={cash - INITIAL_CASH >= 0} class:negative={cash - INITIAL_CASH < 0}>
+					${formatMoney(cash - INITIAL_CASH)}
+				</span>
+			</div>
+			<div class="final-stat">
+				<span class="label">Final Market Share</span>
+				<span class="value">{formatPercent(marketShare)}</span>
+			</div>
+			<div class="final-stat">
+				<span class="label">Final Reputation</span>
+				<span class="value">{reputation.toFixed(2)}</span>
+			</div>
+		</div>
+		<div class="history">
+			<h3>Performance History</h3>
+			<div class="history-list">
+				{#each history as entry}
+					<div class="history-entry">
+						<span>Quarter {entry.turn}</span>
+						<span>{formatPercent(entry.marketShare)}</span>
+						<span class:positive={entry.profit >= 0} class:negative={entry.profit < 0}
+							>${formatMoney(entry.profit)}</span
+						>
+					</div>
+				{/each}
+			</div>
+		</div>
+		<button class="btn restart-btn" onclick={resetGame}>Play Again</button>
+	</div>
+{:else if activeTab === "market"}
+		<div class="tab-panel">
+			<h2>📊 Projections</h2>
+			<div class="research-content">
+				<div class="research-card">
+					<h3>Market Demand</h3>
+					<p>Current market demand: <strong>{marketDemand} units</strong></p>
+					<p class="research-note">Demand fluctuates based on economic conditions and competitor activity.</p>
 				</div>
-				<div class="final-stat">
-					<span class="label">Total Profit</span>
-					<span class="value" class:positive={cash - INITIAL_CASH >= 0} class:negative={cash - INITIAL_CASH < 0}>
-						${formatMoney(cash - INITIAL_CASH)}
-					</span>
+				<div class="research-card">
+					<h3>Price Sensitivity</h3>
+					<p>Customers are sensitive to price changes. Higher prices reduce demand significantly.</p>
+					<p class="research-note">Optimal pricing balances revenue per unit with sales volume.</p>
 				</div>
-				<div class="final-stat">
-					<span class="label">Final Market Share</span>
-					<span class="value">{formatPercent(marketShare)}</span>
+				<div class="research-card">
+					<h3>Quality Impact</h3>
+					<p>Quality affects demand with diminishing returns. Quality 5-7 offers best value.</p>
+					<p class="research-note">Higher quality builds reputation over time.</p>
 				</div>
-				<div class="final-stat">
-					<span class="label">Final Reputation</span>
-					<span class="value">{reputation.toFixed(2)}</span>
+				<div class="research-card">
+					<h3>Marketing Effectiveness</h3>
+					<p>Marketing has strong initial impact but saturates quickly.</p>
+					<p class="research-note">Consistent marketing maintains brand awareness.</p>
 				</div>
 			</div>
-			<div class="history">
-				<h3>Performance History</h3>
-				<div class="history-list">
+		</div>
+
+	{:else if activeTab === "results"}
+		<div class="tab-panel">
+			<h2>📈 Results</h2>
+			{#if history.length === 0}
+				<p class="no-data">No quarterly data available yet. Complete a quarter to see results.</p>
+			{:else}
+				<div class="results-history">
 					{#each history as entry}
-						<div class="history-entry">
-							<span>Quarter {entry.turn}</span>
-							<span>{formatPercent(entry.marketShare)}</span>
-							<span class:positive={entry.profit >= 0} class:negative={entry.profit < 0}
-								>${formatMoney(entry.profit)}</span
-							>
+						<div class="history-card">
+							<div class="history-header">Quarter {entry.turn}</div>
+							<div class="history-stats">
+								<div class="history-stat">
+									<span class="label">Market Share</span>
+									<span class="value">{formatPercent(entry.marketShare)}</span>
+								</div>
+								<div class="history-stat">
+									<span class="label">Cash</span>
+									<span class="value">${formatMoney(entry.cash)}</span>
+								</div>
+								<div class="history-stat">
+									<span class="label">Profit</span>
+									<span class="value" class:positive={entry.profit >= 0} class:negative={entry.profit < 0}>
+										${formatMoney(entry.profit)}
+									</span>
+								</div>
+							</div>
 						</div>
 					{/each}
 				</div>
+			{/if}
+		</div>
+
+	{:else if activeTab === "competitor"}
+		<div class="tab-panel">
+			<h2>🔍 Competitors</h2>
+			<div class="competitor-insights">
+				<div class="insight-card">
+					<h3>Current Competitor Position</h3>
+					{#if currentTurn === 1}
+						<p>Competitor ranges are being analyzed...</p>
+					{:else}
+						<table class="insight-table">
+							<tbody>
+								<tr>
+									<td>Price</td>
+									<td>${competitorPrice.toFixed(2)}</td>
+									<td class:positive={price < competitorPrice} class:negative={price > competitorPrice}>
+										{price < competitorPrice ? "Lower ✓" : price > competitorPrice ? "Higher ✗" : "Equal"}
+									</td>
+								</tr>
+								<tr>
+									<td>Quality</td>
+									<td>{competitorQuality}</td>
+									<td class:positive={quality > competitorQuality} class:negative={quality < competitorQuality}>
+										{quality > competitorQuality ? "Higher ✓" : quality < competitorQuality ? "Lower ✗" : "Equal"}
+									</td>
+								</tr>
+								<tr>
+									<td>Marketing</td>
+									<td>${competitorMarketing}</td>
+									<td class:positive={marketing > competitorMarketing} class:negative={marketing < competitorMarketing}>
+										{marketing > competitorMarketing ? "Higher ✓" : marketing < competitorMarketing ? "Lower ✗" : "Equal"}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					{/if}
+				</div>
+				<div class="insight-card">
+					<h3>Competitor Behavior</h3>
+					<p>Competitors adjust strategies randomly each quarter, simulating market dynamics.</p>
+					<p class="insight-note">Monitor their moves and adapt your strategy accordingly.</p>
+				</div>
+				<div class="insight-card">
+					<h3>Market Position</h3>
+					<div class="position-indicator">
+						<div class="position-bar" style="width: {marketShare * 100}%"></div>
+						<span class="position-label">Your Share: {formatPercent(marketShare)}</span>
+					</div>
+					<p class="insight-note">
+						{#if marketShare > 0.6}
+							You're dominating the market!
+						{:else if marketShare > 0.4}
+							Strong competitive position.
+						{:else if marketShare > 0.2}
+							Moderate market presence.
+						{:else}
+							Struggling to compete.
+						{/if}
+					</p>
+				</div>
 			</div>
-			<button class="btn restart-btn" onclick={resetGame}>Play Again</button>
 		</div>
 	{/if}
 </div>
@@ -479,6 +610,173 @@
 		font-weight: 900;
 		margin: 0;
 		letter-spacing: -2px;
+	}
+
+	.tab-nav {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.tab-btn {
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.7);
+		padding: 0.6rem 1rem;
+		border-radius: 8px;
+		font-weight: 600;
+		font-size: 0.8rem;
+		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.tab-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: white;
+	}
+
+	.tab-btn.active {
+		background: #3b82f6;
+		border-color: #3b82f6;
+		color: white;
+	}
+
+	@media (max-width: 1024px) {
+		.tab-btn {
+			font-size: 0.7rem;
+			padding: 0.5rem 0.8rem;
+		}
+	}
+
+	.tab-panel {
+		background: #18181b;
+		padding: 2rem;
+		border-radius: 1rem;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		min-width: 400px;
+		max-width: 600px;
+		width: 100%;
+	}
+
+	.tab-panel h2 {
+		font-size: 1.5rem;
+		font-weight: 900;
+		margin: 0 0 1.5rem;
+	}
+
+	.research-content,
+	.competitor-insights,
+	.results-history {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.research-card,
+	.insight-card,
+	.history-card {
+		background: rgba(255, 255, 255, 0.03);
+		padding: 1rem;
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.research-card h3,
+	.insight-card h3,
+	.history-header {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
+		margin: 0 0 0.5rem;
+	}
+
+	.research-card p,
+	.insight-card p {
+		font-size: 0.85rem;
+		color: rgba(255, 255, 255, 0.7);
+		margin: 0 0 0.5rem;
+		line-height: 1.5;
+	}
+
+	.research-note,
+	.insight-note {
+		font-size: 0.75rem;
+		color: rgba(255, 255, 255, 0.5);
+		font-style: italic;
+		margin: 0;
+	}
+
+	.history-stats {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+
+	.history-stat {
+		text-align: center;
+	}
+
+	.history-stat .label {
+		font-size: 0.7rem;
+		color: rgba(255, 255, 255, 0.5);
+		font-weight: 700;
+		text-transform: uppercase;
+		display: block;
+		margin-bottom: 0.2rem;
+	}
+
+	.history-stat .value {
+		font-size: 0.9rem;
+		font-weight: 900;
+	}
+
+	.no-data {
+		text-align: center;
+		color: rgba(255, 255, 255, 0.5);
+		font-size: 0.9rem;
+		padding: 2rem;
+	}
+
+	.insight-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.85rem;
+	}
+
+	.insight-table td {
+		padding: 0.5rem;
+		color: rgba(255, 255, 255, 0.7);
+		font-weight: 600;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.insight-table tr:last-child td {
+		border-bottom: none;
+	}
+
+	.position-indicator {
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 8px;
+		padding: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.position-bar {
+		height: 8px;
+		background: linear-gradient(90deg, #3b82f6, #10b981);
+		border-radius: 4px;
+		margin-bottom: 0.5rem;
+		transition: width 0.3s ease;
+	}
+
+	.position-label {
+		font-size: 0.8rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
 	}
 
 	.game-viewport {
@@ -802,7 +1100,7 @@
 			padding: 0.75rem;
 			align-items: stretch;
 			justify-content: flex-start;
-			overflow-x: hidden;
+			overflow-x: auto;
 		}
 
 		.header {
