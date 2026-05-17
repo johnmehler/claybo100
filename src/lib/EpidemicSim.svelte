@@ -40,10 +40,10 @@
 	// Biological Parameters (Difficulty-locked)
 	let difficulty = $state<"EASY" | "MED" | "HARD">("MED");
 	let transmissionBase = $derived(
-		difficulty === "EASY" ? 0.5 : difficulty === "MED" ? 0.75 : 1.0,
+		difficulty === "EASY" ? 0.75 : difficulty === "MED" ? 0.90 : 1.0,
 	);
 	let immuneRate = $derived(
-		difficulty === "EASY" ? 0.5 : difficulty === "MED" ? 0.25 : 0.05,
+		difficulty === "EASY" ? 0.25 : difficulty === "MED" ? 0.15 : 0.05,
 	);
 	let durationBase = $derived(
 		difficulty === "EASY" ? 180 : difficulty === "MED" ? 250 : 350,
