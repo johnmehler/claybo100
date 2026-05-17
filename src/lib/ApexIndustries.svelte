@@ -6,202 +6,233 @@
 		$props();
 
 	// Game Constants
-	const TOTAL_DAYS = 30;
-	const INITIAL_MONEY = 10000.00;
-	const INITIAL_WORKERS = 5;
-	const INITIAL_MACHINES = 2;
+	const TOTAL_TURNS = 12;
+	const INITIAL_CASH = 50000.00;
+	const BASE_COST = 5.00;
+	const BASE_REPUTATION = 1.0;
 
-	// Production costs
-	const WORKER_SALARY = 100.00;
-	const MACHINE_MAINTENANCE = 50.00;
-	const RAW_MATERIAL_COST = 2.00;
-	const BASE_PRODUCT_PRICE = 15.00;
+	// Player inputs (6 per turn)
+	let price = $state(15.00);
+	let quality = $state(5);
+	let marketing = $state(1000);
+	let productionQuantity = $state(100);
+	let factoryInvestment = $state(0);
+	let employeePay = $state(100);
 
-	// Machine types
-	interface MachineType {
-		id: string;
-		name: string;
-		cost: number;
-		production: number;
-		efficiency: number;
-	}
+	// Input options
+	const priceOptions = [8, 10, 12, 15, 18, 20, 25, 30];
+	const qualityOptions = [1, 3, 5, 7, 9];
+	const marketingOptions = [0, 500, 1000, 2000, 3000, 5000, 8000];
+	const productionOptions = [50, 100, 150, 200, 300, 500];
+	const investmentOptions = [0, 2000, 5000, 10000, 20000];
+	const payOptions = [80, 100, 120, 150, 180, 200];
 
-	const machineTypes: MachineType[] = [
-		{ id: 'basic', name: 'Basic Machine', cost: 5000, production: 10, efficiency: 1.0 },
-		{ id: 'advanced', name: 'Advanced Machine', cost: 15000, production: 25, efficiency: 1.5 },
-		{ id: 'premium', name: 'Premium Machine', cost: 40000, production: 50, efficiency: 2.0 }
-	];
-
-	// State
-	let currentDay = $state(1);
-	let money = $state(INITIAL_MONEY);
-	let workers = $state(INITIAL_WORKERS);
-	let machines = $state<Array<{ type: MachineType, condition: number }>>(
-		Array(INITIAL_MACHINES).fill(null).map(() => ({ type: machineTypes[0], condition: 100 }))
-	);
-	let rawMaterials = $state(0);
+	// Hidden state variables
+	let cash = $state(INITIAL_CASH);
+	let reputation = $state(BASE_REPUTATION);
+	let productionEfficiency = $state(1.0);
 	let inventory = $state(0);
-	let productPrice = $state(BASE_PRODUCT_PRICE);
+	let marketDemand = $state(100);
+	let competitorPrice = $state(15.00);
+	let competitorQuality = $state(5);
+	let competitorMarketing = $state(1000);
+	let marketShare = $state(0.1);
 
-	let dailyRevenue = $state(0);
-	let dailyCosts = $state(0);
-	let dailyProfit = $state(0);
-	let unitsProduced = $state(0);
-	let unitsSold = $state(0);
-
-	let dailyHistory = $state<Array<{
-		day: number,
-		revenue: number,
-		costs: number,
-		profit: number,
-		produced: number,
-		sold: number,
-		money: number
-	}>>([]);
-
+	// Turn tracking
+	let currentTurn = $state(1);
 	let showResults = $state(false);
 	let gameOver = $state(false);
-	let showBuyMenu = $state(false);
 
-	let selectedMachineType = $state<MachineType | null>(null);
-	let rawMaterialsToBuy = $state(100);
+	// Competitor display ranges
+	const allowedPriceRange = { min: 8, max: 30 };
+	const allowedQualityRange = { min: 1, max: 9 };
+	const allowedMarketingRange = { min: 0, max: 8000 };
 
-	function calculateDailyCosts(): number {
-		const laborCost = workers * WORKER_SALARY;
-		const maintenanceCost = machines.reduce((sum, m) => sum + MACHINE_MAINTENANCE, 0);
-		return laborCost + maintenanceCost;
+	// Results
+	let demandScore = $state(0);
+	let unitCost = $state(0);
+	let unitsSold = $state(0);
+	let revenue = $state(0);
+	let costs = $state(0);
+	let profit = $state(0);
+	let feedback = $state("");
+
+	let history = $state<Array<{
+		turn: number,
+		cash: number,
+		marketShare: number,
+		reputation: number,
+		profit: number
+	}>>([]);
+
+	// Core equations
+
+	function calculateDemandScore(): number {
+		const Q = quality;
+		const M = marketing;
+		const P = price;
+		const R = reputation;
+
+		return (Math.pow(Q, 0.7) * Math.pow(M, 0.5) / Math.pow(P, 1.2)) * R;
 	}
 
-	function calculateProductionCapacity(): number {
-		const machineCapacity = machines.reduce((sum, m) => {
-			return sum + (m.type.production * m.type.efficiency * (m.condition / 100));
-		}, 0);
-		const workerCapacity = workers * 5;
-		return Math.min(machineCapacity, workerCapacity);
+	function calculateCompetitorDemandScore(): number {
+		const Q = competitorQuality;
+		const M = competitorMarketing;
+		const P = competitorPrice;
+		const R = 1.0; // Competitors have neutral reputation
+
+		return (Math.pow(Q, 0.7) * Math.pow(M, 0.5) / Math.pow(P, 1.2)) * R;
 	}
 
-	function produceGoods() {
-		const capacity = calculateProductionCapacity();
-		const maxFromMaterials = Math.floor(rawMaterials);
-		const toProduce = Math.min(capacity, maxFromMaterials);
-		
-		unitsProduced = toProduce;
-		rawMaterials -= toProduce;
-		inventory += toProduce;
+	function calculateUnitCost(): number {
+		const B = BASE_COST;
+		const F = factoryInvestment / 1000;
+		const E = employeePay / 100;
 
-		// Machines degrade slightly
-		machines = machines.map(m => ({
-			...m,
-			condition: Math.max(0, m.condition - Math.random() * 2)
-		}));
+		return B + 0.4 * quality - 0.3 * F - 0.2 * E;
 	}
 
-	function calculateDemand(): number {
-		// Demand fluctuates based on price and random factors
-		const baseDemand = 50;
-		const priceFactor = Math.max(0.1, 1 - (productPrice - BASE_PRODUCT_PRICE) / BASE_PRODUCT_PRICE);
-		const randomFactor = 0.7 + Math.random() * 0.6;
-		return Math.floor(baseDemand * priceFactor * randomFactor);
+	function updateReputation(): void {
+		const Q = quality;
+		const M = marketing / 1000;
+		const currentReputation = reputation;
+
+		reputation = 0.9 * currentReputation + 0.05 * Q + 0.03 * M;
 	}
 
-	function sellGoods() {
-		const demand = calculateDemand();
-		const toSell = Math.min(inventory, demand);
-		
-		unitsSold = toSell;
-		inventory -= toSell;
-		dailyRevenue = toSell * productPrice;
+	function updateProductionEfficiency(): void {
+		const F = factoryInvestment / 10000;
+		const E = employeePay / 100;
+
+		productionEfficiency = 1.0 + 0.1 * F + 0.05 * E;
 	}
 
-	function startDay() {
-		dailyCosts = calculateDailyCosts();
-		produceGoods();
-		sellGoods();
-		
-		dailyProfit = dailyRevenue - dailyCosts;
-		money += dailyProfit;
+	function simulateCompetitors(): void {
+		// Simple AI: competitors randomly adjust their strategies
+		competitorPrice = competitorPrice * (0.9 + Math.random() * 0.2);
+		competitorMarketing = competitorMarketing * (0.8 + Math.random() * 0.4);
+		competitorQuality = Math.max(1, Math.min(9, competitorQuality + (Math.random() - 0.5) * 2));
+	}
 
-		dailyHistory.push({
-			day: currentDay,
-			revenue: dailyRevenue,
-			costs: dailyCosts,
-			profit: dailyProfit,
-			produced: unitsProduced,
-			sold: unitsSold,
-			money
+	function executeTurn(): void {
+		// Calculate demand
+		const playerDemandScore = calculateDemandScore();
+		const competitorDemandScore = calculateCompetitorDemandScore();
+		const totalDemandScore = playerDemandScore + competitorDemandScore;
+
+		demandScore = playerDemandScore;
+
+		// Market share
+		marketShare = totalDemandScore > 0 ? playerDemandScore / totalDemandScore : 0;
+		const actualDemand = Math.floor(marketDemand * marketShare);
+
+		// Production and inventory
+		const actualProduction = Math.min(productionQuantity, Math.floor(productionQuantity * productionEfficiency));
+		inventory += actualProduction;
+
+		// Sales
+		const availableUnits = Math.min(inventory, actualDemand);
+		unitsSold = availableUnits;
+		inventory -= availableUnits;
+
+		// Revenue and costs
+		revenue = unitsSold * price;
+		unitCost = calculateUnitCost();
+		const productionCost = actualProduction * unitCost;
+		const marketingCost = marketing;
+		const investmentCost = factoryInvestment;
+		const laborCost = (employeePay / 10) * (productionQuantity / 10);
+
+		costs = productionCost + marketingCost + investmentCost + laborCost;
+		profit = revenue - costs;
+		cash += profit;
+
+		// Update hidden state
+		updateReputation();
+		updateProductionEfficiency();
+		simulateCompetitors();
+
+		// Generate feedback
+		generateFeedback();
+
+		// Record history
+		history.push({
+			turn: currentTurn,
+			cash,
+			marketShare,
+			reputation,
+			profit
 		});
 
 		showResults = true;
 
-		if (currentDay >= TOTAL_DAYS) {
+		if (currentTurn >= TOTAL_TURNS) {
 			gameOver = true;
 		}
 	}
 
-	function nextDay() {
-		currentDay++;
+	function generateFeedback(): void {
+		const messages: string[] = [];
+
+		if (marketShare < 0.3) messages.push("Struggling to compete in the market");
+		else if (marketShare > 0.6) messages.push("Dominating market share!");
+
+		if (price > competitorPrice * 1.2) messages.push("Customers think you're overpriced");
+		else if (price < competitorPrice * 0.8) messages.push("Aggressive pricing strategy");
+
+		if (quality < competitorQuality - 2) messages.push("Quality concerns hurting reputation");
+		else if (quality > competitorQuality + 2) messages.push("Premium quality building brand loyalty");
+
+		if (marketing < competitorMarketing * 0.5) messages.push("Marketing budget too low");
+		else if (marketing > competitorMarketing * 2) messages.push("Heavy marketing spend");
+
+		if (productionEfficiency < 1.1) messages.push("Factory needs investment");
+		else if (productionEfficiency > 1.3) messages.push("Highly efficient production");
+
+		if (inventory > productionQuantity * 0.5) messages.push("Inventory building up");
+		else if (unitsSold < Math.floor(marketDemand * marketShare) * 0.7) messages.push("Stockouts limiting sales");
+
+		if (profit < 0) messages.push("Losses this turn");
+		else if (profit > 5000) messages.push("Strong profitability");
+
+		feedback = messages.slice(0, 2).join(". ");
+	}
+
+	function nextTurn(): void {
+		currentTurn++;
 		showResults = false;
 	}
 
-	function buyMachine(type: MachineType) {
-		if (money >= type.cost) {
-			money -= type.cost;
-			machines = [...machines, { type, condition: 100 }];
-		}
-	}
-
-	function buyRawMaterials() {
-		const cost = rawMaterialsToBuy * RAW_MATERIAL_COST;
-		if (money >= cost) {
-			money -= cost;
-			rawMaterials += rawMaterialsToBuy;
-		}
-	}
-
-	function hireWorker() {
-		if (money >= WORKER_SALARY * 5) {
-			money -= WORKER_SALARY * 5;
-			workers++;
-		}
-	}
-
-	function fireWorker() {
-		if (workers > 1) {
-			workers--;
-		}
-	}
-
-	function repairMachine(index: number) {
-		const cost = 500;
-		if (money >= cost && machines[index].condition < 100) {
-			money -= cost;
-			machines = machines.map((m, i) => 
-				i === index ? { ...m, condition: 100 } : m
-			);
-		}
-	}
-
-	function resetGame() {
-		currentDay = 1;
-		money = INITIAL_MONEY;
-		workers = INITIAL_WORKERS;
-		machines = Array(INITIAL_MACHINES).fill(null).map(() => ({ type: machineTypes[0], condition: 100 }));
-		rawMaterials = 0;
+	function resetGame(): void {
+		currentTurn = 1;
+		cash = INITIAL_CASH;
+		reputation = BASE_REPUTATION;
+		productionEfficiency = 1.0;
 		inventory = 0;
-		productPrice = BASE_PRODUCT_PRICE;
-		dailyRevenue = 0;
-		dailyCosts = 0;
-		dailyProfit = 0;
-		unitsProduced = 0;
-		unitsSold = 0;
-		dailyHistory = [];
+		marketDemand = 100;
+		competitorPrice = 15.00;
+		competitorQuality = 5;
+		competitorMarketing = 1000;
+
+		price = 15.00;
+		quality = 5;
+		marketing = 1000;
+		productionQuantity = 100;
+		factoryInvestment = 0;
+		employeePay = 100;
+
 		showResults = false;
 		gameOver = false;
-		showBuyMenu = false;
+		history = [];
 	}
 
 	function formatMoney(value: number): string {
 		return value.toFixed(2);
+	}
+
+	function formatPercent(value: number): string {
+		return (value * 100).toFixed(1) + "%";
 	}
 
 	onMount(() => {
@@ -214,7 +245,7 @@
 
 <div class="apex-container">
 	<div class="header">
-		<div class="day-badge">DAY {currentDay}/{TOTAL_DAYS}</div>
+		<div class="turn-badge">Turn {currentTurn}/{TOTAL_TURNS}</div>
 		<h1>🏭 Apex Industries</h1>
 	</div>
 
@@ -222,117 +253,183 @@
 		<div class="game-viewport">
 			<div class="stats-panel">
 				<div class="stat">
-					<span class="label">Money</span>
-					<span class="value">${formatMoney(money)}</span>
+					<span class="label">Cash</span>
+					<span class="value">${formatMoney(cash)}</span>
 				</div>
 				<div class="stat">
-					<span class="label">Inventory</span>
-					<span class="value">{inventory} units</span>
+					<span class="label">Market Share</span>
+					<span class="value">{formatPercent(marketShare)}</span>
 				</div>
 				<div class="stat">
-					<span class="label">Raw Materials</span>
-					<span class="value">{Math.floor(rawMaterials)}</span>
+					<span class="label">Reputation</span>
+					<span class="value">{reputation.toFixed(2)}</span>
 				</div>
 			</div>
 
-			<div class="production-panel">
-				<h3>Production Capacity</h3>
-				<div class="capacity-display">
-					<span>Workers: {workers} 👷</span>
-					<span>Machines: {machines.length} ⚙️</span>
-					<span>Daily Capacity: {Math.floor(calculateProductionCapacity())} units</span>
-				</div>
-			</div>
-
-			<div class="machines-panel">
-				<h3>Machines</h3>
-				<div class="machines-list">
-					{#each machines as machine, index}
-						<div class="machine-card">
-							<span class="machine-name">{machine.type.name}</span>
-							<span class="machine-condition">Condition: {Math.floor(machine.condition)}%</span>
-							<button class="repair-btn" onclick={() => repairMachine(index)} disabled={machine.condition >= 100 || money < 500}>
-								Repair ($500)
-							</button>
-						</div>
-					{/each}
-				</div>
-			</div>
-
-			<div class="price-panel">
-				<div class="price-control">
-					<span class="label">Product Price</span>
-					<div class="price-buttons">
-						<button onclick={() => productPrice = Math.max(5, productPrice - 1)}>-</button>
-						<span>${productPrice.toFixed(2)}</span>
-						<button onclick={() => productPrice = Math.min(50, productPrice + 1)}>+</button>
+			<div class="inputs-panel">
+				<h3>Your Strategy</h3>
+				<div class="input-grid">
+					<div class="input-group">
+						<label for="price">Price</label>
+						<select id="price" bind:value={price}>
+							{#each priceOptions as option}
+								<option value={option}>${option}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="input-group">
+						<label for="quality">Quality (1-9)</label>
+						<select id="quality" bind:value={quality}>
+							{#each qualityOptions as option}
+								<option value={option}>{option}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="input-group">
+						<label for="marketing">Marketing</label>
+						<select id="marketing" bind:value={marketing}>
+							{#each marketingOptions as option}
+								<option value={option}>${option}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="input-group">
+						<label for="production">Production</label>
+						<select id="production" bind:value={productionQuantity}>
+							{#each productionOptions as option}
+								<option value={option}>{option} units</option>
+							{/each}
+						</select>
+					</div>
+					<div class="input-group">
+						<label for="investment">Factory Investment</label>
+						<select id="investment" bind:value={factoryInvestment}>
+							{#each investmentOptions as option}
+								<option value={option}>${option}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="input-group">
+						<label for="pay">Employee Pay</label>
+						<select id="pay" bind:value={employeePay}>
+							{#each payOptions as option}
+								<option value={option}>${option}</option>
+							{/each}
+						</select>
 					</div>
 				</div>
 			</div>
 
-			<div class="action-buttons">
-				<button class="btn secondary-btn" onclick={() => showBuyMenu = true}>Buy/Manage</button>
-				<button class="btn start-btn" onclick={startDay}>Start Day</button>
+			<div class="competitor-panel">
+				<h3>Competitors</h3>
+				<table class="competitor-table">
+					<tbody>
+						{#if currentTurn === 1}
+							<tr>
+								<td>Price Range</td>
+								<td>${allowedPriceRange.min}-${allowedPriceRange.max}</td>
+							</tr>
+							<tr>
+								<td>Quality Range</td>
+								<td>{allowedQualityRange.min}-{allowedQualityRange.max}</td>
+							</tr>
+							<tr>
+								<td>Marketing Range</td>
+								<td>${allowedMarketingRange.min}-${allowedMarketingRange.max}</td>
+							</tr>
+						{:else}
+							<tr>
+								<td>Price</td>
+								<td>${competitorPrice.toFixed(2)}</td>
+							</tr>
+							<tr>
+								<td>Quality</td>
+								<td>{competitorQuality}</td>
+							</tr>
+							<tr>
+								<td>Marketing</td>
+								<td>${competitorMarketing}</td>
+							</tr>
+						{/if}
+					</tbody>
+				</table>
 			</div>
+
+			<button class="btn execute-btn" onclick={executeTurn}>Execute Turn</button>
 		</div>
 	{:else if showResults && !gameOver}
 		<div class="results-panel">
-			<h2>Day {currentDay} Results</h2>
+			<h2>Turn {currentTurn} Results</h2>
+			<div class="feedback-message">{feedback}</div>
 			<div class="results-stats">
 				<div class="result">
-					<span class="label">Produced</span>
-					<span class="value">{unitsProduced} units</span>
+					<span class="label">Market Share</span>
+					<span class="value">{formatPercent(marketShare)}</span>
 				</div>
 				<div class="result">
-					<span class="label">Sold</span>
-					<span class="value">{unitsSold} units</span>
+					<span class="label">Units Sold</span>
+					<span class="value">{unitsSold}</span>
 				</div>
 				<div class="result">
 					<span class="label">Revenue</span>
-					<span class="value positive">${formatMoney(dailyRevenue)}</span>
+					<span class="value positive">${formatMoney(revenue)}</span>
 				</div>
 				<div class="result">
 					<span class="label">Costs</span>
-					<span class="value negative">${formatMoney(dailyCosts)}</span>
+					<span class="value negative">${formatMoney(costs)}</span>
 				</div>
 				<div class="result">
 					<span class="label">Profit</span>
-					<span class="value" class:positive={dailyProfit >= 0} class:negative={dailyProfit < 0}>
-						${formatMoney(dailyProfit)}
+					<span class="value" class:positive={profit >= 0} class:negative={profit < 0}>
+						${formatMoney(profit)}
 					</span>
 				</div>
+				<div class="result">
+					<span class="label">Cash</span>
+					<span class="value">${formatMoney(cash)}</span>
+				</div>
 			</div>
-			<button class="btn next-btn" onclick={nextDay}>Next Day →</button>
+			<div class="market-share-arrow">
+				{#if marketShare > 0.5}
+					<span class="arrow up">↑</span>
+					<span>Gaining market share</span>
+				{:else}
+					<span class="arrow down">↓</span>
+					<span>Losing market share</span>
+				{/if}
+			</div>
+			<button class="btn next-btn" onclick={nextTurn}>Next Turn →</button>
 		</div>
 	{:else if gameOver}
 		<div class="game-over-panel">
 			<h2>🎉 Game Over!</h2>
 			<div class="final-stats">
 				<div class="final-stat">
-					<span class="label">Final Money</span>
-					<span
-						class="value"
-						class:positive={money >= INITIAL_MONEY}
-						class:negative={money < INITIAL_MONEY}
-					>${formatMoney(money)}</span>
+					<span class="label">Final Cash</span>
+					<span class="value">${formatMoney(cash)}</span>
 				</div>
 				<div class="final-stat">
 					<span class="label">Total Profit</span>
-					<span
-						class="value"
-						class:positive={money - INITIAL_MONEY >= 0}
-						class:negative={money - INITIAL_MONEY < 0}
-					>${formatMoney(money - INITIAL_MONEY)}</span>
+					<span class="value" class:positive={cash - INITIAL_CASH >= 0} class:negative={cash - INITIAL_CASH < 0}>
+						${formatMoney(cash - INITIAL_CASH)}
+					</span>
+				</div>
+				<div class="final-stat">
+					<span class="label">Final Market Share</span>
+					<span class="value">{formatPercent(marketShare)}</span>
+				</div>
+				<div class="final-stat">
+					<span class="label">Final Reputation</span>
+					<span class="value">{reputation.toFixed(2)}</span>
 				</div>
 			</div>
 			<div class="history">
-				<h3>Daily History</h3>
+				<h3>Performance History</h3>
 				<div class="history-list">
-					{#each dailyHistory as entry}
+					{#each history as entry}
 						<div class="history-entry">
-							<span>Day {entry.day}</span>
-							<span>{entry.produced} produced</span>
-							<span>{entry.sold} sold</span>
+							<span>Turn {entry.turn}</span>
+							<span>{formatPercent(entry.marketShare)}</span>
 							<span class:positive={entry.profit >= 0} class:negative={entry.profit < 0}
 								>${formatMoney(entry.profit)}</span
 							>
@@ -341,61 +438,6 @@
 				</div>
 			</div>
 			<button class="btn restart-btn" onclick={resetGame}>Play Again</button>
-		</div>
-	{/if}
-
-	{#if showBuyMenu}
-		<div class="buy-menu-overlay" in:fade>
-			<div class="buy-menu" in:scale>
-				<h2>Buy & Manage</h2>
-				<p>Available: ${formatMoney(money)}</p>
-				
-				<div class="buy-section">
-					<h3>Machines</h3>
-					<div class="machine-options">
-						{#each machineTypes as type}
-							<button 
-								class="machine-option"
-								onclick={() => buyMachine(type)}
-								disabled={money < type.cost}
-							>
-								<span class="machine-option-name">{type.name}</span>
-								<span class="machine-option-cost">${formatMoney(type.cost)}</span>
-								<span class="machine-option-stats">{type.production} units/day</span>
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="buy-section">
-					<h3>Raw Materials</h3>
-					<div class="materials-control">
-						<button onclick={() => rawMaterialsToBuy = Math.max(10, rawMaterialsToBuy - 10)}>-</button>
-						<span>{rawMaterialsToBuy}</span>
-						<button onclick={() => rawMaterialsToBuy = Math.min(1000, rawMaterialsToBuy + 10)}>+</button>
-						<button class="buy-btn" onclick={buyRawMaterials} disabled={money < rawMaterialsToBuy * RAW_MATERIAL_COST}>
-							Buy (${formatMoney(rawMaterialsToBuy * RAW_MATERIAL_COST)})
-						</button>
-					</div>
-				</div>
-
-				<div class="buy-section">
-					<h3>Workers</h3>
-					<div class="workers-control">
-						<button onclick={hireWorker} disabled={money < WORKER_SALARY * 5}>
-							Hire (${formatMoney(WORKER_SALARY * 5)})
-						</button>
-						<span>{workers} workers</span>
-						<button onclick={fireWorker} disabled={workers <= 1}>
-							Fire
-						</button>
-					</div>
-				</div>
-				
-				<div class="buy-actions">
-					<button class="btn close-btn" onclick={() => showBuyMenu = false}>Done</button>
-				</div>
-			</div>
 		</div>
 	{/if}
 </div>
@@ -421,7 +463,7 @@
 		margin-bottom: 2rem;
 	}
 
-	.day-badge {
+	.turn-badge {
 		background: #3b82f6;
 		color: white;
 		font-weight: 900;
@@ -478,144 +520,94 @@
 		font-weight: 900;
 	}
 
-	.production-panel {
-		margin-bottom: 1.5rem;
-	}
-
-	.production-panel h3 {
-		font-size: 0.9rem;
-		font-weight: 700;
-		color: rgba(255, 255, 255, 0.7);
-		margin: 0 0 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.capacity-display {
-		display: flex;
-		justify-content: space-between;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 0.75rem;
-		border-radius: 8px;
-		font-size: 0.9rem;
-		font-weight: 600;
-	}
-
-	.machines-panel {
-		margin-bottom: 1.5rem;
-	}
-
-	.machines-panel h3 {
-		font-size: 0.9rem;
-		font-weight: 700;
-		color: rgba(255, 255, 255, 0.7);
-		margin: 0 0 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.machines-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		max-height: 150px;
-		overflow-y: auto;
-	}
-
-	.machine-card {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 0.5rem 0.75rem;
-		border-radius: 6px;
-		font-size: 0.85rem;
-	}
-
-	.machine-name {
-		font-weight: 600;
-	}
-
-	.machine-condition {
-		color: rgba(255, 255, 255, 0.6);
-	}
-
-	.repair-btn {
-		background: #3b82f6;
-		border: none;
-		color: white;
-		padding: 0.25rem 0.5rem;
-		border-radius: 4px;
-		font-weight: 700;
-		font-size: 0.75rem;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.repair-btn:hover:not(:disabled) {
-		background: #2563eb;
-	}
-
-	.repair-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.price-panel {
+	.inputs-panel {
 		margin-bottom: 2rem;
 	}
 
-	.price-control {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 1rem;
-		border-radius: 8px;
+	.inputs-panel h3 {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.7);
+		margin: 0 0 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.price-control .label {
-		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.8);
-		font-weight: 600;
-	}
-
-	.price-buttons {
-		display: flex;
-		align-items: center;
+	.input-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
 		gap: 1rem;
 	}
 
-	.price-buttons button {
+	.input-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.input-group label {
+		font-size: 0.8rem;
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.input-group select {
 		background: #27272a;
 		border: 1px solid #3f3f46;
 		color: white;
-		padding: 0.45rem 0.85rem;
+		padding: 0.6rem 0.8rem;
 		border-radius: 8px;
 		font-weight: 700;
-		font-size: 0.95rem;
+		font-size: 0.9rem;
 		cursor: pointer;
 		transition: all 0.2s;
 	}
 
-	.price-buttons button:hover {
+	.input-group select:hover {
 		background: #3f3f46;
+		border-color: #52525b;
 	}
 
-	.price-buttons span {
-		font-size: 1.25rem;
+	.input-group select:focus {
+		outline: none;
+		border-color: #3b82f6;
+	}
+
+	.competitor-panel {
+		margin-bottom: 2rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border-radius: 8px;
+	}
+
+	.competitor-panel h3 {
+		font-size: 0.8rem;
 		font-weight: 700;
-		min-width: 80px;
-		text-align: center;
+		color: rgba(255, 255, 255, 0.5);
+		margin: 0 0 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.action-buttons {
-		display: flex;
-		gap: 1rem;
+	.competitor-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.85rem;
+	}
+
+	.competitor-table td {
+		padding: 0.5rem;
+		color: rgba(255, 255, 255, 0.7);
+		font-weight: 600;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.competitor-table tr:last-child td {
+		border-bottom: none;
 	}
 
 	.btn {
-		flex: 1;
+		width: 100%;
 		padding: 1rem;
 		border: none;
 		border-radius: 12px;
@@ -625,32 +617,17 @@
 		transition: all 0.2s;
 	}
 
-	.btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
 	.btn:not(:disabled):hover {
 		transform: scale(1.02);
 	}
 
-	.start-btn {
+	.execute-btn {
 		background: #3b82f6;
 		color: white;
 	}
 
-	.start-btn:hover:not(:disabled) {
+	.execute-btn:hover {
 		background: #2563eb;
-	}
-
-	.secondary-btn {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: white;
-	}
-
-	.secondary-btn:hover {
-		background: #3f3f46;
 	}
 
 	.results-panel, .game-over-panel {
@@ -667,7 +644,17 @@
 	.results-panel h2, .game-over-panel h2 {
 		font-size: 1.75rem;
 		font-weight: 900;
-		margin: 0 0 1.5rem;
+		margin: 0 0 1rem;
+	}
+
+	.feedback-message {
+		background: rgba(255, 255, 255, 0.05);
+		padding: 1rem;
+		border-radius: 8px;
+		margin-bottom: 1.5rem;
+		font-size: 0.9rem;
+		color: rgba(255, 255, 255, 0.8);
+		font-weight: 600;
 	}
 
 	.results-stats {
@@ -706,10 +693,30 @@
 		color: #ef4444;
 	}
 
+	.market-share-arrow {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	.arrow.up {
+		color: #10b981;
+		font-size: 1.5rem;
+	}
+
+	.arrow.down {
+		color: #ef4444;
+		font-size: 1.5rem;
+	}
+
 	.next-btn, .restart-btn {
 		background: #10b981;
 		color: white;
-		width: 100%;
 	}
 
 	.next-btn:hover, .restart-btn:hover {
@@ -722,6 +729,7 @@
 		justify-content: center;
 		gap: 2rem;
 		margin-bottom: 2rem;
+		flex-wrap: wrap;
 	}
 
 	.final-stat {
@@ -765,7 +773,7 @@
 
 	.history-entry {
 		display: grid;
-		grid-template-columns: 1fr 1fr 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr;
 		gap: 0.5rem;
 		padding: 0.5rem;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -774,196 +782,5 @@
 
 	.history-entry:last-child {
 		border-bottom: none;
-	}
-
-	.buy-menu-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.8);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 100;
-		backdrop-filter: blur(10px);
-	}
-
-	.buy-menu {
-		background: #18181b;
-		padding: 2rem;
-		border-radius: 1rem;
-		border: 1px solid #27272a;
-		box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
-		min-width: 500px;
-		max-width: 600px;
-		max-height: 80vh;
-		overflow-y: auto;
-	}
-
-	.buy-menu h2 {
-		font-size: 1.5rem;
-		font-weight: 900;
-		margin: 0 0 0.5rem;
-	}
-
-	.buy-menu > p {
-		color: rgba(255, 255, 255, 0.6);
-		margin: 0 0 1.5rem;
-	}
-
-	.buy-section {
-		margin-bottom: 2rem;
-	}
-
-	.buy-section h3 {
-		font-size: 1rem;
-		font-weight: 700;
-		margin: 0 0 1rem;
-		color: rgba(255, 255, 255, 0.8);
-	}
-
-	.machine-options {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.machine-option {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
-		gap: 0.5rem;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 1rem;
-		border-radius: 8px;
-		border: 1px solid transparent;
-		color: white;
-		font-weight: 600;
-		font-size: 0.9rem;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.machine-option:hover:not(:disabled) {
-		background: rgba(59, 130, 246, 0.2);
-		border-color: #3b82f6;
-	}
-
-	.machine-option:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.machine-option-name {
-		font-weight: 700;
-	}
-
-	.machine-option-cost {
-		color: #10b981;
-	}
-
-	.machine-option-stats {
-		color: rgba(255, 255, 255, 0.6);
-	}
-
-	.materials-control {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 1rem;
-		border-radius: 8px;
-	}
-
-	.materials-control button {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: white;
-		padding: 0.4rem 0.8rem;
-		border-radius: 6px;
-		font-weight: 700;
-		font-size: 0.9rem;
-		cursor: pointer;
-		transition: all 0.2s;
-		width: 36px;
-		height: 36px;
-	}
-
-	.materials-control button:hover {
-		background: #3f3f46;
-	}
-
-	.materials-control span {
-		font-size: 1.1rem;
-		font-weight: 700;
-		min-width: 50px;
-		text-align: center;
-	}
-
-	.buy-btn {
-		background: #10b981;
-		border: none;
-		flex: 1;
-		max-width: 200px;
-	}
-
-	.buy-btn:hover:not(:disabled) {
-		background: #059669;
-	}
-
-	.buy-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.workers-control {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 1rem;
-		border-radius: 8px;
-	}
-
-	.workers-control button {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: white;
-		padding: 0.5rem 1rem;
-		border-radius: 6px;
-		font-weight: 700;
-		font-size: 0.85rem;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.workers-control button:hover:not(:disabled) {
-		background: #3f3f46;
-	}
-
-	.workers-control button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.workers-control span {
-		font-size: 1.1rem;
-		font-weight: 700;
-		min-width: 80px;
-		text-align: center;
-	}
-
-	.buy-actions {
-		display: flex;
-		justify-content: center;
-	}
-
-	.close-btn {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: white;
-		width: 200px;
-	}
-
-	.close-btn:hover {
-		background: #3f3f46;
 	}
 </style>
