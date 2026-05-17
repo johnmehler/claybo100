@@ -9,14 +9,13 @@
 	const TOTAL_TURNS = 12;
 	const INITIAL_CASH = 50000.00;
 	const BASE_COST = 5.00;
-	const BASE_REPUTATION = 1.0;
+	const BASE_REPUTATION = 5.0;
 
-	// Player inputs (6 per turn)
+	// Player inputs (5 per turn)
 	let price = $state(15.00);
 	let quality = $state(5);
 	let marketing = $state(1000);
 	let productionQuantity = $state(100);
-	let factoryInvestment = $state(0);
 	let employeePay = $state(100);
 
 	// Input options
@@ -24,7 +23,6 @@
 	const qualityOptions = [1, 3, 5, 7, 9];
 	const marketingOptions = [0, 500, 1000, 2000, 3000, 5000, 8000];
 	const productionOptions = [50, 100, 150, 200, 300, 500];
-	const investmentOptions = [0, 2000, 5000, 10000, 20000];
 	const payOptions = [80, 100, 120, 150, 180, 200];
 
 	// Hidden state variables
@@ -32,7 +30,7 @@
 	let reputation = $state(BASE_REPUTATION);
 	let productionEfficiency = $state(1.0);
 	let inventory = $state(0);
-	let marketDemand = $state(100);
+	let marketDemand = $state(1000);
 	let competitorPrice = $state(15.00);
 	let competitorQuality = $state(5);
 	let competitorMarketing = $state(1000);
@@ -90,10 +88,9 @@
 
 	function calculateUnitCost(): number {
 		const B = BASE_COST;
-		const F = factoryInvestment / 1000;
 		const E = employeePay / 100;
 
-		return B + 0.4 * quality - 0.3 * F - 0.2 * E;
+		return B + 0.4 * quality - 0.2 * E;
 	}
 
 	function updateReputation(): void {
@@ -101,14 +98,13 @@
 		const M = marketing / 1000;
 		const currentReputation = reputation;
 
-		reputation = 0.9 * currentReputation + 0.05 * Q + 0.03 * M;
+		reputation = Math.max(0, Math.min(10, 0.9 * currentReputation + 0.05 * Q + 0.03 * M));
 	}
 
 	function updateProductionEfficiency(): void {
-		const F = factoryInvestment / 10000;
 		const E = employeePay / 100;
 
-		productionEfficiency = 1.0 + 0.1 * F + 0.05 * E;
+		productionEfficiency = 1.0 + 0.05 * E;
 	}
 
 	function simulateCompetitors(): void {
@@ -144,10 +140,9 @@
 		unitCost = calculateUnitCost();
 		const productionCost = actualProduction * unitCost;
 		const marketingCost = marketing;
-		const investmentCost = factoryInvestment;
 		const laborCost = (employeePay / 10) * (productionQuantity / 10);
 
-		costs = productionCost + marketingCost + investmentCost + laborCost;
+		costs = productionCost + marketingCost + laborCost;
 		profit = revenue - costs;
 		cash += profit;
 
@@ -190,7 +185,7 @@
 		if (marketing < competitorMarketing * 0.5) messages.push("Marketing budget too low");
 		else if (marketing > competitorMarketing * 2) messages.push("Heavy marketing spend");
 
-		if (productionEfficiency < 1.1) messages.push("Factory needs investment");
+		if (productionEfficiency < 1.1) messages.push("Low production efficiency");
 		else if (productionEfficiency > 1.3) messages.push("Highly efficient production");
 
 		if (inventory > productionQuantity * 0.5) messages.push("Inventory building up");
@@ -213,7 +208,7 @@
 		reputation = BASE_REPUTATION;
 		productionEfficiency = 1.0;
 		inventory = 0;
-		marketDemand = 100;
+		marketDemand = 1000;
 		competitorPrice = 15.00;
 		competitorQuality = 5;
 		competitorMarketing = 1000;
@@ -222,7 +217,6 @@
 		quality = 5;
 		marketing = 1000;
 		productionQuantity = 100;
-		factoryInvestment = 0;
 		employeePay = 100;
 
 		showResults = false;
@@ -309,14 +303,6 @@
 					<select id="production" bind:value={productionQuantity}>
 						{#each productionOptions as option}
 							<option value={option}>{option} units</option>
-						{/each}
-					</select>
-				</div>
-				<div class="input-group">
-					<label for="investment">Factory Investment</label>
-					<select id="investment" bind:value={factoryInvestment}>
-						{#each investmentOptions as option}
-							<option value={option}>${option}</option>
 						{/each}
 					</select>
 				</div>
