@@ -496,31 +496,38 @@
 
 	@media (max-width: 1024px) {
 		.board-wrapper {
-			padding: 0.5rem 0.75rem;
+			padding: 0.5rem;
+			height: 100%;
+			min-height: 0;
+		}
+
+		.game-board {
+			flex: 1;
+			min-height: 0;
 		}
 
 		.game-stats {
-			gap: 1.25rem;
-			margin-bottom: 0.6rem;
+			gap: clamp(0.75rem, 2.5vw, 1rem);
+			margin-bottom: 0.5rem;
 		}
 
 		.label {
-			font-size: 0.62rem;
+			font-size: clamp(0.55rem, 2.2vw, 0.65rem);
 			letter-spacing: 0.08em;
 		}
 
 		.value {
-			font-size: 1.35rem;
+			font-size: clamp(1.1rem, 4vw, 1.3rem);
 		}
 
 		.bottom-bar {
 			height: auto;
-			padding: 0.6rem 0.75rem 0.9rem;
+			padding: 0.5rem 0.6rem 0.75rem;
 		}
 
 		.controls {
 			width: 100%;
-			gap: 0.65rem;
+			gap: clamp(0.5rem, 2vw, 0.65rem);
 			align-items: stretch;
 			flex-direction: column;
 		}
@@ -531,48 +538,95 @@
 		}
 
 		.control-group label {
-			font-size: 0.72rem;
+			font-size: clamp(0.6rem, 2.3vw, 0.72rem);
 			font-weight: 700;
 		}
 
 		.input-row {
-			gap: 0.45rem;
+			gap: clamp(0.35rem, 1.5vw, 0.45rem);
 		}
 
 		.step-btn {
-			width: 2rem;
-			height: 2rem;
-			font-size: 1rem;
+			width: clamp(1.8rem, 5.5vw, 2rem);
+			height: clamp(1.8rem, 5.5vw, 2rem);
+			font-size: clamp(0.9rem, 3.5vw, 1rem);
 			border-radius: 0.5rem;
 			flex-shrink: 0;
 		}
 
 		input[type="range"] {
-			height: 0.28rem;
+			height: clamp(0.22rem, 0.8vw, 0.28rem);
 		}
 
 		input[type="range"]::-webkit-slider-thumb {
-			width: 1rem;
-			height: 1rem;
+			width: clamp(0.85rem, 3vw, 1rem);
+			height: clamp(0.85rem, 3vw, 1rem);
 		}
 
 		.shoot-btn {
 			width: 100%;
-			height: 2.4rem;
+			height: clamp(2.1rem, 6.5vw, 2.4rem);
 			padding: 0;
-			font-size: 0.86rem;
+			font-size: clamp(0.75rem, 2.8vw, 0.86rem);
 			letter-spacing: 0.08em;
 			border-radius: 0.7rem;
 		}
 
 		.telemetry-toggle {
-			font-size: 0.6rem;
-			gap: 0.4rem;
+			font-size: clamp(0.5rem, 2vw, 0.6rem);
+			gap: clamp(0.3rem, 1.2vw, 0.4rem);
 		}
 
 		.telemetry-toggle input {
-			width: 0.8rem;
-			height: 0.8rem;
+			width: clamp(0.65rem, 2.5vw, 0.8rem);
+			height: clamp(0.65rem, 2.5vw, 0.8rem);
+		}
+
+		.ball {
+			width: clamp(2rem, 6vw, 3vmin);
+			height: clamp(2rem, 6vw, 3vmin);
+		}
+
+		.feedback {
+			font-size: clamp(3rem, 10vw, 5vmin);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.board-wrapper {
+			padding: 0.4rem;
+		}
+
+		.game-stats {
+			gap: 0.6rem;
+			margin-bottom: 0.4rem;
+		}
+
+		.label {
+			font-size: 0.5rem;
+		}
+
+		.value {
+			font-size: 1rem;
+		}
+
+		.bottom-bar {
+			padding: 0.4rem 0.5rem 0.6rem;
+		}
+
+		.controls {
+			gap: 0.45rem;
+		}
+
+		.step-btn {
+			width: 1.6rem;
+			height: 1.6rem;
+			font-size: 0.8rem;
+		}
+
+		.shoot-btn {
+			height: 2rem;
+			font-size: 0.7rem;
 		}
 	}
 </style>

@@ -820,45 +820,85 @@
 		}
 
 		.header {
-			margin-bottom: 0.75rem;
+			margin-bottom: 0.5rem;
+			gap: 0.4rem;
 		}
 
 		h1 {
-			font-size: 1.6rem;
-			letter-spacing: -1px;
+			font-size: clamp(1.2rem, 4vw, 1.6rem);
+			letter-spacing: -0.8px;
+		}
+
+		.level-info {
+			font-size: 0.75rem;
 		}
 
 		.game-viewport {
 			width: 100%;
 			max-width: 100%;
-			padding: 0.6rem;
+			padding: 0.5rem;
 			box-sizing: border-box;
+			flex: 1;
+			min-height: 0;
 		}
 
 		.grid {
-			width: 100%;
+			width: min(90vw, calc(100dvh - 10rem));
 			max-width: 100%;
 		}
 
 		.controls {
-			margin-top: 0.85rem;
+			margin-top: 0.6rem;
 			width: 100%;
+			gap: 0.5rem;
 		}
 
 		.dpad {
-			gap: 0.6rem;
-			margin-bottom: 0.65rem;
+			gap: 0.5rem;
+			margin-bottom: 0.5rem;
 		}
 
 		.btn {
-			padding: 0.65rem 1rem;
-			font-size: 1rem;
-			min-width: 3rem;
+			padding: clamp(0.5rem, 2.5vw, 0.7rem) clamp(0.7rem, 3vw, 1rem);
+			font-size: clamp(0.85rem, 3vw, 1rem);
+			min-width: clamp(2.5rem, 8vw, 3rem);
 		}
 
 		.hint {
-			font-size: 0.72rem;
-			padding-bottom: 0.4rem;
+			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
+			padding-bottom: 0.3rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.blockdude-container {
+			padding: 0.5rem;
+		}
+
+		.header {
+			margin-bottom: 0.4rem;
+		}
+
+		h1 {
+			font-size: clamp(1rem, 5vw, 1.4rem);
+		}
+
+		.game-viewport {
+			padding: 0.4rem;
+		}
+
+		.grid {
+			width: min(92vw, calc(100dvh - 9rem));
+		}
+
+		.dpad {
+			gap: 0.4rem;
+		}
+
+		.btn {
+			padding: 0.45rem 0.6rem;
+			font-size: 0.8rem;
+			min-width: 2.2rem;
 		}
 	}
 </style>

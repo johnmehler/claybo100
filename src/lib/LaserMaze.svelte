@@ -607,53 +607,54 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
 		color: white;
 		font-family: "Outfit", "Inter", sans-serif;
-		padding: 2rem;
+		padding: clamp(0.75rem, 1.8vmin, 1.5rem);
 		position: relative;
-		overflow: hidden;
+		overflow: auto;
 	}
 
 	.game-header {
 		text-align: center;
-		margin-bottom: 2.5rem;
+		margin-bottom: clamp(0.75rem, 1.8vmin, 1.5rem);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1.2rem;
+		gap: clamp(0.45rem, 1.1vmin, 0.9rem);
 	}
 
 	.header-controls {
 		display: flex;
 		align-items: center;
-		gap: 1.5rem;
+		gap: clamp(0.6rem, 1.2vmin, 1rem);
 		background: rgba(255, 255, 255, 0.03);
-		padding: 0.5rem 0.5rem 0.5rem 1.2rem;
+		padding: clamp(0.3rem, 0.8vmin, 0.5rem) clamp(0.3rem, 0.8vmin, 0.5rem)
+			clamp(0.3rem, 0.8vmin, 0.5rem) clamp(0.7rem, 1.6vmin, 1rem);
 		border-radius: 99px;
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
 	.level-badge {
 		color: #ff6e61;
-		font-size: 0.8rem;
+		font-size: clamp(0.64rem, 1.5vmin, 0.78rem);
 		font-weight: 800;
 		text-transform: uppercase;
-		letter-spacing: 0.1rem;
+		letter-spacing: 0.08rem;
 	}
 
 	.random-btn {
 		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
 		color: white;
 		border: none;
-		padding: 0.6rem 1.4rem;
+		padding: clamp(0.42rem, 1vmin, 0.55rem) clamp(0.8rem, 1.9vmin, 1.2rem);
 		border-radius: 99px;
-		font-size: 0.85rem;
+		font-size: clamp(0.66rem, 1.5vmin, 0.8rem);
 		font-weight: 800;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
+		gap: clamp(0.3rem, 0.7vmin, 0.5rem);
 		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		box-shadow: 0 4px 15px rgba(255, 110, 97, 0.3);
 	}
@@ -676,26 +677,26 @@
 	}
 
 	.game-header h1 {
-		font-size: 3.5rem;
+		font-size: clamp(1.5rem, 4.8vmin, 2.6rem);
 		font-weight: 900;
 		margin: 0;
 		background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.6) 100%);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
-		letter-spacing: -0.1rem;
+		letter-spacing: -0.04rem;
 	}
 
 	.game-header p {
 		margin: 0;
 		color: rgba(255, 255, 255, 0.5);
-		font-size: 1rem;
+		font-size: clamp(0.72rem, 1.8vmin, 0.92rem);
 		max-width: 500px;
-		line-height: 1.6;
+		line-height: 1.45;
 	}
 
 	.game-layout {
 		display: flex;
-		gap: 2rem;
+		gap: clamp(0.75rem, 1.8vmin, 1.4rem);
 		align-items: flex-start;
 		justify-content: center;
 		width: 100%;
@@ -706,12 +707,12 @@
 		background: rgba(255, 255, 255, 0.05);
 		backdrop-filter: blur(20px);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 2rem;
-		padding: 1.5rem;
+		border-radius: clamp(0.9rem, 1.8vmin, 1.4rem);
+		padding: clamp(0.7rem, 1.4vmin, 1.1rem);
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
-		width: 260px;
+		gap: clamp(0.45rem, 1vmin, 0.8rem);
+		width: clamp(170px, 18vw, 240px);
 		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 	}
 
@@ -742,18 +743,18 @@
 	.inventory-items {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 0.8rem;
+		gap: clamp(0.35rem, 0.9vmin, 0.65rem);
 	}
 
 	.inventory-item {
 		background: rgba(255, 255, 255, 0.03);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 1rem;
-		padding: 0.8rem;
+		border-radius: clamp(0.55rem, 1.2vmin, 0.8rem);
+		padding: clamp(0.4rem, 0.9vmin, 0.6rem);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.5rem;
+		gap: clamp(0.2rem, 0.7vmin, 0.4rem);
 		cursor: pointer;
 		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		color: white;
@@ -778,8 +779,8 @@
 	}
 
 	.component-preview {
-		width: 40px;
-		height: 40px;
+		width: clamp(1.45rem, 3.4vmin, 2.2rem);
+		height: clamp(1.45rem, 3.4vmin, 2.2rem);
 		position: relative;
 		display: flex;
 		align-items: center;
@@ -789,7 +790,7 @@
 	.mirror::before {
 		content: "";
 		position: absolute;
-		width: 3px;
+		width: clamp(1px, 0.35vmin, 3px);
 		height: 80%;
 		background: #00f2fe;
 		box-shadow: 0 0 10px #00f2fe;
@@ -799,7 +800,7 @@
 	.splitter::before {
 		content: "";
 		position: absolute;
-		width: 3px;
+		width: clamp(1px, 0.35vmin, 3px);
 		height: 80%;
 		background: #00f2fe;
 		box-shadow: 0 0 10px #00f2fe;
@@ -808,8 +809,8 @@
 	.splitter::after {
 		content: "";
 		position: absolute;
-		width: 20px;
-		height: 20px;
+		width: clamp(0.8rem, 1.7vmin, 1.1rem);
+		height: clamp(0.8rem, 1.7vmin, 1.1rem);
 		background: rgba(0, 242, 254, 0.2);
 		border: 1px solid rgba(0, 242, 254, 0.4);
 		border-radius: 2px;
@@ -819,7 +820,7 @@
 	.m90::before, .s90::before { transform: rotate(-45deg); }
 
 	.count {
-		font-size: 1.2rem;
+		font-size: clamp(0.75rem, 1.7vmin, 1rem);
 		font-weight: 900;
 	}
 
@@ -833,9 +834,9 @@
 
 	.grid-container {
 		position: relative;
-		padding: 1.5rem;
+		padding: clamp(0.5rem, 1.2vmin, 1rem);
 		background: rgba(255, 255, 255, 0.01);
-		border-radius: 2rem;
+		border-radius: clamp(0.9rem, 1.8vmin, 1.4rem);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 		box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
 	}
@@ -844,15 +845,15 @@
 		display: grid;
 		grid-template-columns: repeat(var(--grid-size), 1fr);
 		grid-template-rows: repeat(var(--grid-size), 1fr);
-		gap: 6px;
-		width: 70vmin;
-		height: 70vmin;
+		gap: clamp(2px, 0.45vmin, 5px);
+		width: min(62vmin, 620px);
+		height: min(62vmin, 620px);
 		position: relative;
 	}
 
 	.cell {
 		background: rgba(255, 255, 255, 0.03);
-		border-radius: 8px;
+		border-radius: clamp(4px, 0.8vmin, 8px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1043,11 +1044,109 @@
 	.prism-shape {
 		width: 0;
 		height: 0;
-		border-left: 18px solid transparent;
-		border-right: 18px solid transparent;
-		border-bottom: 30px solid var(--prism-color, white);
+		border-left: clamp(8px, 1.4vmin, 14px) solid transparent;
+		border-right: clamp(8px, 1.4vmin, 14px) solid transparent;
+		border-bottom: clamp(14px, 2.6vmin, 24px) solid var(--prism-color, white);
 		filter: drop-shadow(0 0 12px var(--prism-color, white));
 		opacity: 0.9;
+	}
+
+	@media (max-width: 1024px) {
+		.lasermaze-container {
+			padding: 0.75rem;
+			overflow: auto;
+			height: 100%;
+		}
+
+		.game-header {
+			margin-bottom: 0.75rem;
+			gap: 0.5rem;
+		}
+
+		.game-header h1 {
+			font-size: clamp(1.3rem, 4vw, 1.8rem);
+		}
+
+		.game-header p {
+			display: none;
+		}
+
+		.game-layout {
+			flex-direction: column;
+			align-items: center;
+			width: 100%;
+			gap: 0.75rem;
+		}
+
+		.inventory-bar {
+			width: min(92vw, 280px);
+			padding: 0.6rem;
+			gap: 0.4rem;
+		}
+
+		.inventory-bar h3 {
+			font-size: 0.75rem;
+		}
+
+		.section-label {
+			font-size: 0.6rem;
+		}
+
+		.grid-container {
+			padding: 0.5rem;
+		}
+
+		.grid {
+			width: min(85vw, calc(100dvh - 14rem));
+			height: min(85vw, calc(100dvh - 14rem));
+			gap: clamp(2px, 0.5vw, 4px);
+		}
+
+		.component-preview {
+			width: clamp(1.2rem, 3.5vw, 1.8rem);
+			height: clamp(1.2rem, 3.5vw, 1.8rem);
+		}
+
+		.count {
+			font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.lasermaze-container {
+			padding: 0.5rem;
+		}
+
+		.game-header {
+			margin-bottom: 0.5rem;
+		}
+
+		.game-header h1 {
+			font-size: clamp(1.1rem, 5vw, 1.5rem);
+		}
+
+		.header-controls {
+			padding: 0.25rem 0.5rem;
+		}
+
+		.level-badge {
+			font-size: 0.6rem;
+		}
+
+		.random-btn {
+			padding: 0.3rem 0.7rem;
+			font-size: 0.6rem;
+		}
+
+		.inventory-bar {
+			width: 94vw;
+			padding: 0.5rem;
+		}
+
+		.grid {
+			width: min(90vw, calc(100dvh - 13rem));
+			height: min(90vw, calc(100dvh - 13rem));
+		}
 	}
 
 	.laser-svg {

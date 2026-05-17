@@ -1188,14 +1188,14 @@
 		}
 
 		.header {
-			margin-bottom: 0.5rem;
-			padding: 0.25rem 0.5rem;
+			margin-bottom: 0.4rem;
+			padding: 0.2rem 0.4rem;
 			flex: 0 0 auto;
 		}
 
 		h1 {
-			font-size: 1.35rem;
-			letter-spacing: -1px;
+			font-size: clamp(1.1rem, 4vw, 1.35rem);
+			letter-spacing: -0.8px;
 		}
 
 		.game-viewport,
@@ -1203,10 +1203,10 @@
 		.game-over-panel,
 		.buy-menu {
 			min-width: unset;
-			width: 95vw;
-			max-width: 95vw;
-			padding: 0.9rem;
-			border-radius: 0.85rem;
+			width: 94vw;
+			max-width: 94vw;
+			padding: 0.7rem;
+			border-radius: 0.75rem;
 			border: 1px solid rgba(255, 255, 255, 0.08);
 			margin: 0 auto;
 			box-sizing: border-box;
@@ -1218,7 +1218,7 @@
 			flex: 1;
 			min-height: 0;
 			height: auto;
-			max-height: none;
+			max-height: calc(100dvh - 8rem);
 			overflow-y: auto;
 			-webkit-overflow-scrolling: touch;
 		}
@@ -1231,110 +1231,161 @@
 		}
 
 		.stats-panel {
-			margin-bottom: 0.75rem;
-			padding-bottom: 0.5rem;
+			margin-bottom: 0.6rem;
+			padding-bottom: 0.4rem;
 		}
 
 		.stat .value {
-			font-size: 1.1rem;
+			font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+		}
+
+		.stat .label {
+			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
 		.weather-panel,
 		.price-panel,
 		.recipe-panel {
-			margin-bottom: 0.75rem;
+			margin-bottom: 0.6rem;
 		}
 
-		.recipe-panel h3 {
-			font-size: 0.75rem;
+		.recipe-panel h3,
+		.price-panel h3,
+		.weather-panel h3 {
+			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
 		.weather-display {
-			font-size: 1rem;
-			padding: 0.6rem;
-			margin-bottom: 0.75rem;
+			font-size: clamp(0.85rem, 3vw, 1rem);
+			padding: 0.5rem;
+			margin-bottom: 0.6rem;
 		}
 
 		.weather-icon {
-			font-size: 1.5rem;
+			font-size: clamp(1.2rem, 4vw, 1.5rem);
 		}
 
 		.price-control {
-			padding: 0.75rem;
+			padding: 0.6rem;
 		}
 
 		.price-buttons span {
-			font-size: 1rem;
-			min-width: 62px;
+			font-size: clamp(0.85rem, 3vw, 1rem);
+			min-width: clamp(50px, 15vw, 62px);
 		}
 
 		.recipe-controls {
-			gap: 0.5rem;
+			gap: 0.4rem;
+		}
+
+		.recipe-slider {
+			padding: 0.4rem;
+		}
+
+		.recipe-slider label {
+			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
 		.action-buttons {
 			margin-top: auto;
 			position: sticky;
 			bottom: 0;
-			padding-top: 0.5rem;
+			padding-top: 0.4rem;
 			background: linear-gradient(to bottom, rgba(24, 24, 27, 0), #18181b 30%);
 		}
 
 		.btn {
-			padding: 0.8rem;
-			font-size: 0.85rem;
+			padding: clamp(0.6rem, 2.5vw, 0.8rem);
+			font-size: clamp(0.75rem, 2.8vw, 0.85rem);
 		}
 
 		.buy-menu-overlay {
-			padding: 0.5rem;
+			padding: 0.4rem;
 		}
 
 		.buy-menu {
-			width: 95vw;
-			max-width: 95vw;
-			height: 95dvh;
-			max-height: 95dvh;
-			padding: 1rem;
+			width: 94vw;
+			max-width: 94vw;
+			height: calc(100dvh - 5rem);
+			max-height: calc(100dvh - 5rem);
+			padding: 0.8rem;
 			overflow-y: auto;
 		}
 
 		.buy-menu h2 {
-			font-size: 1.2rem;
+			font-size: clamp(1rem, 3.5vw, 1.2rem);
 		}
 
 		.buy-menu > p {
-			margin-bottom: 1rem;
+			margin-bottom: 0.8rem;
+			font-size: clamp(0.8rem, 2.8vw, 0.9rem);
 		}
 
 		.buy-table td {
-			padding: 0.5rem 0.3rem;
-			font-size: 0.75rem;
+			padding: 0.4rem 0.25rem;
+			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
 		.buy-table td:nth-child(2) button {
-			padding: 0.25rem 0.45rem;
-			font-size: 0.7rem;
+			padding: 0.2rem 0.4rem;
+			font-size: clamp(0.6rem, 2.3vw, 0.7rem);
 		}
 
 		.buy-preview {
-			padding: 0.65rem;
-			font-size: 0.9rem;
+			padding: 0.5rem;
+			font-size: clamp(0.8rem, 2.8vw, 0.9rem);
 		}
 
 		.buy-actions {
-			position: sticky;
-			bottom: 0;
-			background: #18181b;
-			padding-top: 0.5rem;
+			padding-top: 0.6rem;
 		}
 
-		.history-list {
-			max-height: 150px;
+		.buy-actions button {
+			padding: clamp(0.5rem, 2vw, 0.6rem) clamp(0.8rem, 3vw, 1rem);
+			font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.lemonade-container {
+			padding: 0.4rem;
 		}
 
-		.history-entry {
-			font-size: 0.75rem;
-			gap: 0.25rem;
+		.header {
+			margin-bottom: 0.3rem;
+		}
+
+		h1 {
+			font-size: clamp(1rem, 5vw, 1.25rem);
+		}
+
+		.game-viewport,
+		.results-panel,
+		.game-over-panel,
+		.buy-menu {
+			width: 92vw;
+			max-width: 92vw;
+			padding: 0.6rem;
+		}
+
+		.game-viewport,
+		.results-panel,
+		.game-over-panel {
+			max-height: calc(100dvh - 7rem);
+		}
+
+		.buy-menu {
+			height: calc(100dvh - 4rem);
+			max-height: calc(100dvh - 4rem);
+		}
+
+		.stats-panel {
+			margin-bottom: 0.5rem;
+		}
+
+		.btn {
+			padding: 0.5rem;
+			font-size: 0.7rem;
 		}
 	}
 </style>

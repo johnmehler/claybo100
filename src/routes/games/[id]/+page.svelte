@@ -337,23 +337,26 @@
 	@media (max-width: 1024px) {
 		.main-container,
 		.main-container.in-game,
-		.view-content,
-		.game-mat {
+		.view-content {
 			min-height: 100dvh;
 			height: 100dvh;
 		}
 
 		.game-mat {
-			align-items: stretch;
-			justify-content: flex-start;
+			min-height: 100dvh;
+			height: 100dvh;
+			padding-top: 4.5rem;
+			box-sizing: border-box;
+			align-items: flex-start;
+			justify-content: center;
 			overflow: hidden;
 		}
 
 		.game-frame-adaptive {
 			width: 100vw;
-			height: 100dvh;
+			height: calc(100dvh - 4.5rem);
 			max-width: 100vw;
-			max-height: 100dvh;
+			max-height: calc(100dvh - 4.5rem);
 			border-radius: 0;
 			border: none;
 			box-shadow: none;
@@ -363,6 +366,20 @@
 		.game-guide,
 		.updated-line {
 			display: none;
+		}
+	}
+
+	@media (min-width: 1025px) {
+		.game-mat {
+			padding-top: 5.5vmin;
+			box-sizing: border-box;
+			min-height: 100vh;
+			height: 100vh;
+		}
+
+		.game-frame-adaptive {
+			width: min(92vmin, 900px);
+			height: min(92vmin, 900px);
 		}
 	}
 </style>
