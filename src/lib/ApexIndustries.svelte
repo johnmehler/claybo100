@@ -20,7 +20,7 @@
 
 	// Input options
 	const priceOptions = [8, 10, 12, 15, 18, 20, 25, 30];
-	const qualityOptions = [1, 3, 5, 7, 9];
+	const qualityOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 	const marketingOptions = [0, 500, 1000, 2000, 3000, 5000, 8000];
 	const productionOptions = [50, 100, 150, 200, 300, 500];
 	const payOptions = [80, 100, 120, 150, 180, 200];
@@ -96,6 +96,12 @@
 	let costs = $state(0);
 	let profit = $state(0);
 	let feedback = $state("");
+	let marketPreference = $state({
+		priceWeight: 1,
+		qualityWeight: 1,
+		marketingWeight: 1,
+		premiumShare: 0.5
+	});
 
 	let history = $state<Array<{
 		turn: number,
@@ -113,46 +119,75 @@
 
 	// Core equations
 
-	function calculateDemandScore(): number {
-		const Q = quality;
-		const M = marketing;
-		const P = price;
-		const R = reputation;
+	function updateMarketPreference(): void {
+		const rawPriceWeight = marketPreference.priceWeight * (0.97 + Math.random() * 0.06);
+		const rawQualityWeight = marketPreference.qualityWeight * (0.97 + Math.random() * 0.06);
+		const rawMarketingWeight = marketPreference.marketingWeight * (0.97 + Math.random() * 0.06);
 
-		return (Math.pow(Q, 0.7) * Math.pow(M, 0.5) / Math.pow(P, 1.2)) * R;
+		const averageWeight = (rawPriceWeight + rawQualityWeight + rawMarketingWeight) / 3;
+		const premiumShare = Math.max(
+			0.35,
+			Math.min(0.65, marketPreference.premiumShare + (Math.random() * 0.08 - 0.04))
+		);
+
+		marketPreference = {
+			priceWeight: rawPriceWeight / averageWeight,
+			qualityWeight: rawQualityWeight / averageWeight,
+			marketingWeight: rawMarketingWeight / averageWeight,
+			premiumShare
+		};
 	}
 
-	function calculateCompetitorDemandScore(): number {
-		// Calculate average demand score across all AI competitors
-		const totalScore = aiCompetitors.reduce((sum, ai) => {
-			const Q = ai.quality;
-			const M = ai.marketing;
-			const P = ai.price;
-			const R = ai.reputation;
-			return sum + (Math.pow(Q, 0.7) * Math.pow(M, 0.5) / Math.pow(P, 1.2)) * R;
-		}, 0);
-		return totalScore / aiCompetitors.length;
+	function calculateDemandScore(
+		company: { price: number; quality: number; marketing: number; reputation: number; employeePay: number },
+		demandNoise: number
+	): number {
+		const payQualityAdjustment = ((company.employeePay - 100) / 100) * 0.4;
+		const adjustedQuality = Math.max(1, (company.quality + payQualityAdjustment) * marketPreference.qualityWeight);
+		const adjustedPrice = Math.max(1, company.price * marketPreference.priceWeight);
+		const adjustedMarketing = Math.max(0, company.marketing * marketPreference.marketingWeight);
+
+		const valueSegmentScore =
+			(Math.log1p(Math.pow(adjustedQuality * 0.85, 1.25)) * Math.sqrt(adjustedMarketing + 1)) /
+			Math.pow(adjustedPrice, 1.5);
+
+		const premiumSegmentScore =
+			(Math.log1p(Math.pow(adjustedQuality * 1.15, 1.4)) * Math.sqrt(adjustedMarketing + 1)) /
+			Math.pow(adjustedPrice, 1.3);
+
+		const segmentScore =
+			(1 - marketPreference.premiumShare) * valueSegmentScore +
+			marketPreference.premiumShare * premiumSegmentScore;
+
+		const reputationFactor = Math.sqrt(1 + 0.15 * company.reputation);
+
+		return Math.max(0.001, segmentScore * reputationFactor * demandNoise);
 	}
 
 	function calculateUnitCost(): number {
 		const B = BASE_COST;
 		const E = employeePay / 100;
 
-		return B + 0.4 * quality - 0.2 * E;
+		return Math.max(2, B + 0.4 * quality - 0.35 * E);
 	}
 
 	function updateReputation(): void {
 		const Q = quality;
 		const M = marketing / 1000;
-		const currentReputation = reputation;
+		const nextReputation = 0.97 * reputation + 0.02 * Q + 0.01 * M;
+		const clampedReputation = Math.max(0, Math.min(10, nextReputation));
 
-		reputation = Math.max(0, Math.min(10, 0.9 * currentReputation + 0.05 * Q + 0.03 * M));
+		reputation = Q >= 5 ? Math.max(BASE_REPUTATION, clampedReputation) : clampedReputation;
 	}
 
 	function updateProductionEfficiency(): void {
 		const E = employeePay / 100;
+		const targetEfficiency = 0.9 + 0.25 * E;
 
-		productionEfficiency = 1.0 + 0.05 * E;
+		productionEfficiency = Math.max(
+			0.8,
+			Math.min(1.6, 0.98 * productionEfficiency + 0.02 * targetEfficiency)
+		);
 	}
 
 	function simulateCompetitors(): void {
@@ -188,12 +223,13 @@
 	}
 
 	function executeAITurn(ai: AICompetitor, aiMarketShare: number): void {
-		// Calculate AI demand score
-		// Calculate unit cost for AI
-		const aiUnitCost = BASE_COST + 0.4 * ai.quality - 0.2 * (ai.employeePay / 100);
+		const aiUnitCost = Math.max(2, BASE_COST + 0.4 * ai.quality - 0.35 * (ai.employeePay / 100));
 
 		// Production
-		const aiActualProduction = Math.min(ai.production, Math.floor(ai.production * ai.productionEfficiency));
+		let aiActualProduction = Math.min(ai.production, Math.floor(ai.production * ai.productionEfficiency));
+		if (ai.employeePay < 100 && Math.random() < (100 - ai.employeePay) / 160) {
+			aiActualProduction = Math.floor(aiActualProduction * (0.6 + Math.random() * 0.25));
+		}
 		ai.inventory += aiActualProduction;
 
 		// Sales (AI gets their share of market demand)
@@ -210,20 +246,37 @@
 		const aiProfit = aiRevenue - aiCosts;
 		ai.cash += aiProfit;
 
-		// Update AI reputation
-		ai.reputation = Math.max(0, Math.min(10, 0.9 * ai.reputation + 0.05 * ai.quality + 0.03 * (ai.marketing / 1000)));
+		const aiNextReputation = 0.97 * ai.reputation + 0.02 * ai.quality + 0.01 * (ai.marketing / 1000);
+		const aiClampedReputation = Math.max(0, Math.min(10, aiNextReputation));
+		ai.reputation = ai.quality >= 5 ? Math.max(BASE_REPUTATION, aiClampedReputation) : aiClampedReputation;
 
-		// Update AI production efficiency
-		ai.productionEfficiency = 1.0 + 0.05 * (ai.employeePay / 100);
+		const aiTargetEfficiency = 0.9 + 0.25 * (ai.employeePay / 100);
+		ai.productionEfficiency = Math.max(
+			0.8,
+			Math.min(1.6, 0.98 * ai.productionEfficiency + 0.02 * aiTargetEfficiency)
+		);
 	}
 
 	function executeTurn(): void {
 		quality = Math.max(1, Math.min(9, Math.round(Number(quality) || 1)));
+		updateMarketPreference();
 
 		// Calculate demand
-		const playerDemandScore = calculateDemandScore();
+		const playerDemandScore = calculateDemandScore(
+			{ price, quality, marketing, reputation, employeePay },
+			0.96 + Math.random() * 0.08
+		);
 		const aiDemandScores = aiCompetitors.map(ai =>
-			(Math.pow(ai.quality, 0.7) * Math.pow(ai.marketing, 0.5) / Math.pow(ai.price, 1.2)) * ai.reputation
+			calculateDemandScore(
+				{
+					price: ai.price,
+					quality: ai.quality,
+					marketing: ai.marketing,
+					reputation: ai.reputation,
+					employeePay: ai.employeePay
+				},
+				0.96 + Math.random() * 0.08
+			)
 		);
 		const totalAIDemandScore = aiDemandScores.reduce((sum, score) => sum + score, 0);
 		const totalDemandScore = playerDemandScore + totalAIDemandScore;
@@ -239,7 +292,10 @@
 		aiCompetitors.forEach((ai, index) => executeAITurn(ai, aiMarketShares[index]));
 
 		// Production and inventory
-		const actualProduction = Math.min(productionQuantity, Math.floor(productionQuantity * productionEfficiency));
+		let actualProduction = Math.min(productionQuantity, Math.floor(productionQuantity * productionEfficiency));
+		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
+			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
+		}
 		inventory += actualProduction;
 
 		// Sales
@@ -347,6 +403,12 @@
 		marketing = 1000;
 		productionQuantity = 100;
 		employeePay = 100;
+		marketPreference = {
+			priceWeight: 1,
+			qualityWeight: 1,
+			marketingWeight: 1,
+			premiumShare: 0.5
+		};
 
 		// Reinitialize teams
 		initializeTeams();
