@@ -266,6 +266,10 @@
 		// Generate feedback
 		generateFeedback();
 
+		// Update market demand randomly by -1% to 11%
+		const demandChangePercent = (Math.random() * 12 - 1) / 100; // -0.01 to 0.11
+		marketDemand = Math.max(100, Math.round(marketDemand * (1 + demandChangePercent)));
+
 		// Record history
 		const teamSnapshots = [
 			{ name: playerTeam, quality, price, marketShare },
