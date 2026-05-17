@@ -489,6 +489,7 @@
 		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 		min-width: 500px;
 		max-width: 600px;
+		width: 100%;
 	}
 
 	.stats-panel {
@@ -638,6 +639,7 @@
 		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 		min-width: 400px;
 		max-width: 500px;
+		width: 100%;
 		text-align: center;
 	}
 
@@ -782,5 +784,54 @@
 
 	.history-entry:last-child {
 		border-bottom: none;
+	}
+
+	@media (max-width: 1024px) {
+		.apex-container {
+			padding: 0.75rem;
+			align-items: stretch;
+			justify-content: flex-start;
+			overflow-x: hidden;
+		}
+
+		.header {
+			margin-bottom: 0.75rem;
+		}
+
+		h1 {
+			font-size: clamp(1.35rem, 5.8vw, 1.7rem);
+			letter-spacing: -0.04em;
+		}
+
+		.game-viewport,
+		.results-panel,
+		.game-over-panel {
+			min-width: 0;
+			max-width: 100%;
+			width: 100%;
+			padding: 0.85rem;
+			border-radius: 0.75rem;
+			box-sizing: border-box;
+		}
+
+		.stats-panel,
+		.results-stats,
+		.input-grid {
+			gap: 0.6rem;
+		}
+
+		.competitor-table {
+			table-layout: fixed;
+			word-break: break-word;
+		}
+
+		.competitor-table td {
+			padding: 0.4rem;
+			font-size: 0.78rem;
+		}
+
+		.final-stat .value {
+			font-size: 1.4rem;
+		}
 	}
 </style>

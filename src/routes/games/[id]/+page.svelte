@@ -70,7 +70,7 @@
 		lasermaze: LaserMaze,
 		blockdude: BlockDude,
 		lemonadestand: LemonadeStand,
-		"apex-industries": ApexIndustries,
+		"apexindustries": ApexIndustries,
 	};
 
 	const GameComponent = $derived(gameComponents[id]);
