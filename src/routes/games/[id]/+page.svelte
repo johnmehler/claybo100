@@ -335,6 +335,10 @@
 	}
 
 	@media (max-width: 1024px) {
+		.main-container {
+			--mobile-top-clearance: 4.5rem;
+		}
+
 		.main-container,
 		.main-container.in-game,
 		.view-content {
@@ -343,23 +347,28 @@
 		}
 
 		.game-mat {
-			min-height: 100dvh;
-			height: 100dvh;
-			padding-top: 4.5rem;
+			min-height: calc(100dvh - var(--mobile-top-clearance));
+			height: calc(100dvh - var(--mobile-top-clearance));
+			margin-top: var(--mobile-top-clearance);
+			padding-top: 0;
 			box-sizing: border-box;
-			align-items: flex-start;
-			justify-content: center;
+			align-items: stretch;
+			justify-content: stretch;
 			overflow: hidden;
 		}
 
 		.game-frame-adaptive {
 			width: 100vw;
-			height: calc(100dvh - 4.5rem);
+			height: 100%;
 			max-width: 100vw;
-			max-height: calc(100dvh - 4.5rem);
+			max-height: 100%;
 			border-radius: 0;
 			border: none;
 			box-shadow: none;
+		}
+
+		.game-frame-adaptive :global(*) {
+			max-height: 100%;
 		}
 
 		.game-about,

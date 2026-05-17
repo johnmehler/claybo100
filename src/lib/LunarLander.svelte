@@ -1005,4 +1005,20 @@
 		color: var(--color-bittersweet) !important;
 		box-shadow: 0 0 15px rgba(255, 110, 97, 0.3);
 	}
+
+	@media (max-width: 1024px) {
+		.viewport {
+			flex: 0 0 auto;
+			width: 100%;
+			height: auto;
+			aspect-ratio: 1 / 1;
+			margin: 0;
+			border-radius: 0;
+		}
+
+		.scene {
+			width: 100%;
+			height: 100%;
+		}
+	}
 </style>

@@ -245,7 +245,7 @@
 
 <div class="apex-container">
 	<div class="header">
-		<div class="turn-badge">Turn {currentTurn}/{TOTAL_TURNS}</div>
+		<div class="turn-badge">Quarter {currentTurn}/{TOTAL_TURNS}</div>
 		<h1>🏭 Apex Industries</h1>
 	</div>
 
@@ -355,11 +355,11 @@
 				</table>
 			</div>
 
-			<button class="btn execute-btn" onclick={executeTurn}>Execute Turn</button>
+			<button class="btn execute-btn" onclick={executeTurn}>Execute Quarter</button>
 		</div>
 	{:else if showResults && !gameOver}
 		<div class="results-panel">
-			<h2>Turn {currentTurn} Results</h2>
+			<h2>Quarter {currentTurn} Results</h2>
 			<div class="feedback-message">{feedback}</div>
 			<div class="results-stats">
 				<div class="result">
@@ -398,7 +398,7 @@
 					<span>Losing market share</span>
 				{/if}
 			</div>
-			<button class="btn next-btn" onclick={nextTurn}>Next Turn →</button>
+			<button class="btn next-btn" onclick={nextTurn}>Next Quarter →</button>
 		</div>
 	{:else if gameOver}
 		<div class="game-over-panel">
@@ -428,7 +428,7 @@
 				<div class="history-list">
 					{#each history as entry}
 						<div class="history-entry">
-							<span>Turn {entry.turn}</span>
+							<span>Quarter {entry.turn}</span>
 							<span>{formatPercent(entry.marketShare)}</span>
 							<span class:positive={entry.profit >= 0} class:negative={entry.profit < 0}
 								>${formatMoney(entry.profit)}</span
