@@ -84,16 +84,6 @@
 	let lemonsPerCup = $state(1);
 	let sugarPerCup = $state(1);
 	let icePerCup = $state(2);
-	
-	// Dynamic recipe optima (change daily)
-	let idealSugar = $state(1);
-	let idealIce = $state(2);
-	
-	// Cups to make (player commits before knowing demand)
-	let cupsToCommit = $state(10);
-	
-	// Micro-event message for the day
-	let dayMessage = $state("");
 
 	function generateWeather(): WeatherInfo {
 		const rand = Math.random();
@@ -200,8 +190,11 @@
 	}
 
 	function calculateTasteScore(): number {
-		// Calculate taste score based on recipe proportions vs dynamic optima
+		// Calculate taste score based on recipe proportions
+		// Ideal: 1 lemon, 1 sugar, 2 ice per cup
 		const idealLemons = 1;
+		const idealSugar = 1;
+		const idealIce = 2;
 		
 		// Deviation penalties
 		const lemonDeviation = Math.abs(lemonsPerCup - idealLemons);
@@ -229,7 +222,8 @@
 			score -= sugarDeviation * 20;
 		}
 		
-		// Ice penalty depends on temperature (still matters even with dynamic idealIce)
+		// Ice penalty depends on temperature
+		// On hot days, ice is good. On cold days, too much ice hurts
 		if (currentWeather.temperature > 80) {
 			// Hot weather: more ice is better
 			if (icePerCup < idealIce) {
@@ -244,65 +238,6 @@
 		
 		// Clamp score between 0 and 100
 		return Math.max(0, Math.min(100, score));
-	}
-
-	function getTasteLabel(score: number): string {
-		if (score >= 80) return "Excellent";
-		if (score >= 50) return "Decent";
-		return "Awful";
-	}
-
-	function generateDayMessage(): string {
-		const messages: string[] = [];
-		const tasteScore = calculateTasteScore();
-		const sellRate = cupsToMake > 0 ? customers / cupsToMake : 0;
-		const idealLemons = 1;
-		
-		// Recipe feedback
-		if (sugarPerCup > idealSugar * 1.5) {
-			messages.push("Customers found it too sweet!");
-		} else if (sugarPerCup < idealSugar * 0.5) {
-			messages.push("Not sweet enough for most people.");
-		} else if (sugarPerCup >= idealSugar * 0.9 && sugarPerCup <= idealSugar * 1.1) {
-			messages.push("Perfect sweetness balance!");
-		}
-		
-		if (lemonsPerCup > idealLemons * 1.5) {
-			messages.push("Too sour for many customers.");
-		} else if (lemonsPerCup < idealLemons * 0.5) {
-			messages.push("Bland flavor disappointed customers.");
-		}
-		
-		// Ice feedback based on temperature
-		if (currentWeather.temperature > 80 && icePerCup < idealIce) {
-			messages.push("People wanted colder drinks on this hot day.");
-		} else if (currentWeather.temperature < 60 && icePerCup > idealIce * 1.5) {
-			messages.push("Too much ice for this chilly weather.");
-		}
-		
-		// Price feedback
-		if (pricePerCup > 1.50) {
-			messages.push("Price was too high for most customers.");
-		} else if (pricePerCup < 0.50) {
-			messages.push("Great value - customers loved the low price!");
-		}
-		
-		// Sales performance
-		if (sellRate > 0.8) {
-			messages.push("Sold almost everything you made!");
-		} else if (sellRate < 0.3) {
-			messages.push("Lots of unsold lemonade.");
-		}
-		
-		// Weather-specific events
-		if (currentWeather.type === "rainy") {
-			messages.push("Rain kept many people away.");
-		} else if (currentWeather.type === "hot" && visitors > 50) {
-			messages.push("Heat wave brought huge crowds!");
-		}
-		
-		// Return random message or empty string
-		return messages.length > 0 ? messages[Math.floor(Math.random() * messages.length)] : "";
 	}
 
 	function calculateVisitorCount(): number {
@@ -339,11 +274,6 @@
 				break;
 		}
 		
-		// Jackpot variance: heat-wave explosions (15% chance on hot days)
-		if (currentWeather.type === "hot" && Math.random() < 0.15) {
-			baseVisitors *= 2;
-		}
-		
 		// Random variation (±20%)
 		const randomFactor = 0.8 + Math.random() * 0.4;
 		
@@ -363,18 +293,18 @@
 			// Price sensitivity depends on temperature
 			// Hot weather = higher price tolerance
 			// Cold weather = more price sensitive
-			let targetPrice = 1.00;
+			let priceTolerance = 1.0;
 			if (currentWeather.temperature > 80) {
-				targetPrice = 1.20;
+				priceTolerance = 1.5;
 			} else if (currentWeather.temperature < 60) {
-				targetPrice = 0.80;
+				priceTolerance = 0.7;
 			}
 			
-			// Exponential price decay for brutal cliffs
-			// k controls steepness - higher = more brutal
-			const k = 3.0;
-			const priceFactor = Math.exp(-k * (pricePerCup - targetPrice) / targetPrice);
-			willingness *= priceFactor;
+			// Price affects willingness
+			const maxAcceptablePrice = 1.00 * priceTolerance;
+			if (pricePerCup > maxAcceptablePrice) {
+				willingness *= (maxAcceptablePrice / pricePerCup);
+			}
 			
 			// Random individual variation
 			willingness *= (0.8 + Math.random() * 0.4);
@@ -393,7 +323,7 @@
 			return;
 		}
 
-		// Calculate max cups possible based on supplies and recipe ratios
+		// Auto-calculate max cups possible based on supplies and recipe ratios
 		const maxCups = Math.min(
 			cups,
 			Math.floor(lemons / lemonsPerCup),
@@ -406,22 +336,19 @@
 			return;
 		}
 		
-		// Player commits to cupsToCommit, cap by available supplies
-		cupsToMake = Math.min(cupsToCommit, maxCups);
-		
-		if (!makeLemonade()) {
-			return;
-		}
-		
-		// Now calculate demand (player doesn't know this yet!)
+		// Calculate demand first to know how many cups to actually make
 		visitors = calculateVisitorCount();
 		customers = calculateDemand(visitors);
 		
-		// Cap customers by cups made
-		customers = Math.min(customers, cupsToMake);
+		// Cap customers by both visitors and inventory
+		customers = Math.min(customers, visitors, maxCups);
 		
-		// Generate contextual message for the day
-		dayMessage = generateDayMessage();
+		// Only make lemonade for cups that will be sold
+		cupsToMake = customers;
+		
+		if (customers > 0 && !makeLemonade()) {
+			return;
+		}
 		
 		revenue = customers * pricePerCup;
 		
@@ -454,15 +381,6 @@
 		ice = 0;
 		// Generate weather for the coming day
 		currentWeather = generateWeather();
-		
-		// Update dynamic recipe optima based on new weather
-		// idealIce: lerp(1, 4, heat) where heat is normalized temperature
-		const normalizedHeat = Math.max(0, Math.min(1, (currentWeather.temperature - 40) / 60));
-		idealIce = Math.round(1 + normalizedHeat * 3);
-		
-		// idealSugar: random daily drift around 1
-		idealSugar = Math.max(0.5, Math.min(2, 1 + (Math.random() - 0.5) * 0.5));
-		
 		showResults = false;
 	}
 
@@ -475,13 +393,9 @@
 		ice = 0;
 		pricePerCup = 1.00;
 		cupsToMake = 10;
-		cupsToCommit = 10;
 		lemonsPerCup = 1;
 		sugarPerCup = 1;
 		icePerCup = 2;
-		idealSugar = 1;
-		idealIce = 2;
-		dayMessage = "";
 		dailyHistory = [];
 		showResults = false;
 		gameOver = false;
@@ -541,17 +455,6 @@
 				</div>
 			</div>
 
-			<div class="cups-panel">
-				<div class="cups-control">
-					<span class="label">Cups to Make</span>
-					<div class="cups-buttons">
-						<button onclick={() => cupsToCommit = Math.max(1, cupsToCommit - 5)}>-5</button>
-						<span>{cupsToCommit}</span>
-						<button onclick={() => cupsToCommit = cupsToCommit + 5}>+5</button>
-					</div>
-				</div>
-			</div>
-
 			<div class="recipe-panel">
 				<h3>Recipe per Cup</h3>
 				<div class="recipe-controls">
@@ -581,7 +484,7 @@
 					</div>
 				</div>
 				<div class="taste-preview">
-					<span>Recipe Quality: {getTasteLabel(calculateTasteScore())}</span>
+					<span>Taste Score: {calculateTasteScore().toFixed(0)}/100</span>
 				</div>
 			</div>
 
@@ -597,11 +500,6 @@
 				<span class="weather-icon">{currentWeather.icon}</span>
 				<span>{currentWeather.description} — {currentWeather.temperature}°F</span>
 			</div>
-			{#if dayMessage}
-				<div class="day-message">
-					<span>{dayMessage}</span>
-				</div>
-			{/if}
 			<div class="results-stats">
 				<div class="result">
 					<span class="label">Customers</span>
@@ -835,18 +733,6 @@
 		font-weight: 600;
 	}
 
-	.day-message {
-		background: rgba(251, 191, 36, 0.1);
-		border: 1px solid rgba(251, 191, 36, 0.3);
-		padding: 0.75rem;
-		border-radius: 8px;
-		text-align: center;
-		margin-bottom: 1rem;
-		font-weight: 600;
-		font-size: 0.9rem;
-		color: #fbbf24;
-	}
-
 	.price-panel {
 		margin-bottom: 2rem;
 	}
@@ -892,54 +778,6 @@
 		font-size: 1.25rem;
 		font-weight: 700;
 		min-width: 80px;
-		text-align: center;
-	}
-
-	.cups-panel {
-		margin-bottom: 2rem;
-	}
-
-	.cups-control {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: rgba(255, 255, 255, 0.05);
-		padding: 1rem;
-		border-radius: 8px;
-	}
-
-	.cups-control .label {
-		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.8);
-		font-weight: 600;
-	}
-
-	.cups-buttons {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.cups-buttons button {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: white;
-		padding: 0.45rem 0.85rem;
-		border-radius: 8px;
-		font-weight: 700;
-		font-size: 0.95rem;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.cups-buttons button:hover {
-		background: #3f3f46;
-	}
-
-	.cups-buttons span {
-		font-size: 1.25rem;
-		font-weight: 700;
-		min-width: 50px;
 		text-align: center;
 	}
 
