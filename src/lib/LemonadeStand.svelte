@@ -98,9 +98,12 @@
 		// Add temperature variation (+/- 10 degrees)
 		const tempVariation = Math.floor(Math.random() * 21) - 10;
 		
+		// Ensure minimum temperature of 50°F
+		const finalTemp = Math.max(50, baseWeather.temperature + tempVariation);
+		
 		return {
 			...baseWeather,
-			temperature: baseWeather.temperature + tempVariation
+			temperature: finalTemp
 		};
 	}
 
