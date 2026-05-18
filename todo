@@ -1,3 +1,6 @@
-## Games
-1. heat diffusion puzzle
-2. Block Dude
+2. Dots and Boxes, the game isn't fit to the game mat correctly
+3. Nim, everything is invisible in light mode
+4. Hex, we need to clean up the outlines in both light and dark mode
+5. Set, should redo the cards entirely
+6. ShotSim, the light mode CSS and fitting is messed up
+7. Lunar Lander end page has a gradient

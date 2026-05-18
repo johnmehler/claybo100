@@ -669,8 +669,8 @@
 	}
 
 	.status-card.is-impossible .status-text {
-		color: var(--color-golden);
-		text-shadow: 0 0 3vmin rgba(255, 230, 109, 0.4);
+		color: var(--app-text);
+		text-shadow: 0 0 3vmin rgba(255, 255, 255, 0.4);
 	}
 
 	.winning-formula {
@@ -691,7 +691,7 @@
 		font-weight: 500;
 	}
 	.equals {
-		color: var(--color-golden);
+		color: var(--app-text);
 		font-weight: 900;
 	}
 	.result {
@@ -700,7 +700,7 @@
 	}
 
 	.new-puzzle-btn {
-		background: var(--color-golden);
+		background: var(--app-text);
 		color: black;
 		border: none;
 		padding: 1.5vmin 4vmin;
@@ -712,7 +712,7 @@
 	}
 	.new-puzzle-btn:hover {
 		transform: scale(1.05);
-		box-shadow: 0 0 2vmin var(--color-golden);
+		box-shadow: 0 0 2vmin var(--app-text);
 	}
 
 	.workspace {
@@ -775,9 +775,9 @@
 		pointer-events: none;
 	}
 	.block.selected {
-		border-color: var(--color-golden);
-		box-shadow: 0 0 2vmin rgba(255, 230, 109, 0.2);
-		background: rgba(255, 230, 109, 0.05);
+		border-color: var(--app-text);
+		box-shadow: 0 0 2vmin rgba(255, 255, 255, 0.2);
+		background: rgba(255, 255, 255, 0.05);
 	}
 	.block .val {
 		font-size: 4.5vmin;
@@ -820,10 +820,10 @@
 		transform: scale(1.1);
 	}
 	.op.selected {
-		background: var(--color-golden);
-		border-color: var(--color-golden);
+		background: var(--app-text);
+		border-color: var(--app-text);
 		color: black;
-		box-shadow: 0 0 20px rgba(255, 230, 109, 0.3);
+		box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 	}
 
 	@media (max-width: 768px) {
@@ -874,9 +874,9 @@
 	}
 	.diff-btn.active {
 		color: black;
-		background: var(--color-illusion);
-		border-color: var(--color-illusion);
-		box-shadow: 0 0 15px rgba(248, 165, 194, 0.3);
+		background: var(--app-text);
+		border-color: var(--app-text);
+		box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
 	}
 
 	.unsolvable-btn,
@@ -920,14 +920,14 @@
 	.victory-icon {
 		width: 10vmin;
 		height: 10vmin;
-		background: rgba(255, 230, 109, 0.1);
+		background: rgba(255, 255, 255, 0.1);
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-golden);
+		color: var(--app-text);
 		margin-bottom: -1vmin;
-		box-shadow: 0 0 3vmin rgba(255, 230, 109, 0.2);
+		box-shadow: 0 0 3vmin rgba(255, 255, 255, 0.2);
 	}
 	.victory-icon svg {
 		width: 5vmin;

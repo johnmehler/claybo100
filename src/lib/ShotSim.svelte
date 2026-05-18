@@ -215,7 +215,7 @@
 					<path 
 						d="M {trajectory.map(p => `${p.x} ${100 - p.y}`).join(' L ')}" 
 						fill="none" 
-						stroke="var(--color-golden)" 
+						stroke="var(--app-text)" 
 						stroke-width="0.3"
 						stroke-dasharray="1 1"
 						opacity="0.6"
@@ -388,7 +388,7 @@
 
 	.step-btn:hover:not(:disabled) {
 		background: rgba(255,255,255,0.15);
-		color: var(--color-illusion);
+		color: var(--app-text);
 	}
 
 	input[type="range"] {
@@ -427,7 +427,7 @@
 	}
 
 	.shoot-btn:hover:not(:disabled) {
-		background: var(--color-illusion);
+		background: var(--app-text);
 		transform: translateY(-2px);
 	}
 
@@ -444,7 +444,7 @@
 	.telemetry-toggle input {
 		width: 2vmin;
 		height: 2vmin;
-		accent-color: var(--color-golden);
+		accent-color: var(--app-text);
 	}
 
 	.telemetry-label {
@@ -460,9 +460,9 @@
 		width: 20vmin;
 	}
 
-	.initial-label { color: var(--color-golden); align-items: center; margin-left: -10vmin; }
+	.initial-label { color: var(--app-text); align-items: center; margin-left: -10vmin; }
 	.peak-label { color: var(--color-apple); align-items: center; margin-left: -10vmin; }
-	.dist-label { color: var(--color-illusion); align-items: center; margin-left: -10vmin; }
+	.dist-label { color: var(--app-text); align-items: center; margin-left: -10vmin; }
 
 	.distance-label {
 		position: absolute;
@@ -487,14 +487,14 @@
 	.cannon-container { position: absolute; width: 10vmin; height: 10vmin; }
 	.cannon-base { position: absolute; bottom: 0; left: 10%; width: 80%; height: 4vmin; background: #333; border-radius: 1vmin 1vmin 0 0; }
 	.cannon-barrel { position: absolute; bottom: 2.5vmin; right: 50%; width: 12vmin; height: 5vmin; background: #444; border-radius: 1vmin; transform-origin: right center; display: flex; align-items: center; justify-content: flex-start; padding-left: 2vmin; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-	.barrel-stats { display: flex; flex-direction: column; font-size: 1.2vmin; font-weight: 800; color: var(--color-golden); }
+	.barrel-stats { display: flex; flex-direction: column; font-size: 1.2vmin; font-weight: 800; color: var(--app-text); }
 
 	.backboard { position: absolute; background: rgba(255,255,255,0.8); border-radius: 0.2vmin; }
 	.rim { position: absolute; background: var(--color-bittersweet); border-radius: 0.2vmin; z-index: 2; }
 	.net { position: absolute; background: rgba(255,255,255,0.1); border-radius: 0 0 1vmin 1vmin; border: 1px dashed rgba(255,255,255,0.2); z-index: 1; }
 	.ball { position: absolute; width: 3vmin; height: 3vmin; background: #ff8c00; border-radius: 50%; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 	.trajectory-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-	.feedback { position: absolute; top: 20%; left: 0; right: 0; text-align: center; font-size: 6vmin; font-weight: 900; color: var(--color-golden); text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+	.feedback { position: absolute; top: 20%; left: 0; right: 0; text-align: center; font-size: 6vmin; font-weight: 900; color: var(--app-text); text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
 
 	@media (max-width: 1024px) {
 		.board-wrapper {

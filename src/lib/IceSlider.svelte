@@ -363,7 +363,7 @@
 						<polyline 
 							points={optimalPath.map(p => `${p.x + 0.5},${p.y + 0.5}`).join(' ')}
 							fill="none"
-							stroke="var(--color-golden)"
+							stroke="var(--app-text)"
 							stroke-width="0.15"
 							stroke-dasharray="0.2 0.1"
 							stroke-linecap="round"
@@ -371,7 +371,7 @@
 							in:fade
 						/>
 						{#each optimalPath as p}
-							<circle cx={p.x + 0.5} cy={p.y + 0.5} r="0.1" fill="var(--color-golden)" />
+							<circle cx={p.x + 0.5} cy={p.y + 0.5} r="0.1" fill="var(--app-text)" />
 						{/each}
 					{/if}
 				</svg>
@@ -561,13 +561,13 @@
 	.nav-extra-btn:hover {
 		background: var(--ice-secondary-hover-bg);
 		color: var(--ice-secondary-hover-text);
-		border-color: var(--color-golden);
+		border-color: var(--app-text);
 	}
 
 	.nav-extra-btn.active {
-		background: var(--color-golden);
+		background: var(--app-text);
 		color: black;
-		border-color: var(--color-golden);
+		border-color: var(--app-text);
 	}
 
 	.board-wrapper {
@@ -654,8 +654,8 @@
 	.goal-icon {
 		width: 60%;
 		height: 60%;
-		color: var(--color-golden);
-		filter: drop-shadow(0 0 8px var(--color-golden));
+		color: var(--app-text);
+		filter: drop-shadow(0 0 8px var(--app-text));
 		animation: pulse 2s infinite ease-in-out;
 	}
 

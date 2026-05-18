@@ -460,7 +460,7 @@
 	.stat-box { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.05); padding: 1.5vmin 3vmin; border-radius: 1.5vmin; border: 1px solid rgba(255,255,255,0.1); min-width: 25vmin; }
 	.stat-box .label { font-size: 1.2vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; margin-bottom: 0.5vmin; }
 	.stat-box .value { font-size: 3vmin; font-weight: 900; font-variant-numeric: tabular-nums; }
-	.stat-box.optimal .value { color: var(--color-illusion); }
+	.stat-box.optimal .value { color: var(--app-text); }
 	.stat-box.previous .value { color: var(--game-text-muted); }
 
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 0 4vmin; box-sizing: border-box; }
@@ -477,7 +477,7 @@
 	.grid-line { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; }
 
 	.user-path { fill: none; stroke: white; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 12px rgba(255,255,255,0.6)); transition: stroke 0.3s; }
-	.optimal-path { fill: none; stroke: var(--color-illusion); stroke-width: 3; stroke-dasharray: 8 8; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 8px rgba(255, 166, 201, 0.5)); }
+	.optimal-path { fill: none; stroke: var(--app-text); stroke-width: 3; stroke-dasharray: 8 8; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); }
 	.guide-line { stroke: rgba(255, 255, 255, 0.1); stroke-width: 2; stroke-dasharray: 4 4; }
 
 	.control-point { fill: #111; stroke: white; stroke-width: 3; cursor: grab; transition: stroke 0.2s, r 0.2s; }

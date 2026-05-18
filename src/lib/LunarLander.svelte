@@ -567,16 +567,16 @@
 			<!-- Landing pads -->
 			{#each pads as pad}
 				<rect x={pad.x} y={pad.y - 0.4} width={pad.width} height="0.5" rx="0.15"
-					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
+					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--app-text)' : 'var(--color-apple)'}
 					opacity="0.9" />
 				<text x={pad.x + pad.width / 2} y={pad.y + 3} text-anchor="middle"
 					fill="rgba(255,255,255,0.5)" font-size="1.8" font-weight="800">x{pad.multiplier}</text>
 				<!-- Pad beacon lights -->
 				<circle cx={pad.x + 0.3} cy={pad.y - 0.2} r="0.3"
-					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
+					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--app-text)' : 'var(--color-apple)'}
 					opacity={0.4 + Math.sin(Date.now() / 500) * 0.3} />
 				<circle cx={pad.x + pad.width - 0.3} cy={pad.y - 0.2} r="0.3"
-					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--color-golden)' : 'var(--color-apple)'}
+					fill={pad.multiplier >= 5 ? 'var(--color-bittersweet)' : pad.multiplier >= 3 ? 'var(--app-text)' : 'var(--color-apple)'}
 					opacity={0.4 + Math.sin(Date.now() / 500) * 0.3} />
 			{/each}
 
@@ -587,7 +587,7 @@
 					{#if thrusting && fuel > 0}
 						<polygon
 							points="-0.8,2 0.8,2 0,{3.5 + flameFlicker * 2}"
-							fill="var(--color-golden)"
+							fill="var(--app-text)"
 							opacity={0.7 + flameFlicker * 0.3} />
 						<polygon
 							points="-0.5,2 0.5,2 0,{3 + flameFlicker * 1.5}"
@@ -631,7 +631,7 @@
 				</text>
 				{#if sessionSummary}
 					<text x="50" y="47" text-anchor="middle" font-size="2.6" font-weight="800"
-						fill={sessionComplete ? 'var(--color-golden)' : 'rgba(255,255,255,0.7)'}
+						fill={sessionComplete ? 'var(--app-text)' : 'rgba(255,255,255,0.7)'}
 						style="filter: drop-shadow(0 2px 8px rgba(0,0,0,0.45))"
 						in:fade>
 						{sessionSummary}
@@ -726,7 +726,7 @@
 	}
 
 	.hud-item:hover .hud-limit {
-		color: var(--color-golden);
+		color: var(--app-text);
 	}
 
 	.hud-label {
@@ -757,7 +757,7 @@
 	}
 
 	.score-val {
-		color: var(--color-golden);
+		color: var(--app-text);
 		font-size: 3.5vmin;
 	}
 
@@ -845,7 +845,7 @@
 		margin: 0;
 		font-size: 4vmin;
 		font-weight: 900;
-		color: var(--color-golden);
+		color: var(--app-text);
 	}
 
 	.results-score {

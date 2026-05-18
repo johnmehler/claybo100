@@ -207,7 +207,7 @@
 					{#each Array(SIZE) as _, c}
 						{#if hLines[r][c]}
 							<rect x={10 + c*16} y={10 + r*16 - 1} width={16} height={2} 
-								fill={lastAiMove?.type === 'h' && lastAiMove.r === r && lastAiMove.c === c ? 'var(--color-golden)' : 'white'} 
+								fill={lastAiMove?.type === 'h' && lastAiMove.r === r && lastAiMove.c === c ? 'var(--app-text)' : 'white'} 
 								rx="1" in:fade={{duration: 100}} />
 						{/if}
 					{/each}
@@ -217,7 +217,7 @@
 					{#each Array(SIZE + 1) as _, c}
 						{#if vLines[r][c]}
 							<rect x={10 + c*16 - 1} y={10 + r*16} width={2} height={16} 
-								fill={lastAiMove?.type === 'v' && lastAiMove.r === r && lastAiMove.c === c ? 'var(--color-golden)' : 'white'} 
+								fill={lastAiMove?.type === 'v' && lastAiMove.r === r && lastAiMove.c === c ? 'var(--app-text)' : 'white'} 
 								rx="1" in:fade={{duration: 100}} />
 						{/if}
 					{/each}
@@ -225,7 +225,7 @@
 
 				{#each Array(SIZE + 1) as _, r}
 					{#each Array(SIZE + 1) as _, c}
-						<circle cx={10 + c*16} cy={10 + r*16} r="2.2" fill="var(--color-illusion)" />
+						<circle cx={10 + c*16} cy={10 + r*16} r="2.2" fill="var(--app-text)" />
 					{/each}
 				{/each}
 
@@ -309,7 +309,7 @@
 	.diff-select { display: flex; gap: 1vmin; }
 	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--game-text-muted); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; }
 	.diff-btn:hover { color: var(--game-text-primary); border-color: rgba(255,255,255,0.3); }
-	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); box-shadow: 0 0 15px rgba(248, 165, 194, 0.3); }
+	.diff-btn.active { color: black; background: var(--app-text); border-color: var(--app-text); box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); }
 
 	.svg-container { 
 		width: 75vmin; 
