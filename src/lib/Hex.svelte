@@ -259,13 +259,13 @@
 	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
 	.status-msg { font-size: 3.5vmin; font-weight: 900; letter-spacing: 1px; min-width: 30vmin; text-align: center; }
 
-	.mode-select { display: flex; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 0.5vmin; border-radius: 1.2vmin; border: 1px solid rgba(255,255,255,0.1); }
+	.mode-select { display: flex; gap: 0.5vmin; background: var(--panel-bg); padding: 0.5vmin; border-radius: 1.2vmin; border: 1px solid var(--panel-border); }
 	.mode-btn { background: transparent; border: none; color: var(--game-text-muted); padding: 0.8vmin 2vmin; border-radius: 0.8vmin; font-size: 1.4vmin; font-weight: 900; cursor: pointer; transition: all 0.3s; }
-	.mode-btn.active { background: var(--color-apple); color: black; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
+	.mode-btn.active { background: var(--color-apple); color: var(--app-bg); box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
 
 	.hex-grid { 
 		display: flex; flex-direction: column; align-items: flex-start; padding: 3vmin; 
-		background: rgba(255,255,255,0.01); border-radius: 0; backdrop-filter: blur(10px);
+		background: var(--panel-bg); border-radius: 0; backdrop-filter: blur(10px);
 		position: relative;
 		transition: opacity 0.5s ease;
 		border: none;
@@ -276,7 +276,6 @@
 	.hex-wrapper {
 		width: 5.2vmin; height: 6vmin; margin-right: 0.1vmin;
 		position: relative;
-		filter: drop-shadow(0 0 1px rgba(255,255,255,0.15));
 	}
 
 	.hex-edge {
@@ -289,7 +288,7 @@
 
 	.hex-edge polyline {
 		fill: none;
-		stroke-width: 4px;
+		stroke-width: 6px;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		vector-effect: non-scaling-stroke;
@@ -302,7 +301,7 @@
 	
 	.hex { 
 		width: 100%; height: 100%; display: block; padding: 0;
-		background: #111114; /* Opaque background prevents shadow bleed-through */
+		background: var(--app-bg);
 		clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 		cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 		border: none;
@@ -310,29 +309,22 @@
 	.hex:disabled { cursor: not-allowed; }
 
 	.hex-wrapper:hover .hex:not(.red):not(.blue):not(:disabled) { 
-		background: #202025; 
-		transform: scale(1.05) translateY(-2px); 
-	}
-	.hex-wrapper:hover {
-		z-index: 10;
+		background: color-mix(in srgb, var(--app-bg) 85%, var(--app-text) 15%);
 	}
 
 	.hex.red { 
 		background: var(--color-bittersweet); 
-		filter: drop-shadow(0 0 10px rgba(255, 110, 97, 0.3));
 		transform: scale(0.95);
 	}
 	
 	.hex.blue { 
 		background: var(--color-apple); 
-		filter: drop-shadow(0 0 10px rgba(78, 205, 196, 0.3));
 		transform: scale(0.95);
 	}
 
 	.hex.winner {
 		transform: scale(1.05);
 		z-index: 5;
-		filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
 	}
 
 	.hex.winner::after {
