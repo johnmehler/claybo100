@@ -320,7 +320,7 @@
 	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; }
-	.stat .value { font-size: 4.5vmin; font-weight: 900; color: var(--color-illusion); line-height: 1.1; }
+	.stat .value { font-size: 4.5vmin; font-weight: 900; color: var(--app-text); line-height: 1.1; }
 	.stat .total { font-size: 2.2vmin; color: var(--game-text-soft); font-weight: 600; margin-left: 0.5vmin; }
 	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; padding-bottom: 2vmin; }
 	
@@ -345,9 +345,9 @@
 		transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box;
 	}
 	.cell.visited { background: rgba(255,255,255,0.12); border-color: var(--knight-cell-visited-border); }
-	.cell.valid { background: rgba(248, 165, 194, 0.1); cursor: pointer; border: 2px solid var(--color-illusion); }
-	.cell.valid:hover { background: rgba(248, 165, 194, 0.25); transform: scale(1.05); }
-	.cell.current { background: var(--color-illusion); box-shadow: 0 0 20px rgba(248, 165, 194, 0.4); border: none; }
+	.cell.valid { background: rgba(255, 255, 255, 0.1); cursor: pointer; border: 2px solid var(--app-text); }
+	.cell.valid:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+	.cell.current { background: var(--app-text); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); border: none; }
 	.cell.mistake { background: rgba(255, 110, 97, 0.25) !important; box-shadow: 0 0 20px rgba(255, 110, 97, 0.4); border: 2px solid var(--color-bittersweet) !important; z-index: 5; }
 	.cell.correct-next { background: rgba(76, 175, 80, 0.15) !important; border: 2px solid #4CAF50 !important; box-shadow: 0 0 20px rgba(76, 175, 80, 0.4); z-index: 5; }
 	.knight-icon { width: 5vmin; height: 5vmin; color: #000; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
@@ -372,7 +372,7 @@
 		letter-spacing: -0.02vmin;
 		text-align: center;
 	}
-	.status-text.perfect { color: var(--color-illusion) !important; text-shadow: 0 0 15px rgba(248, 165, 194, 0.4); }
+	.status-text.perfect { color: var(--app-text) !important; text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
 	.status-text.close { color: var(--color-apple) !important; }
 
 	.completion-overlay {

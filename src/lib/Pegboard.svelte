@@ -164,7 +164,7 @@
 	.stats { display: flex; justify-content: center; gap: 12vmin; margin-bottom: 2vmin; width: 100%; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; }
-	.value { font-size: 5vmin; font-weight: 900; color: var(--color-golden); }
+	.value { font-size: 5vmin; font-weight: 900; color: var(--app-text); }
 
 	.board {
 		display: grid; grid-template-columns: repeat(7, 7.5vmin); gap: 1vmin; padding: 2vmin;
@@ -179,7 +179,7 @@
 	.cell.selected { background: rgba(255,255,255,0.15); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
 	.cell.target { background: rgba(105, 175, 75, 0.2); box-shadow: inset 0 0 10px rgba(105, 175, 75, 0.3); }
 
-	.peg { width: 4vmin; height: 4vmin; border-radius: 50%; background: var(--color-golden); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+	.peg { width: 4vmin; height: 4vmin; border-radius: 50%; background: var(--app-text); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 	.selected .peg { background: white; scale: 1.1; }
 
 	.completion-overlay { position: absolute; top: 0; left: -150%; width: 150%; height: 100%; background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(200, 200, 200, 0.2) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(200, 200, 200, 0.2) 70%, rgba(255, 255, 255, 0) 100%); transform: skewX(-25deg); animation: swoosh 0.8s ease-in-out forwards; pointer-events: none; z-index: 20; }

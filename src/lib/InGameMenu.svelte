@@ -81,7 +81,7 @@
 
 	.back-btn:hover, .help-btn:hover {
 		background: rgba(255, 255, 255, 0.08);
-		border-color: var(--color-illusion);
+		border-color: var(--app-text);
 		color: var(--game-text-primary);
 	}
 	

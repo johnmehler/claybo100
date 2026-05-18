@@ -358,7 +358,7 @@
 		border-color: var(--panel-border);
 	}
 
-	.control-btn.help { color: var(--color-illusion); }
+	.control-btn.help { color: var(--app-text); }
 	.control-btn.restart { color: var(--color-indigo); }
 	.control-btn:hover { background: rgba(255, 255, 255, 0.05); }
 	.control-btn:hover { background: color-mix(in srgb, var(--panel-bg) 82%, var(--app-text) 8%); }
@@ -424,7 +424,7 @@
 		justify-content: center;
 		gap: 0.6vmin;
 		padding: 1.2vmin 1vmin;
-		background: color-mix(in srgb, var(--panel-bg) 86%, var(--color-golden) 8%);
+		background: var(--panel-bg);
 		border: 1px solid var(--panel-border);
 		border-radius: 1.2vmin;
 		color: var(--app-muted-text);
@@ -435,15 +435,15 @@
 	}
 
 	.theme-btn:hover {
-		background: color-mix(in srgb, var(--panel-bg) 74%, var(--color-golden) 18%);
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 8%);
 		color: var(--app-text);
 	}
 
 	.theme-btn.active {
-		background: var(--color-golden);
-		border-color: var(--color-golden);
-		color: var(--game-text-on-accent);
-		box-shadow: 0 0.2vmin 0.5vmin rgba(251, 191, 36, 0.3);
+		background: var(--app-text);
+		border-color: var(--app-text);
+		color: var(--app-bg);
+		box-shadow: 0 0.2vmin 0.5vmin rgba(0, 0, 0, 0.2);
 	}
 
 	.theme-btn svg {

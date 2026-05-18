@@ -217,11 +217,11 @@
 	
 	.input-stepper { display: flex; align-items: center; gap: 2vmin; background: var(--panel-bg); padding: 1vmin; border-radius: 1.5vmin; border: 1px solid var(--panel-border); }
 	.input-stepper button { background: color-mix(in srgb, var(--panel-bg) 84%, var(--app-text) 12%); border: none; color: var(--app-text); width: 8vmin; height: 8vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 5vmin; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-	.input-stepper button:hover { background: color-mix(in srgb, var(--panel-bg) 72%, var(--app-text) 24%); color: var(--color-illusion); transform: scale(1.05); }
+	.input-stepper button:hover { background: color-mix(in srgb, var(--panel-bg) 72%, var(--app-text) 24%); color: var(--app-text); transform: scale(1.05); }
 	.input-stepper .stepper-value { font-size: 6vmin; font-weight: 900; width: 8vmin; text-align: center; color: var(--color-bittersweet); }
 
 	.cta-btn { background: var(--color-bittersweet); color: #111; border: none; padding: 2vmin 5vmin; font-size: 2.5vmin; font-weight: 800; border-radius: 1.5vmin; cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 20px -5px rgba(255, 110, 97, 0.4); }
-	.cta-btn:hover { background: var(--color-illusion); scale: 1.05; }
+	.cta-btn:hover { background: var(--app-text); scale: 1.05; }
 
 	.board-wrapper {
 		flex: 1;
@@ -238,7 +238,7 @@
 	.stats { display: flex; gap: min(12vmin, 4vw); margin-bottom: 2vmin; width: min(95vmin, 100%); justify-content: center; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.label { font-size: 1.4vmin; color: var(--app-muted-text); font-weight: 800; letter-spacing: 0.2vmin; }
-	.value { font-size: 5vmin; font-weight: 900; color: var(--color-illusion); }
+	.value { font-size: 5vmin; font-weight: 900; color: var(--app-text); }
 
 	.stage {
 		display: flex;

@@ -124,7 +124,7 @@
 			</div>
 			<div class="stat">
 				<span class="label">STATUS</span>
-				<div class="status-msg" style="color: {winner ? 'var(--color-golden)' : (!isAiTurn ? 'var(--color-apple)' : 'var(--color-bittersweet)')}">
+				<div class="status-msg" style="color: {winner ? 'var(--app-text)' : (!isAiTurn ? 'var(--color-apple)' : 'var(--color-bittersweet)')}">
 					{winner ? winner + ' WINS!' : (gameMode === 'ai' ? (isAiTurn ? 'AI THINKING...' : 'YOUR TURN') : `PLAYER ${currentPlayer}'S TURN`)}
 				</div>
 			</div>

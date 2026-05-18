@@ -480,7 +480,7 @@
 	.stat .value {
 		font-size: 5vmin;
 		font-weight: 900;
-		color: var(--color-illusion);
+		color: var(--app-text);
 	}
 
 	.bottom-bar {
@@ -537,7 +537,7 @@
 	}
 
 	.tile:hover:not(.empty) {
-		background: var(--color-illusion);
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 15%);
 		filter: brightness(1.1);
 	}
 	.tile:active:not(.empty) {
@@ -626,7 +626,7 @@
 
 	.tool-btn.main:hover {
 		transform: scale(1.1);
-		background: var(--color-illusion);
+		background: var(--app-text);
 	}
 
 	.tool-btn.exit {
@@ -670,7 +670,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-illusion);
+		color: var(--app-text);
 		font-weight: 900;
 		font-size: 2vmin;
 		letter-spacing: 0.3vmin;

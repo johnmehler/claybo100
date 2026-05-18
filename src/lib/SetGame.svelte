@@ -257,7 +257,7 @@
 	.stat .value {
 		font-size: 5vmin;
 		font-weight: 900;
-		color: var(--color-illusion);
+		color: var(--app-text);
 	}
 
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
@@ -278,7 +278,7 @@
 		border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5vmin; cursor: pointer; transition: all 0.3s; 
 	}
 	.card:not(.placeholder):hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-0.5vmin); }
-	.card.selected { border-color: var(--color-illusion); box-shadow: 0 0 2vmin rgba(248, 165, 194, 0.2); background: rgba(248, 165, 194, 0.05); }
+	.card.selected { border-color: var(--app-text); box-shadow: 0 0 2vmin rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); }
 	.card.placeholder { background: transparent; border: 1px dashed rgba(255, 255, 255, 0.03); pointer-events: none; }
 	.shape { width: 11vmin; height: 5.5vmin; flex-shrink: 0; }
 
@@ -300,8 +300,8 @@
 
 	.add-cards-btn:hover {
 		background: rgba(255, 255, 255, 0.05);
-		border-color: var(--color-illusion);
-		color: var(--color-illusion);
+		border-color: var(--app-text);
+		color: var(--app-text);
 		transform: translateY(-2px);
 	}
 
