@@ -18,13 +18,13 @@
 	let marketing = $state(300);
 	let productionQuantity = $state(100);
 	let employeePay = $state(80);
-	let qualitySpending = $state(2000);
+	let qualitySpending = $state(5000);
 	let previousQuality = $state(5);
 	let previousMarketShare = $state(0.2);
 	let inventoryQuality = $state(5);
 
 	let previousPrice = $state(18.00);
-	let previousQualitySpending = $state(2000);
+	let previousQualitySpending = $state(5000);
 	let previousMarketing = $state(300);
 	let previousProductionQuantity = $state(100);
 	let previousEmployeePay = $state(80);
@@ -541,7 +541,7 @@
 
 		price = 18.00;
 		quality = 5;
-		qualitySpending = 2000;
+		qualitySpending = 5000;
 		previousQuality = 5;
 		previousMarketShare = 0.2;
 		marketing = 300;
@@ -549,7 +549,7 @@
 		employeePay = 80;
 
 		previousPrice = 18.00;
-		previousQualitySpending = 2000;
+		previousQualitySpending = 5000;
 		previousMarketing = 300;
 		previousProductionQuantity = 100;
 		previousEmployeePay = 80;
