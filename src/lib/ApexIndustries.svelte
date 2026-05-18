@@ -29,6 +29,8 @@
 	let previousProductionQuantity = $state(100);
 	let previousEmployeePay = $state(80);
 	let payHistory = $state([80, 80, 80]);
+	let reputationInputEffect = $state(0);
+	let pendingReputationEffect = $state(0);
 
 	// Input options
 	const priceOptions = Array.from({ length: 21 }, (_, i) => i + 5);
@@ -46,7 +48,7 @@
 	let marketShare = $state(0.2);
 	let playerTeam = $state("");
 
-	// AI Competitors (4 competitors with names)
+	// AI Competitors (3 competitors with names)
 	type AICompetitor = {
 		name: string;
 		price: number;
@@ -62,10 +64,12 @@
 		inventory: number;
 		inventoryQuality: number;
 		payHistory: number[];
+		reputationInputEffect: number;
+		pendingReputationEffect: number;
 	};
 
-	const allTeams = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon"];
-	const teamColors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#a855f7"];
+	const allTeams = ["Alpha", "Beta", "Gamma", "Delta"];
+	const teamColors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b"];
 
 	let aiCompetitors = $state<AICompetitor[]>([]);
 
@@ -90,7 +94,9 @@
 			productionEfficiency: 1.0,
 			inventory: 100,
 			inventoryQuality: 5,
-			payHistory: [80, 80, 80]
+			payHistory: [80, 80, 80],
+			reputationInputEffect: 0,
+			pendingReputationEffect: 0
 		}));
 	}
 
@@ -206,7 +212,10 @@
 	function calculateQualityFromSpending(spending: number, prevQuality: number): number {
 		const normalizedSpending = spending / 1000;
 
-		const spendingQuality = 1 + 8 * (1 - Math.exp(-normalizedSpending / 2.5));
+		// Sigmoid (S-curve): steep marginal gains in middle, flat at extremes
+		const midpoint = 5;
+		const steepness = 0.4;
+		const spendingQuality = 1 + 8 / (1 + Math.exp(-steepness * (normalizedSpending - midpoint)));
 
 		const persistenceWeight = 0.4;
 		const spendingWeight = 1 - persistenceWeight;
@@ -216,43 +225,42 @@
 		return Math.max(1, Math.min(9, blendedQuality));
 	}
 
-	// Customer satisfaction — what they actually experienced (0-10 scale)
-	function computeSatisfaction(soldQuality: number, soldPrice: number, fulfillmentRate: number): number {
-		// Value-for-money: quality relative to expected at price (baseline 5 at $15)
-		const expectedQuality = 3 + (soldPrice - 5) * 0.25; // ~3 at $5, ~8 at $25
-		const valueScore = 5 + (soldQuality - expectedQuality) * 1.2;
-		// Fulfillment matters — couldn't get product = unhappy
-		return Math.max(0, Math.min(10, valueScore * fulfillmentRate));
+	function computeReputationInputEffect(marketingSpend: number, pay: number): number {
+		const baselineMarketing = 300;
+		const baselinePay = 80;
+		const marketingEffect =
+			1.8 * (Math.log1p(marketingSpend / 400) - Math.log1p(baselineMarketing / 400));
+		const payEffect = 0.028 * (pay - baselinePay);
+		return marketingEffect + payEffect;
 	}
 
-	// Failures — stockouts, low quality, labor scandals (0-10 scale)
-	function computeFailures(stockoutRate: number, soldQuality: number, avgPay: number): number {
-		const stockoutFailure = stockoutRate * 5; // up to 5 if completely stocked out
-		const qualityScandal = Math.max(0, 4 - soldQuality) * 1.5; // up to 4.5 if quality 1
-		const sweatshopScandal = avgPay < 70 ? Math.min(3, (70 - avgPay) / 10) : 0;
-		return Math.min(10, stockoutFailure + qualityScandal + sweatshopScandal);
+	function computeEfficiencyTarget(currentPay: number, history: number[]): number {
+		const averagePay = history.reduce((s, p) => s + p, 0) / history.length;
+		const payChanges: number[] = [];
+		for (let i = 0; i < history.length - 1; i++) {
+			payChanges.push(Math.abs(history[i] - history[i + 1]));
+		}
+		const averageVolatility = payChanges.length > 0
+			? payChanges.reduce((sum, c) => sum + c, 0) / payChanges.length
+			: 0;
+		const sustainedPayBonus = Math.max(0, (averagePay - 100) / 100) * 0.5;
+		const currentPayBonus = Math.max(0, (currentPay - 100) / 100) * 0.2;
+		const whipsawPenalty = Math.min(0.35, averageVolatility / 90);
+		return Math.max(0.7, Math.min(1.6, 0.95 + sustainedPayBonus + currentPayBonus - whipsawPenalty));
 	}
 
-	function updateReputation(satisfaction: number, failures: number): void {
-		const M = marketing / 1000; // 0-5 scale
-		// Network effect: high reputation amplifies positive momentum, low rep dampens recovery
-		const networkBoost = 1 + 0.08 * (reputation - 5);
-		// Asymmetric decay: bad reputation is sticky (slower decay), good reputation needs to be earned
-		const decayRate = reputation >= 5 ? 0.92 : 0.95;
-		const nextReputation =
-			decayRate * reputation
-			+ 0.05 * satisfaction * networkBoost
-			+ 0.02 * M
-			- 0.03 * failures;
-		reputation = Math.max(0, Math.min(10, nextReputation));
+	function updateReputation(): void {
+		const currentInputEffect = computeReputationInputEffect(marketing, employeePay);
+		const effectDelta = currentInputEffect - reputationInputEffect;
+		const reputationDelta = 0.33 * effectDelta + pendingReputationEffect;
+
+		reputation = Math.max(0, Math.min(10, reputation + reputationDelta));
+		reputationInputEffect = currentInputEffect;
+		pendingReputationEffect = 0.66 * effectDelta;
 	}
 
 	function updateProductionEfficiency(): void {
-		// Efficiency is driven by sustained pay (history) so consistently
-		// paying above median keeps efficiency high without needing raises.
-		const avgPay = payHistory.reduce((s, p) => s + p, 0) / payHistory.length;
-		const E = (employeePay + avgPay) / 200;
-		const targetEfficiency = 0.9 + 0.5 * E;
+		const targetEfficiency = computeEfficiencyTarget(employeePay, payHistory);
 
 		productionEfficiency = Math.max(
 			0.7,
@@ -315,7 +323,6 @@
 		// Sales (AI gets their share of market demand)
 		const aiActualDemand = Math.floor(marketDemand * aiMarketShare);
 		const aiAvailableUnits = Math.min(ai.inventory, aiActualDemand);
-		const aiSoldQuality = ai.inventoryQuality;
 		ai.inventory -= aiAvailableUnits;
 
 		// Revenue and costs
@@ -329,26 +336,15 @@
 		const aiProfit = aiRevenue - aiCosts;
 		ai.cash += aiProfit;
 
-		// Reputation — driven by satisfaction, marketing, failures
-		const aiAveragePayHistory = ai.payHistory.reduce((sum, pay) => sum + pay, 0) / ai.payHistory.length;
-		const aiFulfillmentRate = aiActualDemand > 0 ? aiAvailableUnits / aiActualDemand : 1;
-		const aiStockoutRate = aiActualDemand > 0 ? Math.max(0, 1 - aiAvailableUnits / aiActualDemand) : 0;
-		const aiExpectedQuality = 3 + (ai.price - 5) * 0.25;
-		const aiValueScore = 5 + (aiSoldQuality - aiExpectedQuality) * 1.2;
-		const aiSatisfaction = Math.max(0, Math.min(10, aiValueScore * aiFulfillmentRate));
-		const aiQualityScandal = Math.max(0, 4 - aiSoldQuality) * 1.5;
-		const aiSweatshopScandal = aiAveragePayHistory < 70 ? Math.min(3, (70 - aiAveragePayHistory) / 10) : 0;
-		const aiFailures = Math.min(10, aiStockoutRate * 5 + aiQualityScandal + aiSweatshopScandal);
-		const aiNetworkBoost = 1 + 0.08 * (ai.reputation - 5);
-		const aiDecayRate = ai.reputation >= 5 ? 0.92 : 0.95;
-		const aiNextReputation =
-			aiDecayRate * ai.reputation
-			+ 0.05 * aiSatisfaction * aiNetworkBoost
-			+ 0.02 * (ai.marketing / 1000)
-			- 0.03 * aiFailures;
-		ai.reputation = Math.max(0, Math.min(10, aiNextReputation));
+		// Reputation — based on marketing + pay and applied with a 1-quarter lag.
+		const aiCurrentInputEffect = computeReputationInputEffect(ai.marketing, ai.employeePay);
+		const aiEffectDelta = aiCurrentInputEffect - ai.reputationInputEffect;
+		const aiReputationDelta = 0.33 * aiEffectDelta + ai.pendingReputationEffect;
+		ai.reputation = Math.max(0, Math.min(10, ai.reputation + aiReputationDelta));
+		ai.reputationInputEffect = aiCurrentInputEffect;
+		ai.pendingReputationEffect = 0.66 * aiEffectDelta;
 
-		const aiTargetEfficiency = 0.9 + 0.5 * ((ai.employeePay + aiAveragePayHistory) / 200);
+		const aiTargetEfficiency = computeEfficiencyTarget(ai.employeePay, ai.payHistory);
 		ai.productionEfficiency = Math.max(
 			0.7,
 			Math.min(1.6, 0.7 * ai.productionEfficiency + 0.3 * aiTargetEfficiency)
@@ -392,7 +388,7 @@
 
 		demandScore = playerDemandScore;
 
-		// Market share (player vs 4 AI competitors)
+		// Market share (player vs 3 AI competitors)
 		marketShare = totalDemandScore > 0 ? playerDemandScore / totalDemandScore : 0;
 		const aiMarketShares = aiDemandScores.map(score => (totalDemandScore > 0 ? score / totalDemandScore : 0));
 		const actualDemand = Math.floor(marketDemand * marketShare);
@@ -418,7 +414,6 @@
 		// Sales
 		const availableUnits = Math.min(inventory, actualDemand);
 		unitsSold = availableUnits;
-		const soldQuality = inventoryQuality;
 		inventory -= availableUnits;
 
 		// Revenue and costs
@@ -433,13 +428,8 @@
 		profit = revenue - costs;
 		cash += profit;
 
-		// Update hidden state — reputation driven by realized customer experience
-		const fulfillmentRate = actualDemand > 0 ? unitsSold / actualDemand : 1;
-		const stockoutRate = actualDemand > 0 ? Math.max(0, 1 - unitsSold / actualDemand) : 0;
-		const avgPay = payHistory.reduce((s, p) => s + p, 0) / payHistory.length;
-		const satisfaction = computeSatisfaction(soldQuality, price, fulfillmentRate);
-		const failures = computeFailures(stockoutRate, soldQuality, avgPay);
-		updateReputation(satisfaction, failures);
+		// Update hidden state
+		updateReputation();
 		updateProductionEfficiency();
 		simulateCompetitors();
 
@@ -520,8 +510,8 @@
 	const projectedQuality = $derived(calculateQualityFromSpending(qualitySpending, previousQuality));
 
 	const averagePayHistory = $derived(payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length);
-	const currentEfficiency = $derived(0.9 + 0.5 * ((employeePay + averagePayHistory) / 200));
-	const previousEfficiency = $derived(0.9 + 0.5 * ((previousEmployeePay + averagePayHistory) / 200));
+	const currentEfficiency = $derived(computeEfficiencyTarget(employeePay, payHistory));
+	const previousEfficiency = $derived(computeEfficiencyTarget(previousEmployeePay, payHistory));
 
 	const projectedUnitCost = $derived(BASE_COST + 0.4 * projectedQuality - 0.35 * (employeePay / 100));
 	const projectedProductionCost = $derived(productionQuantity * projectedUnitCost);
@@ -564,6 +554,8 @@
 		previousProductionQuantity = 100;
 		previousEmployeePay = 80;
 		payHistory = [80, 80, 80];
+		reputationInputEffect = 0;
+		pendingReputationEffect = 0;
 		segments = BASE_SEGMENTS.map(s => ({ ...s }));
 		priceSensitivity = 1.0;
 
@@ -1034,12 +1026,43 @@
 								</svg>
 							</div>
 						</div>
+					{:else if activeChart === "pay"}
+						<div class="chart-card">
+							<h3>Average Employee Pay (Current Quarter)</h3>
+							<div class="chart">
+								<svg viewBox="0 0 400 200" class="line-chart">
+									<!-- Grid lines -->
+									{#each [50, 80, 110, 140, 170, 200] as y}
+										<line x1="40" y1={200 - ((y - 50) / 150) * 160} x2="380" y2={200 - ((y - 50) / 150) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+										<text x="30" y={200 - ((y - 50) / 150) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">${y}</text>
+									{/each}
+									{#each history[history.length - 1].teams as team, teamIndex}
+										{@const isPlayer = team.name === playerTeam}
+										{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === team.name)}
+										{@const teamAveragePay = isPlayer
+											? payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length
+											: aiIndex >= 0
+												? aiCompetitors[aiIndex].payHistory.reduce((sum, pay) => sum + pay, 0) / aiCompetitors[aiIndex].payHistory.length
+												: 80}
+										{@const barHeight = ((teamAveragePay - 50) / 150) * 160}
+										{@const barX = 60 + teamIndex * 70}
+										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">${teamAveragePay.toFixed(0)}</text>
+									{/each}
+									<!-- X-axis labels -->
+									{#each history[history.length - 1].teams as team, teamIndex}
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
+									{/each}
+								</svg>
+							</div>
+						</div>
 					{/if}
 
 					<div class="chart-buttons">
 						<button class="chart-btn" class:active={activeChart === "quality"} onclick={() => activeChart = "quality"}>Quality</button>
 						<button class="chart-btn" class:active={activeChart === "price"} onclick={() => activeChart = "price"}>Price</button>
 						<button class="chart-btn" class:active={activeChart === "market"} onclick={() => activeChart = "market"}>Market Share</button>
+						<button class="chart-btn" class:active={activeChart === "pay"} onclick={() => activeChart = "pay"}>Avg Pay</button>
 					</div>
 				</div>
 
@@ -1075,7 +1098,7 @@
 			<div class="competitor-insights">
 				<div class="insight-card">
 					<h3>Team: {playerTeam}</h3>
-					<p>You are competing against 4 AI teams: {aiCompetitors.map(ai => ai.name).join(", ")}</p>
+					<p>You are competing against 3 AI teams: {aiCompetitors.map(ai => ai.name).join(", ")}</p>
 				</div>
 				<div class="insight-card">
 					<h3>AI Team Details</h3>
