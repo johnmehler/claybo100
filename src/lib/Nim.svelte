@@ -175,7 +175,7 @@
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
+	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); align-items: center; }
 
 	.board-wrapper { 
 		flex: 1; 
@@ -191,11 +191,11 @@
 
 	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; gap: 6vmin; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
-	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
+	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
 	.status-msg { font-size: 3.5vmin; font-weight: 900; letter-spacing: 1px; min-width: 30vmin; text-align: center; }
 
 	.mode-select { display: flex; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 0.5vmin; border-radius: 1.2vmin; border: 1px solid rgba(255,255,255,0.1); }
-	.mode-btn { background: transparent; border: none; color: rgba(255,255,255,0.4); padding: 0.8vmin 2vmin; border-radius: 0.8vmin; font-size: 1.4vmin; font-weight: 900; cursor: pointer; transition: all 0.3s; }
+	.mode-btn { background: transparent; border: none; color: var(--game-text-muted); padding: 0.8vmin 2vmin; border-radius: 0.8vmin; font-size: 1.4vmin; font-weight: 900; cursor: pointer; transition: all 0.3s; }
 	.mode-btn.active { background: var(--color-apple); color: black; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
 
 	.heaps-container {
@@ -244,7 +244,7 @@
 	.action-btn.take:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
 	
 	.action-btn.menu { 
-		background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1);
+		background: rgba(255,255,255,0.05); color: var(--game-text-primary); border: 1px solid rgba(255,255,255,0.1);
 	}
 	.action-btn.menu:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
 

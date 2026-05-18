@@ -933,7 +933,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--game-text-primary);
 		align-items: center;
 	}
 	.board-wrapper {
@@ -963,7 +963,7 @@
 	}
 	.stat .label {
 		font-size: 1.2vmin;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 		letter-spacing: 0.2vmin;
 		text-transform: uppercase;
@@ -975,7 +975,7 @@
 	}
 	.stat .value.status-val {
 		font-size: 2.5vmin;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-muted);
 		text-transform: uppercase;
 	}
 	.stat .value.status-val.won {
@@ -1006,27 +1006,6 @@
 	canvas {
 		display: block;
 		cursor: crosshair;
-	}
-
-	.hint-overlay {
-		position: absolute;
-		bottom: 3vmin;
-		left: 50%;
-		transform: translateX(-50%);
-		pointer-events: none;
-		z-index: 5;
-	}
-
-	.hint-text {
-		background: rgba(75, 190, 75, 0.15);
-		border: 1px solid rgba(75, 190, 75, 0.3);
-		color: rgba(75, 190, 75, 0.9);
-		padding: 1vmin 2.5vmin;
-		border-radius: 1vmin;
-		font-size: 1.8vmin;
-		font-weight: 800;
-		letter-spacing: 0.15vmin;
-		animation: pulse-hint 2s ease-in-out infinite;
 	}
 
 	@keyframes pulse-hint {

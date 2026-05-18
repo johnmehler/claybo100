@@ -684,7 +684,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--game-text-primary);
 		position: relative;
 		overflow: hidden;
 	}
@@ -720,7 +720,7 @@
 
 	.hud-limit {
 		font-size: 1vmin;
-		color: rgba(255,255,255,0.2);
+		color: var(--game-text-soft);
 		font-weight: 800;
 		letter-spacing: 0.05vmin;
 	}
@@ -731,7 +731,7 @@
 
 	.hud-label {
 		font-size: 1.1vmin;
-		color: rgba(255,255,255,0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 		letter-spacing: 0.15vmin;
 		text-transform: uppercase;
@@ -740,7 +740,7 @@
 	.hud-value {
 		font-size: 2.8vmin;
 		font-weight: 900;
-		color: rgba(255,255,255,0.85);
+		color: var(--game-text-primary);
 		font-variant-numeric: tabular-nums;
 		transition: color 0.2s;
 	}
@@ -838,7 +838,7 @@
 		font-size: 1.4vmin;
 		letter-spacing: 0.25vmin;
 		font-weight: 800;
-		color: rgba(255,255,255,0.45);
+		color: var(--game-text-muted);
 	}
 
 	.results-title {
@@ -853,7 +853,7 @@
 		font-size: 9vmin;
 		font-weight: 900;
 		line-height: 1;
-		color: white;
+		color: var(--game-text-primary);
 		text-shadow: 0 0 3vmin rgba(255,255,255,0.18);
 	}
 
@@ -861,7 +861,7 @@
 		margin: 0;
 		font-size: 1.8vmin;
 		font-weight: 700;
-		color: rgba(255,255,255,0.6);
+		color: var(--game-text-muted);
 	}
 
 	.results-actions {
@@ -891,7 +891,7 @@
 		background: rgba(255,255,255,0.03);
 		border: 1px solid rgba(255,255,255,0.1);
 		border-radius: 1vmin;
-		color: rgba(255,255,255,0.4);
+		color: var(--game-text-muted);
 		font-size: 1.4vmin;
 		font-weight: 800;
 		transition: all 0.2s;
@@ -899,7 +899,7 @@
 
 	.lqr-toggle:hover {
 		background: rgba(255,255,255,0.08);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.lqr-toggle.active {
@@ -914,7 +914,7 @@
 
 	.action-btn {
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: 1.5vmin 4vmin;
 		border-radius: 1vmin;
@@ -932,13 +932,13 @@
 	.action-btn.secondary {
 		background: transparent;
 		border: 2px solid rgba(255,255,255,0.2);
-		color: rgba(255,255,255,0.7);
+		color: var(--game-text-muted);
 	}
 
 	.action-btn.secondary:hover {
 		background: rgba(255,255,255,0.1);
 		border-color: rgba(255,255,255,0.4);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	/* Touch controls */
@@ -954,7 +954,7 @@
 	.touch-btn {
 		background: rgba(255,255,255,0.04);
 		border: 1px solid rgba(255,255,255,0.1);
-		color: rgba(255,255,255,0.5);
+		color: var(--game-text-muted);
 		border-radius: 1.5vmin;
 		cursor: pointer;
 		transition: all 0.15s;
@@ -996,7 +996,7 @@
 
 	.touch-btn:hover {
 		background: rgba(255,255,255,0.08);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.touch-btn:active, .active-thrust {

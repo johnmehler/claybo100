@@ -410,7 +410,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--game-text-primary);
 		--sliding-pad-bg: rgba(255, 255, 255, 0.02);
 		--sliding-pad-border: rgba(255, 255, 255, 0.08);
 		--sliding-pad-inset-shadow: rgba(0, 0, 0, 0.5);
@@ -420,12 +420,6 @@
 		--sliding-pad-bg: rgba(255, 245, 228, 0.9);
 		--sliding-pad-border: rgba(120, 94, 62, 0.24);
 		--sliding-pad-inset-shadow: rgba(123, 94, 58, 0.2);
-	}
-
-	.score {
-		font-size: 3vmin;
-		font-weight: 900;
-		letter-spacing: 2px;
 	}
 
 	.board-wrapper {
@@ -477,7 +471,7 @@
 
 	.stat .label {
 		font-size: 1.4vmin;
-		color: rgba(255,255,255,0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 		letter-spacing: 0.2vmin;
 		text-transform: uppercase;
@@ -531,7 +525,7 @@
 		font-weight: 800;
 		border-radius: 1vmin;
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		cursor: pointer;
 		user-select: none;
 		transition: background 0.2s, filter 0.2s;
@@ -602,7 +596,7 @@
 	.tool-btn {
 		background: transparent;
 		border: none;
-		color: rgba(255,255,255,0.6);
+		color: var(--game-text-muted);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -614,7 +608,7 @@
 
 	.tool-btn:hover:not(:disabled) {
 		background: rgba(255,255,255,0.1);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.tool-btn:disabled {
@@ -624,7 +618,7 @@
 
 	.tool-btn.main {
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		padding: 1.2vmin;
 		border-radius: 50%;
 		box-shadow: 0 4px 12px rgba(255, 110, 97, 0.3);
@@ -636,7 +630,7 @@
 	}
 
 	.tool-btn.exit {
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-soft);
 	}
 
 	.tool-btn.exit:hover {
@@ -661,7 +655,7 @@
 	.speed-label {
 		font-size: 1.1vmin;
 		font-weight: 800;
-		color: rgba(255,255,255,0.4);
+		color: var(--game-text-soft);
 		letter-spacing: 0.1vmin;
 	}
 

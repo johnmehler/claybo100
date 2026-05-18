@@ -262,7 +262,7 @@
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
+	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); align-items: center; }
 
 	.board-wrapper { 
 		flex: 1; 
@@ -278,7 +278,7 @@
 
 	.game-stats { display: flex; justify-content: center; align-items: center; gap: 6vmin; margin-bottom: 2vmin; width: 100%; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
-	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
+	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
 	.scoreboard-stat { flex-direction: row; gap: 6vmin; }
 	.score { display: flex; flex-direction: column; align-items: center; }
 	.score .val { font-size: 6vmin; font-weight: 900; }
@@ -307,8 +307,8 @@
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.controls { display: flex; align-items: center; gap: 3vmin; }
 	.diff-select { display: flex; gap: 1vmin; }
-	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; }
-	.diff-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--game-text-muted); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; }
+	.diff-btn:hover { color: var(--game-text-primary); border-color: rgba(255,255,255,0.3); }
 	.diff-btn.active { color: black; background: var(--color-illusion); border-color: var(--color-illusion); box-shadow: 0 0 15px rgba(248, 165, 194, 0.3); }
 
 	.svg-container { 

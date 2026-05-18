@@ -301,33 +301,69 @@
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
+	.game-container {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		height: 100%;
+		color: var(--game-text-primary);
+		align-items: center;
+		--knight-cell-border: rgba(255, 255, 255, 0.14);
+		--knight-cell-visited-border: rgba(255, 255, 255, 0.2);
+	}
+
+	:global(html[data-theme='light']) .game-container {
+		--knight-cell-border: rgba(84, 64, 42, 0.48);
+		--knight-cell-visited-border: rgba(84, 64, 42, 0.62);
+	}
 	.board-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; width: 100%; padding: 1vmin 4vmin; box-sizing: border-box; overflow: hidden; }
 	.game-stats { display: flex; justify-content: center; margin-bottom: 2vmin; width: 100%; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
-	.stat .label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; }
+	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; }
 	.stat .value { font-size: 4.5vmin; font-weight: 900; color: var(--color-illusion); line-height: 1.1; }
-	.stat .total { font-size: 2.2vmin; color: rgba(255,255,255,0.2); font-weight: 600; margin-left: 0.5vmin; }
+	.stat .total { font-size: 2.2vmin; color: var(--game-text-soft); font-weight: 600; margin-left: 0.5vmin; }
 	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; padding-bottom: 2vmin; }
 	
 	.grid { 
-		display: grid; grid-template-columns: repeat(8, 7.5vmin); gap: 0.8vmin; 
-		background: rgba(255,255,255,0.015); padding: 1.5vmin; 
+		display: grid;
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+		grid-template-rows: repeat(8, minmax(0, 1fr));
+		width: min(72vmin, calc(100vw - 4rem), calc(100dvh - 20rem), calc(100% - 0.5rem), calc(100% - 7rem));
+		height: min(72vmin, calc(100vw - 4rem), calc(100dvh - 20rem), calc(100% - 0.5rem), calc(100% - 7rem));
+		max-width: 100%;
+		max-height: calc(100% - 7rem);
+		gap: clamp(0.2rem, 0.8vmin, 0.55rem);
+		background: rgba(255,255,255,0.015);
+		padding: clamp(0.45rem, 1.5vmin, 0.95rem);
+		box-sizing: border-box;
 		border-radius: 2vmin; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);
 	}
 
 	.cell { 
-		width: 7.5vmin; height: 7.5vmin; background: rgba(255,255,255,0.03); 
-		border: 1px solid rgba(255,255,255,0.05); border-radius: 1.2vmin; cursor: default; 
-		transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; 
+		width: 100%; height: 100%; aspect-ratio: 1 / 1; background: rgba(255,255,255,0.03); 
+		border: 1px solid var(--knight-cell-border); border-radius: 1.2vmin; cursor: default; 
+		transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box;
 	}
-	.cell.visited { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.1); }
+	.cell.visited { background: rgba(255,255,255,0.12); border-color: var(--knight-cell-visited-border); }
 	.cell.valid { background: rgba(248, 165, 194, 0.1); cursor: pointer; border: 2px solid var(--color-illusion); }
 	.cell.valid:hover { background: rgba(248, 165, 194, 0.25); transform: scale(1.05); }
 	.cell.current { background: var(--color-illusion); box-shadow: 0 0 20px rgba(248, 165, 194, 0.4); border: none; }
 	.cell.mistake { background: rgba(255, 110, 97, 0.25) !important; box-shadow: 0 0 20px rgba(255, 110, 97, 0.4); border: 2px solid var(--color-bittersweet) !important; z-index: 5; }
 	.cell.correct-next { background: rgba(76, 175, 80, 0.15) !important; border: 2px solid #4CAF50 !important; box-shadow: 0 0 20px rgba(76, 175, 80, 0.4); z-index: 5; }
 	.knight-icon { width: 5vmin; height: 5vmin; color: #000; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+
+	@media (max-width: 900px) {
+		.grid {
+			width: min(82vmin, calc(100vw - 1.25rem), calc(100dvh - 19rem), calc(100% - 6rem));
+			height: min(82vmin, calc(100vw - 1.25rem), calc(100dvh - 19rem), calc(100% - 6rem));
+			max-height: calc(100% - 6rem);
+		}
+
+		.knight-icon {
+			width: clamp(1rem, 4.2vmin, 2rem);
+			height: clamp(1rem, 4.2vmin, 2rem);
+		}
+	}
 	
 	.status-text { 
 		font-size: 3vmin !important; 
@@ -400,7 +436,7 @@
 
 	.tool-btn:hover:not(:disabled) {
 		background: rgba(255,255,255,0.1);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.tool-btn:disabled {
@@ -408,21 +444,8 @@
 		cursor: default;
 	}
 
-	.tool-btn.main {
-		background: var(--color-bittersweet);
-		color: white;
-		padding: 1.2vmin;
-		border-radius: 50%;
-		box-shadow: 0 4px 12px rgba(255, 110, 97, 0.3);
-	}
-
-	.tool-btn.main:hover {
-		transform: scale(1.1);
-		background: var(--color-illusion);
-	}
-
 	.tool-btn.exit {
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-soft);
 	}
 
 	.tool-btn.exit:hover {
@@ -434,10 +457,6 @@
 		height: 3vmin;
 		background: rgba(255,255,255,0.1);
 		margin: 0 1vmin;
-	}
-
-	.speed-control {
-		display: none;
 	}
 
 	.step-counter {

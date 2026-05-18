@@ -454,14 +454,14 @@
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
+	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); align-items: center; }
 	.header-stats { display: flex; justify-content: center; gap: 8vmin; padding: 2vmin; width: 100%; }
 	
 	.stat-box { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,0.05); padding: 1.5vmin 3vmin; border-radius: 1.5vmin; border: 1px solid rgba(255,255,255,0.1); min-width: 25vmin; }
-	.stat-box .label { font-size: 1.2vmin; color: rgba(255,255,255,0.4); font-weight: 800; letter-spacing: 0.2vmin; margin-bottom: 0.5vmin; }
+	.stat-box .label { font-size: 1.2vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; margin-bottom: 0.5vmin; }
 	.stat-box .value { font-size: 3vmin; font-weight: 900; font-variant-numeric: tabular-nums; }
 	.stat-box.optimal .value { color: var(--color-illusion); }
-	.stat-box.previous .value { color: rgba(255, 255, 255, 0.4); }
+	.stat-box.previous .value { color: var(--game-text-muted); }
 
 	.board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 0 4vmin; box-sizing: border-box; }
 	
@@ -488,7 +488,7 @@
 	.marker.start { stroke: var(--color-apple); }
 	.marker.end { stroke: var(--color-bittersweet); }
 
-	.label-text { fill: rgba(255, 255, 255, 0.4); font-size: 16px; font-weight: 800; letter-spacing: 1px; }
+	.label-text { fill: var(--game-text-muted); font-size: 16px; font-weight: 800; letter-spacing: 1px; }
 	.ball { fill: var(--color-bittersweet); filter: drop-shadow(0 0 15px var(--color-bittersweet)); }
 
 	.bottom-bar { 
@@ -504,7 +504,7 @@
 	.action-btn.restart { background: var(--color-bittersweet); color: black; box-shadow: 0 10px 20px -5px rgba(255, 110, 97, 0.3); }
 	.action-btn.restart:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 15px 25px -5px rgba(255, 110, 97, 0.4); }
 	
-	.action-btn.menu { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+	.action-btn.menu { background: rgba(255,255,255,0.05); color: var(--game-text-primary); border: 1px solid rgba(255,255,255,0.1); }
 	.action-btn.menu:not(:disabled):hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
 
 	.exit-btn { font-size: 1.4vmin; padding: 1vmin 3vmin; opacity: 0.8; }

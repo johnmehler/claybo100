@@ -7,7 +7,7 @@
 	const THEME_STORAGE_KEY = 'mathmuseum-theme';
 
 	let { 
-		activeGameActions = { restart: null, newShuffle: null, help: null }
+		activeGameActions = { restart: null, help: null }
 	} = $props();
 
 	let isSidebarCollapsed = $state(true);
@@ -87,7 +87,7 @@
 	</div>
 
 	<nav class="sidebar-nav">
-		{#if activeGameActions.help || activeGameActions.restart || activeGameActions.newShuffle}
+		{#if activeGameActions.help || activeGameActions.restart}
 			<div class="nav-section controls-section" in:fade>
 				<p class="controls-label">GAME CONTROLS</p>
 				<div class="nav-list">
@@ -101,16 +101,6 @@
 						<button class="nav-button control-btn restart" onclick={activeGameActions.restart}>
 							<div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Restart Icon"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
 							<span class="nav-label-text">Restart Game</span>
-						</button>
-					{/if}
-					{#if activeGameActions.newShuffle}
-						<button class="nav-button control-btn shuffle" onclick={activeGameActions.newShuffle}>
-							<div class="nav-icon">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Shuffle Icon">
-									<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
-								</svg>
-							</div>
-							<span class="nav-label-text">New Shuffle</span>
 						</button>
 					{/if}
 				</div>
@@ -373,7 +363,6 @@
 
 	.control-btn.help { color: var(--color-illusion); }
 	.control-btn.restart { color: var(--color-indigo); }
-	.control-btn.shuffle { color: var(--color-bittersweet); }
 	.control-btn:hover { background: rgba(255, 255, 255, 0.05); }
 	.control-btn:hover { background: color-mix(in srgb, var(--panel-bg) 82%, var(--app-text) 8%); }
 

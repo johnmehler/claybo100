@@ -497,13 +497,13 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.nav-extra-btn {
 		background: rgba(255, 255, 255, 0.1);
 		border: 1px solid rgba(255, 255, 255, 0.2);
-		color: white;
+		color: var(--game-text-primary);
 		padding: 0.8vmin 2vmin;
 		border-radius: 0.8vmin;
 		font-weight: 800;
@@ -558,7 +558,7 @@
 
 	.stat .label {
 		font-size: 1vmin;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 	}
 
@@ -706,7 +706,7 @@
 	.control-group label {
 		font-size: 1.2vmin;
 		font-weight: 800;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-muted);
 	}
 
 	.control-group input[type="range"] {
@@ -724,7 +724,7 @@
 	.diff-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-muted);
 		padding: 1vmin 0.5vmin;
 		border-radius: 0.8vmin;
 		font-size: 1vmin;
@@ -735,7 +735,7 @@
 
 	.diff-btn:hover {
 		background: rgba(255, 255, 255, 0.1);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.diff-btn.active {
@@ -763,11 +763,11 @@
 	}
 
 	.bio-row span:first-child {
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-soft);
 	}
 
 	.bio-row span:last-child {
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.controllable {
@@ -818,7 +818,7 @@
 		font-size: 1vmin;
 		text-align: center;
 		margin-top: 0.5vmin;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 	}
 

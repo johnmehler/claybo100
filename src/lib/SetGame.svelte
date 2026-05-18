@@ -220,7 +220,7 @@
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; align-items: center; }
+	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); align-items: center; }
 
 	.board-wrapper { 
 		flex: 1; 
@@ -248,7 +248,7 @@
 
 	.stat .label {
 		font-size: 1.4vmin;
-		color: rgba(255,255,255,0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 		letter-spacing: 0.2vmin;
 		text-transform: uppercase;

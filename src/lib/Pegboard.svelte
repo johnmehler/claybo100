@@ -158,12 +158,12 @@
 </div>
 
 <style>
-	.pegboard-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: white; position: relative; }
+	.pegboard-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); position: relative; }
 	.board-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 1vmin 4vmin; box-sizing: border-box; overflow: hidden; }
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	.stats { display: flex; justify-content: center; gap: 12vmin; margin-bottom: 2vmin; width: 100%; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
-	.label { font-size: 1.4vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.2vmin; }
+	.label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; }
 	.value { font-size: 5vmin; font-weight: 900; color: var(--color-golden); }
 
 	.board {

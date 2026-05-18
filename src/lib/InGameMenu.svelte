@@ -69,7 +69,7 @@
 	.back-btn, .restart-btn, .help-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-muted);
 		padding: 1vmin 2vmin;
 		border-radius: 1vmin;
 		cursor: pointer;
@@ -82,12 +82,12 @@
 	.back-btn:hover, .help-btn:hover {
 		background: rgba(255, 255, 255, 0.08);
 		border-color: var(--color-illusion);
-		color: white;
+		color: var(--game-text-primary);
 	}
 	
 	.restart-btn:hover {
 		background: rgba(255, 255, 255, 0.08);
 		border-color: var(--color-indigo);
-		color: white;
+		color: var(--game-text-primary);
 	}
 </style>

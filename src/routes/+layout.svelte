@@ -43,6 +43,10 @@
 		--app-bg: #09090b;
 		--app-text: #ffffff;
 		--app-muted-text: rgba(255, 255, 255, 0.55);
+		--game-text-primary: #ffffff;
+		--game-text-muted: rgba(255, 255, 255, 0.55);
+		--game-text-soft: rgba(255, 255, 255, 0.38);
+		--game-text-on-accent: #ffffff;
 		--panel-bg: rgba(255, 255, 255, 0.03);
 		--panel-border: rgba(255, 255, 255, 0.08);
 		--game-frame-bg: rgba(255, 255, 255, 0.015);
@@ -55,6 +59,10 @@
 		--app-bg: #f7f1e6;
 		--app-text: #2f251c;
 		--app-muted-text: rgba(47, 37, 28, 0.62);
+		--game-text-primary: #2f251c;
+		--game-text-muted: rgba(47, 37, 28, 0.66);
+		--game-text-soft: rgba(47, 37, 28, 0.52);
+		--game-text-on-accent: #1f1912;
 		--panel-bg: rgba(255, 250, 241, 0.82);
 		--panel-border: rgba(106, 84, 58, 0.2);
 		--game-frame-bg: rgba(255, 249, 238, 0.92);

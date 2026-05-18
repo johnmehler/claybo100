@@ -411,7 +411,7 @@
 
 	.action-btn {
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: 1.5vmin 4vmin;
 		border-radius: 1vmin;
@@ -583,8 +583,7 @@
 
 	.grid-container {
 		width: min(70vmin, calc(100vw - 6vmin), calc(100dvh - 34vmin), calc(100% - 1vmin));
-		aspect-ratio: 1 / 1;
-		height: auto;
+		height: min(70vmin, calc(100vw - 6vmin), calc(100dvh - 34vmin), calc(100% - 1vmin));
 		max-width: 100%;
 		max-height: calc(100% - 0.5rem);
 		box-sizing: border-box;
@@ -619,6 +618,8 @@
 
 	.cell {
 		border: 1px solid var(--ice-cell-border);
+		aspect-ratio: 1 / 1;
+		box-sizing: border-box;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -681,75 +682,9 @@
 		border: 2px solid white;
 	}
 
-	.win-overlay {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background: rgba(0, 0, 0, 0.7);
-		backdrop-filter: blur(15px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 20;
-		text-align: center;
-	}
-
-	.win-content {
-		animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-	}
-
 	@keyframes slideUp {
 		from { transform: translateY(30px); opacity: 0; }
 		to { transform: translateY(0); opacity: 1; }
-	}
-
-	.win-overlay h2 {
-		font-size: 6vmin;
-		color: var(--color-golden);
-		margin: 0;
-		letter-spacing: 0.5vmin;
-		text-shadow: 0 0 20px rgba(255, 203, 92, 0.3);
-	}
-
-	.win-overlay p {
-		font-size: 2.5vmin;
-		color: white;
-		opacity: 0.8;
-		margin-bottom: 4vmin;
-	}
-
-	.win-actions {
-		display: flex;
-		gap: 2vmin;
-		justify-content: center;
-	}
-
-	.win-btn {
-		padding: 1.5vmin 4vmin;
-		border-radius: 1vmin;
-		font-size: 1.8vmin;
-		font-weight: 800;
-		cursor: pointer;
-		transition: all 0.2s;
-		border: none;
-	}
-
-	.win-btn.next {
-		background: var(--color-golden);
-		color: black;
-	}
-
-	.win-btn.restart {
-		background: rgba(255, 255, 255, 0.1);
-		color: white;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-	}
-
-	.win-btn:hover {
-		transform: translateY(-3px);
-		box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 	}
 
 	.bottom-bar {
@@ -801,6 +736,7 @@
 
 		.grid-container {
 			width: min(78vmin, calc(100vw - 1.75rem), calc(100dvh - 18.5rem));
+			height: min(78vmin, calc(100vw - 1.75rem), calc(100dvh - 18.5rem));
 		}
 	}
 </style>

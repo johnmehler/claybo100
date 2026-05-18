@@ -484,11 +484,45 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--game-text-primary);
 		align-items: center;
 		position: relative;
 		transition: background-color 0.3s;
+		--krypto-card-bg: rgba(255, 255, 255, 0.02);
+		--krypto-card-border: rgba(255, 255, 255, 0.08);
+		--krypto-card-hover-bg: rgba(255, 255, 255, 0.08);
+		--krypto-card-hover-border: rgba(255, 255, 255, 0.2);
+		--krypto-card-value-text: #ffffff;
+		--krypto-card-expr-text: rgba(255, 255, 255, 0.4);
+		--krypto-shortcut-text: rgba(255, 255, 255, 0.28);
+		--krypto-shortcut-border: rgba(255, 255, 255, 0.14);
+		--krypto-shortcut-bg: rgba(255, 255, 255, 0.02);
+		--krypto-text-btn-bg: rgba(255, 255, 255, 0.05);
+		--krypto-text-btn-border: rgba(255, 255, 255, 0.18);
+		--krypto-text-btn-text: rgba(255, 255, 255, 0.62);
+		--krypto-text-btn-hover-bg: rgba(255, 255, 255, 0.18);
+		--krypto-text-btn-hover-border: rgba(255, 255, 255, 0.35);
+		--krypto-text-btn-hover-text: #ffffff;
 	}
+
+	:global(html[data-theme='light']) .game-container {
+		--krypto-card-bg: rgba(255, 248, 237, 0.92);
+		--krypto-card-border: rgba(120, 94, 62, 0.45);
+		--krypto-card-hover-bg: rgba(255, 241, 221, 0.96);
+		--krypto-card-hover-border: rgba(120, 94, 62, 0.62);
+		--krypto-card-value-text: #2f251c;
+		--krypto-card-expr-text: rgba(47, 37, 28, 0.72);
+		--krypto-shortcut-text: rgba(47, 37, 28, 0.72);
+		--krypto-shortcut-border: rgba(120, 94, 62, 0.38);
+		--krypto-shortcut-bg: rgba(255, 246, 231, 0.92);
+		--krypto-text-btn-bg: rgba(255, 246, 231, 0.9);
+		--krypto-text-btn-border: rgba(120, 94, 62, 0.38);
+		--krypto-text-btn-text: #2f251c;
+		--krypto-text-btn-hover-bg: rgba(255, 241, 221, 0.98);
+		--krypto-text-btn-hover-border: rgba(120, 94, 62, 0.58);
+		--krypto-text-btn-hover-text: #2f251c;
+	}
+
 	.game-container.flash-red {
 		background-color: rgba(255, 0, 0, 0.2) !important;
 	}
@@ -519,7 +553,7 @@
 	}
 	.stat .label {
 		font-size: 1.4vmin;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--game-text-soft);
 		font-weight: 800;
 		letter-spacing: 0.5vmin;
 		text-transform: uppercase;
@@ -596,7 +630,7 @@
 	.nums-row .num {
 		font-size: 2.2vmin;
 		font-weight: 800;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-muted);
 	}
 
 	.target-row {
@@ -607,7 +641,7 @@
 		font-weight: 800;
 	}
 	.target-row .label {
-		color: rgba(255, 255, 255, 0.2);
+		color: var(--game-text-soft);
 	}
 	.target-row .val {
 		color: var(--color-bittersweet);
@@ -644,7 +678,7 @@
 		align-items: center;
 		gap: 2vmin;
 		font-size: 3vmin;
-		color: white;
+		color: var(--game-text-primary);
 		font-family: "Outfit", sans-serif;
 		background: rgba(255, 255, 255, 0.05);
 		padding: 2vmin 4vmin;
@@ -713,8 +747,8 @@
 		justify-content: center;
 		width: 14vmin;
 		height: 17vmin;
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--krypto-card-bg);
+		border: 1px solid var(--krypto-card-border);
 		border-radius: 2.5vmin;
 		cursor: pointer;
 		transition: all 0.3s;
@@ -723,18 +757,19 @@
 		position: relative;
 	}
 	.block:hover {
-		background: rgba(255, 255, 255, 0.08);
+		background: var(--krypto-card-hover-bg);
 		transform: translateY(-0.5vmin);
-		border-color: rgba(255, 255, 255, 0.2);
+		border-color: var(--krypto-card-hover-border);
 	}
 	.shortcut {
 		font-size: 1.2vmin;
-		color: rgba(255, 255, 255, 0.2);
+		color: var(--krypto-shortcut-text);
 		position: absolute;
 		top: 1vmin;
 		left: 1vmin;
 		font-weight: 800;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--krypto-shortcut-border);
+		background: var(--krypto-shortcut-bg);
 		border-radius: 0.5vmin;
 		padding: 0.1vmin 0.6vmin;
 		pointer-events: none;
@@ -747,11 +782,11 @@
 	.block .val {
 		font-size: 4.5vmin;
 		font-weight: 900;
-		color: white;
+		color: var(--krypto-card-value-text);
 	}
 	.block .expr {
 		font-size: 1.1vmin;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--krypto-card-expr-text);
 		overflow-wrap: anywhere;
 		text-align: center;
 		margin-top: 1vmin;
@@ -769,7 +804,7 @@
 		border-radius: 50%;
 		background: rgba(255, 255, 255, 0.04);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: white;
+		color: var(--krypto-card-value-text);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -822,9 +857,9 @@
 		gap: 1vmin;
 	}
 	.diff-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.4);
+		background: var(--krypto-text-btn-bg);
+		border: 1px solid var(--krypto-text-btn-border);
+		color: var(--krypto-text-btn-text);
 		padding: 1vmin 3vmin;
 		border-radius: 1vmin;
 		cursor: pointer;
@@ -833,8 +868,9 @@
 		transition: all 0.3s;
 	}
 	.diff-btn:hover {
-		color: white;
-		border-color: rgba(255, 255, 255, 0.3);
+		background: var(--krypto-text-btn-hover-bg);
+		color: var(--krypto-text-btn-hover-text);
+		border-color: var(--krypto-text-btn-hover-border);
 	}
 	.diff-btn.active {
 		color: black;
@@ -871,14 +907,14 @@
 	}
 
 	.undo-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border-color: rgba(255, 255, 255, 0.2);
-		color: rgba(255, 255, 255, 0.6);
+		background: var(--krypto-text-btn-bg);
+		border-color: var(--krypto-text-btn-border);
+		color: var(--krypto-text-btn-text);
 	}
 	.undo-btn:hover:not(:disabled) {
-		background: rgba(255, 255, 255, 0.2);
-		color: white;
-		border-color: white;
+		background: var(--krypto-text-btn-hover-bg);
+		color: var(--krypto-text-btn-hover-text);
+		border-color: var(--krypto-text-btn-hover-border);
 	}
 
 	.victory-icon {

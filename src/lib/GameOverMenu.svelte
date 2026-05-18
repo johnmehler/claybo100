@@ -36,7 +36,7 @@
 
 	.action-btn {
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: 1.5vmin 4vmin;
 		border-radius: 1vmin;
@@ -54,12 +54,12 @@
 	.action-btn.secondary {
 		background: transparent;
 		border: 2px solid rgba(255,255,255,0.2);
-		color: rgba(255,255,255,0.7);
+		color: var(--game-text-muted);
 	}
 
 	.action-btn.secondary:hover {
 		background: rgba(255,255,255,0.1);
 		border-color: rgba(255,255,255,0.4);
-		color: white;
+		color: var(--game-text-primary);
 	}
 </style>

@@ -303,7 +303,7 @@
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--game-text-primary);
 		position: relative;
 		overflow: hidden;
 	}
@@ -333,7 +333,7 @@
 		align-items: center;
 	}
 
-	.label { font-size: 1.2vmin; color: rgba(255,255,255,0.3); font-weight: 800; letter-spacing: 0.1vmin; text-transform: uppercase; }
+	.label { font-size: 1.2vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.1vmin; text-transform: uppercase; }
 	.value { font-size: 4vmin; font-weight: 900; color: var(--color-bittersweet); }
 
 	.court {
@@ -376,7 +376,7 @@
 	.step-btn {
 		background: rgba(255,255,255,0.05);
 		border: 1px solid rgba(255,255,255,0.1);
-		color: white;
+		color: var(--game-text-primary);
 		width: 4.5vmin;
 		height: 4.5vmin;
 		border-radius: 1vmin;
@@ -413,7 +413,7 @@
 
 	.shoot-btn {
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: 0 6vmin;
 		height: 8vmin;
@@ -436,7 +436,7 @@
 		align-items: center;
 		gap: 1vmin;
 		cursor: pointer;
-		color: rgba(255,255,255,0.5);
+		color: var(--game-text-muted);
 		font-size: 1.2vmin;
 		font-weight: 800;
 	}
@@ -498,11 +498,6 @@
 		.board-wrapper {
 			padding: 0.5rem;
 			height: 100%;
-			min-height: 0;
-		}
-
-		.game-board {
-			flex: 1;
 			min-height: 0;
 		}
 
