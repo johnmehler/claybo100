@@ -271,6 +271,10 @@
 		border: none;
 	}
 
+	:global(html[data-theme='light']) .hex-grid {
+		background: #e0e0e0;
+	}
+
 	.hex-grid.thinking { opacity: 0.7; pointer-events: none; }
 
 	.hex-wrapper {
