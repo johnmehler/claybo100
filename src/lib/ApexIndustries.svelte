@@ -297,8 +297,8 @@
 		ai.quality = aiActualQuality;
 		const aiUnitCost = Math.max(2, BASE_COST + 0.4 * ai.quality - 0.35 * (ai.employeePay / 100));
 
-		// Production — efficiency above 1.0 yields extra units
-		let aiActualProduction = Math.floor(ai.production * ai.productionEfficiency);
+		// Production — efficiency reduces cost, not output
+		let aiActualProduction = ai.production;
 		if (ai.employeePay < 100 && Math.random() < (100 - ai.employeePay) / 160) {
 			aiActualProduction = Math.floor(aiActualProduction * (0.6 + Math.random() * 0.25));
 		}
@@ -320,7 +320,8 @@
 
 		// Revenue and costs
 		const aiRevenue = aiAvailableUnits * ai.price;
-		const aiProductionCost = aiActualProduction * aiUnitCost;
+		const aiEffectiveUnitsForCost = Math.floor(ai.production / ai.productionEfficiency);
+		const aiProductionCost = aiEffectiveUnitsForCost * aiUnitCost;
 		const aiMarketingCost = ai.marketing;
 		const aiEmployeeCount = calculateEmployeeCount(ai.production);
 		const aiLaborCost = aiEmployeeCount * ai.employeePay;
@@ -399,8 +400,8 @@
 		// Execute AI competitors for this quarter
 		aiCompetitors.forEach((ai, index) => executeAITurn(ai, aiMarketShares[index]));
 
-		// Production and inventory — efficiency above 1.0 yields extra units beyond planned quantity
-		let actualProduction = Math.floor(productionQuantity * productionEfficiency);
+		// Production and inventory — efficiency reduces cost per unit, not output
+		let actualProduction = productionQuantity;
 		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
 			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
 		}
@@ -423,7 +424,8 @@
 		// Revenue and costs
 		revenue = unitsSold * price;
 		unitCost = calculateUnitCost();
-		const productionCost = actualProduction * unitCost;
+		const effectiveUnitsForCost = Math.floor(productionQuantity / productionEfficiency);
+		const productionCost = effectiveUnitsForCost * unitCost;
 		const marketingCost = marketing;
 		const laborCost = calculateLaborCost(productionQuantity, employeePay);
 
@@ -501,8 +503,8 @@
 		if (marketing < avgMarketing * 0.5) messages.push("Marketing budget too low");
 		else if (marketing > avgMarketing * 2) messages.push("Heavy marketing spend");
 
-		if (productionEfficiency < 1.1) messages.push("Low production efficiency");
-		else if (productionEfficiency > 1.3) messages.push("Highly efficient production");
+		if (productionEfficiency < 1.1) messages.push("Low efficiency — higher production costs");
+		else if (productionEfficiency > 1.3) messages.push("High efficiency — lower production costs");
 
 		if (inventory > productionQuantity * 0.5) messages.push("Inventory building up");
 		else if (unitsSold < Math.floor(marketDemand * marketShare) * 0.7) messages.push("Stockouts limiting sales");

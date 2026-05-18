@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>onlinemath.games | Interactive Logic & Math Games</title>
+	<title>Online Math Games - Free Online Math and Puzzle Games</title>
 	<meta name="description" content="onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
 </svelte:head>
 
