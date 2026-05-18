@@ -28,7 +28,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: reset,
 			help: () => instructions.open()
 		});
 	});
@@ -309,16 +308,19 @@
 	.diff-select { display: flex; gap: 1vmin; }
 	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--game-text-muted); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; }
 	.diff-btn:hover { color: var(--game-text-primary); border-color: rgba(255,255,255,0.3); }
-	.diff-btn.active { color: black; background: var(--app-text); border-color: var(--app-text); box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); }
+	.diff-btn.active { color: var(--app-bg); background: var(--app-text); border-color: var(--app-text); box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); }
 
-	.svg-container { 
-		width: 75vmin; 
-		height: 75vmin; 
-		background: rgba(255,255,255,0.015); 
-		border-radius: 3vmin; 
-		border: 1px solid rgba(255,255,255,0.08); 
+	.svg-container {
+		width: min(55vmin, calc(100vw - 12vmin), calc(100% - 4vmin));
+		height: min(55vmin, calc(100vw - 12vmin), calc(100% - 4vmin));
+		background: rgba(255,255,255,0.015);
+		border-radius: 3vmin;
+		border: 1px solid rgba(255,255,255,0.08);
 		backdrop-filter: blur(10px);
 		padding: 2vmin;
+		box-sizing: border-box;
+		max-width: 100%;
+		max-height: 100%;
 	}
 	.board-svg { width: 100%; height: 100%; }
 	.click-zone { cursor: pointer; transition: fill 0.2s; }

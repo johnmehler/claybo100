@@ -265,7 +265,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: resetGame,
 			help: () => instructions.open()
 		});
 	});
@@ -291,10 +290,9 @@
 		<p style="font-size: 0.9em; opacity: 0.7;"><strong>Shortcuts:</strong> [R] Restart, [N] New Puzzle</p>
 	</Instructions>
 
-	<InGameMenu 
-		onBack={onBack} 
-		onHelp={() => instructions.open()} 
-		onRestart={resetGame}
+	<InGameMenu
+		onBack={onBack}
+		onHelp={() => instructions.open()}
 	>
 		<div class="stats-center">
 			<div class="stat">
@@ -309,9 +307,10 @@
 				<div class="status-badge" in:fade>SOLVED!</div>
 			{/if}
 		</div>
-		
+
 		{#snippet rightControls()}
 			<div class="nav-actions">
+				<button class="nav-extra-btn" onclick={resetGame} title="Restart">RESTART [R]</button>
 				{#if isGameOver}
 					<button class="nav-extra-btn optimal-toggle" class:active={showOptimal} onclick={() => showOptimal = !showOptimal}>
 						{showOptimal ? 'HIDE' : 'SHOW'} OPTIMAL
@@ -582,10 +581,10 @@
 	}
 
 	.grid-container {
-		width: min(70vmin, calc(100vw - 6vmin), calc(100dvh - 34vmin), calc(100% - 1vmin));
-		height: min(70vmin, calc(100vw - 6vmin), calc(100dvh - 34vmin), calc(100% - 1vmin));
+		width: min(50vmin, calc(100vw - 12vmin), calc(100% - 4vmin));
+		height: min(50vmin, calc(100vw - 12vmin), calc(100% - 4vmin));
 		max-width: 100%;
-		max-height: calc(100% - 0.5rem);
+		max-height: 100%;
 		box-sizing: border-box;
 		background: var(--ice-board-bg);
 		border: 2px solid var(--ice-board-border);

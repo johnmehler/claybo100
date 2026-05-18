@@ -316,7 +316,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: generate,
 			help: () => instructions.open(),
 		});
 	});
