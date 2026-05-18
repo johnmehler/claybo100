@@ -213,22 +213,35 @@
 		return Math.max(1, Math.min(9, blendedQuality));
 	}
 
-	function updateReputation(): void {
-		const Q = quality;
-		const M = marketing / 1000;
-		// Industry median pay = 100. Pay above median gives small reputation boost.
-		// Pay way below median (sweatshop) damages reputation.
-		const avgPay = payHistory.reduce((s, p) => s + p, 0) / payHistory.length;
-		let payEffect = 0;
-		if (avgPay > 100) {
-			payEffect = 0.01 * Math.min(1, (avgPay - 100) / 100);
-		} else if (avgPay < 70) {
-			payEffect = -0.05 * Math.min(1, (70 - avgPay) / 30);
-		}
-		const nextReputation = 0.97 * reputation + 0.02 * Q + 0.01 * M + payEffect;
-		const clampedReputation = Math.max(0, Math.min(10, nextReputation));
+	// Customer satisfaction — what they actually experienced (0-10 scale)
+	function computeSatisfaction(soldQuality: number, soldPrice: number, fulfillmentRate: number): number {
+		// Value-for-money: quality relative to expected at price (baseline 5 at $15)
+		const expectedQuality = 3 + (soldPrice - 5) * 0.25; // ~3 at $5, ~8 at $25
+		const valueScore = 5 + (soldQuality - expectedQuality) * 1.2;
+		// Fulfillment matters — couldn't get product = unhappy
+		return Math.max(0, Math.min(10, valueScore * fulfillmentRate));
+	}
 
-		reputation = Q >= 5 ? Math.max(BASE_REPUTATION, clampedReputation) : clampedReputation;
+	// Failures — stockouts, low quality, labor scandals (0-10 scale)
+	function computeFailures(stockoutRate: number, soldQuality: number, avgPay: number): number {
+		const stockoutFailure = stockoutRate * 5; // up to 5 if completely stocked out
+		const qualityScandal = Math.max(0, 4 - soldQuality) * 1.5; // up to 4.5 if quality 1
+		const sweatshopScandal = avgPay < 70 ? Math.min(3, (70 - avgPay) / 10) : 0;
+		return Math.min(10, stockoutFailure + qualityScandal + sweatshopScandal);
+	}
+
+	function updateReputation(satisfaction: number, failures: number): void {
+		const M = marketing / 1000; // 0-5 scale
+		// Network effect: high reputation amplifies positive momentum, low rep dampens recovery
+		const networkBoost = 1 + 0.08 * (reputation - 5);
+		// Asymmetric decay: bad reputation is sticky (slower decay), good reputation needs to be earned
+		const decayRate = reputation >= 5 ? 0.92 : 0.95;
+		const nextReputation =
+			decayRate * reputation
+			+ 0.05 * satisfaction * networkBoost
+			+ 0.02 * M
+			- 0.03 * failures;
+		reputation = Math.max(0, Math.min(10, nextReputation));
 	}
 
 	function updateProductionEfficiency(): void {
@@ -299,6 +312,7 @@
 		// Sales (AI gets their share of market demand)
 		const aiActualDemand = Math.floor(marketDemand * aiMarketShare);
 		const aiAvailableUnits = Math.min(ai.inventory, aiActualDemand);
+		const aiSoldQuality = ai.inventoryQuality;
 		ai.inventory -= aiAvailableUnits;
 
 		// Revenue and costs
@@ -310,16 +324,24 @@
 		const aiProfit = aiRevenue - aiCosts;
 		ai.cash += aiProfit;
 
+		// Reputation — driven by satisfaction, marketing, failures
 		const aiAveragePayHistory = ai.payHistory.reduce((sum, pay) => sum + pay, 0) / ai.payHistory.length;
-		let aiPayEffect = 0;
-		if (aiAveragePayHistory > 100) {
-			aiPayEffect = 0.01 * Math.min(1, (aiAveragePayHistory - 100) / 100);
-		} else if (aiAveragePayHistory < 70) {
-			aiPayEffect = -0.05 * Math.min(1, (70 - aiAveragePayHistory) / 30);
-		}
-		const aiNextReputation = 0.97 * ai.reputation + 0.02 * ai.quality + 0.01 * (ai.marketing / 1000) + aiPayEffect;
-		const aiClampedReputation = Math.max(0, Math.min(10, aiNextReputation));
-		ai.reputation = ai.quality >= 5 ? Math.max(BASE_REPUTATION, aiClampedReputation) : aiClampedReputation;
+		const aiFulfillmentRate = aiActualDemand > 0 ? aiAvailableUnits / aiActualDemand : 1;
+		const aiStockoutRate = aiActualDemand > 0 ? Math.max(0, 1 - aiAvailableUnits / aiActualDemand) : 0;
+		const aiExpectedQuality = 3 + (ai.price - 5) * 0.25;
+		const aiValueScore = 5 + (aiSoldQuality - aiExpectedQuality) * 1.2;
+		const aiSatisfaction = Math.max(0, Math.min(10, aiValueScore * aiFulfillmentRate));
+		const aiQualityScandal = Math.max(0, 4 - aiSoldQuality) * 1.5;
+		const aiSweatshopScandal = aiAveragePayHistory < 70 ? Math.min(3, (70 - aiAveragePayHistory) / 10) : 0;
+		const aiFailures = Math.min(10, aiStockoutRate * 5 + aiQualityScandal + aiSweatshopScandal);
+		const aiNetworkBoost = 1 + 0.08 * (ai.reputation - 5);
+		const aiDecayRate = ai.reputation >= 5 ? 0.92 : 0.95;
+		const aiNextReputation =
+			aiDecayRate * ai.reputation
+			+ 0.05 * aiSatisfaction * aiNetworkBoost
+			+ 0.02 * (ai.marketing / 1000)
+			- 0.03 * aiFailures;
+		ai.reputation = Math.max(0, Math.min(10, aiNextReputation));
 
 		const aiTargetEfficiency = 0.9 + 0.5 * ((ai.employeePay + aiAveragePayHistory) / 200);
 		ai.productionEfficiency = Math.max(
@@ -391,6 +413,7 @@
 		// Sales
 		const availableUnits = Math.min(inventory, actualDemand);
 		unitsSold = availableUnits;
+		const soldQuality = inventoryQuality;
 		inventory -= availableUnits;
 
 		// Revenue and costs
@@ -404,8 +427,13 @@
 		profit = revenue - costs;
 		cash += profit;
 
-		// Update hidden state
-		updateReputation();
+		// Update hidden state — reputation driven by realized customer experience
+		const fulfillmentRate = actualDemand > 0 ? unitsSold / actualDemand : 1;
+		const stockoutRate = actualDemand > 0 ? Math.max(0, 1 - unitsSold / actualDemand) : 0;
+		const avgPay = payHistory.reduce((s, p) => s + p, 0) / payHistory.length;
+		const satisfaction = computeSatisfaction(soldQuality, price, fulfillmentRate);
+		const failures = computeFailures(stockoutRate, soldQuality, avgPay);
+		updateReputation(satisfaction, failures);
 		updateProductionEfficiency();
 		simulateCompetitors();
 
