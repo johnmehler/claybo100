@@ -6,29 +6,29 @@
 		$props();
 
 	// Game Constants
-	const TOTAL_TURNS = 12;
+	const TOTAL_TURNS = 6;
 	const INITIAL_CASH = 50000.00;
 	const BASE_COST = 5.00;
 	const BASE_REPUTATION = 5.0;
 	const UNITS_PER_EMPLOYEE = 10;
 
 	// Player inputs (5 per turn)
-	let price = $state(15.00);
+	let price = $state(18.00);
 	let quality = $state(5);
-	let marketing = $state(1000);
+	let marketing = $state(300);
 	let productionQuantity = $state(100);
-	let employeePay = $state(100);
+	let employeePay = $state(80);
 	let qualitySpending = $state(2000);
 	let previousQuality = $state(5);
 	let previousMarketShare = $state(0.2);
 	let inventoryQuality = $state(5);
 
-	let previousPrice = $state(15.00);
+	let previousPrice = $state(18.00);
 	let previousQualitySpending = $state(2000);
-	let previousMarketing = $state(1000);
+	let previousMarketing = $state(300);
 	let previousProductionQuantity = $state(100);
-	let previousEmployeePay = $state(100);
-	let payHistory = $state([100, 100, 100]);
+	let previousEmployeePay = $state(80);
+	let payHistory = $state([80, 80, 80]);
 
 	// Input options
 	const priceOptions = Array.from({ length: 21 }, (_, i) => i + 5);
@@ -78,19 +78,19 @@
 		// Initialize AI competitors
 		aiCompetitors = aiTeamNames.map(name => ({
 			name,
-			price: 15.00,
+			price: 18.00,
 			quality: 5,
 			qualitySpending: 2000,
 			previousQuality: 5,
-			marketing: 1000,
+			marketing: 300,
 			production: 100,
-			employeePay: 100,
+			employeePay: 80,
 			cash: INITIAL_CASH,
 			reputation: BASE_REPUTATION,
 			productionEfficiency: 1.0,
 			inventory: 100,
 			inventoryQuality: 5,
-			payHistory: [100, 100, 100]
+			payHistory: [80, 80, 80]
 		}));
 	}
 
@@ -547,21 +547,21 @@
 		inventoryQuality = 5;
 		marketDemand = 500;
 
-		price = 15.00;
+		price = 18.00;
 		quality = 5;
 		qualitySpending = 2000;
 		previousQuality = 5;
 		previousMarketShare = 0.2;
-		marketing = 1000;
+		marketing = 300;
 		productionQuantity = 100;
-		employeePay = 100;
+		employeePay = 80;
 
-		previousPrice = 15.00;
+		previousPrice = 18.00;
 		previousQualitySpending = 2000;
-		previousMarketing = 1000;
+		previousMarketing = 300;
 		previousProductionQuantity = 100;
-		previousEmployeePay = 100;
-		payHistory = [100, 100, 100];
+		previousEmployeePay = 80;
+		payHistory = [80, 80, 80];
 		segments = BASE_SEGMENTS.map(s => ({ ...s }));
 		priceSensitivity = 1.0;
 
