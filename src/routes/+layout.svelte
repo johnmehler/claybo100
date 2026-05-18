@@ -52,15 +52,15 @@
 	}
 
 	:global(html[data-theme='light']) {
-		--app-bg: #f4f6fb;
-		--app-text: #111827;
-		--app-muted-text: rgba(17, 24, 39, 0.65);
-		--panel-bg: rgba(255, 255, 255, 0.78);
-		--panel-border: rgba(17, 24, 39, 0.14);
-		--game-frame-bg: rgba(255, 255, 255, 0.9);
-		--game-frame-border: rgba(17, 24, 39, 0.14);
-		--game-frame-inner-border: rgba(17, 24, 39, 0.08);
-		--game-mat-glow: rgba(255, 110, 97, 0.07);
+		--app-bg: #f7f1e6;
+		--app-text: #2f251c;
+		--app-muted-text: rgba(47, 37, 28, 0.62);
+		--panel-bg: rgba(255, 250, 241, 0.82);
+		--panel-border: rgba(106, 84, 58, 0.2);
+		--game-frame-bg: rgba(255, 249, 238, 0.92);
+		--game-frame-border: rgba(106, 84, 58, 0.2);
+		--game-frame-inner-border: rgba(106, 84, 58, 0.11);
+		--game-mat-glow: rgba(255, 140, 100, 0.1);
 	}
 
 	:global(html, body) {

@@ -427,29 +427,84 @@
 	}
 
 	.action-btn.secondary {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.7);
+		background: var(--ice-secondary-bg);
+		border: 1px solid var(--ice-secondary-border);
+		color: var(--ice-secondary-text);
 	}
 
 	.action-btn.secondary:hover {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.4);
-		color: white;
+		background: var(--ice-secondary-hover-bg);
+		border-color: var(--ice-secondary-hover-border);
+		color: var(--ice-secondary-hover-text);
 	}
 	.game-inner {
 		display: flex;
 		flex-direction: column;
 		width: 100%;
 		height: 100%;
-		color: white;
+		color: var(--app-text);
 		position: relative;
+		--ice-board-bg: rgba(255, 255, 255, 0.02);
+		--ice-board-border: rgba(255, 255, 255, 0.1);
+		--ice-board-shadow: rgba(0, 0, 0, 0.5);
+		--ice-cell-border: rgba(255, 255, 255, 0.03);
+		--ice-sticky-bg: rgba(75, 106, 190, 0.2);
+		--ice-sticky-border: rgba(255, 255, 255, 0.1);
+		--ice-secondary-bg: rgba(255, 255, 255, 0.05);
+		--ice-secondary-border: rgba(255, 255, 255, 0.1);
+		--ice-secondary-text: rgba(255, 255, 255, 0.7);
+		--ice-secondary-hover-bg: rgba(255, 255, 255, 0.1);
+		--ice-secondary-hover-border: rgba(255, 255, 255, 0.4);
+		--ice-secondary-hover-text: #fff;
+		--ice-stat-value: #a5d8f8;
+		--ice-stat-glow: rgba(165, 216, 248, 0.4);
+	}
+
+	:global(html[data-theme='light']) .game-inner {
+		--ice-board-bg: rgba(255, 246, 231, 0.9);
+		--ice-board-border: rgba(120, 94, 62, 0.24);
+		--ice-board-shadow: rgba(120, 94, 62, 0.22);
+		--ice-cell-border: rgba(120, 94, 62, 0.08);
+		--ice-sticky-bg: rgba(84, 113, 188, 0.18);
+		--ice-sticky-border: rgba(120, 94, 62, 0.16);
+		--ice-secondary-bg: rgba(255, 248, 237, 0.86);
+		--ice-secondary-border: rgba(120, 94, 62, 0.26);
+		--ice-secondary-text: rgba(47, 37, 28, 0.78);
+		--ice-secondary-hover-bg: rgba(255, 241, 218, 0.95);
+		--ice-secondary-hover-border: rgba(120, 94, 62, 0.38);
+		--ice-secondary-hover-text: #2f251c;
+		--ice-stat-value: #5c88b4;
+		--ice-stat-glow: rgba(92, 136, 180, 0.25);
+	}
+
+	.game-inner :global(.nav-row) {
+		padding: clamp(0.75rem, 2vmin, 1.8rem);
+		gap: clamp(0.35rem, 1vmin, 0.75rem);
+	}
+
+	.game-inner :global(.back-btn),
+	.game-inner :global(.help-btn),
+	.game-inner :global(.restart-btn) {
+		background: var(--ice-secondary-bg);
+		border: 1px solid var(--ice-secondary-border);
+		color: var(--ice-secondary-text);
+		padding: clamp(0.4rem, 0.9vmin, 0.75rem) clamp(0.6rem, 1.4vmin, 1.2rem);
+		font-size: clamp(0.68rem, 1.15vmin, 0.95rem);
+	}
+
+	.game-inner :global(.back-btn:hover),
+	.game-inner :global(.help-btn:hover),
+	.game-inner :global(.restart-btn:hover) {
+		background: var(--ice-secondary-hover-bg);
+		border-color: var(--ice-secondary-hover-border);
+		color: var(--ice-secondary-hover-text);
 	}
 
 	.stats-center {
 		display: flex;
 		align-items: center;
-		gap: 4vmin;
+		gap: clamp(1rem, 2.5vmin, 2.5rem);
+		min-width: 0;
 	}
 
 	.status-badge {
@@ -466,6 +521,9 @@
 	.nav-actions {
 		display: flex;
 		gap: 1.5vmin;
+		align-items: center;
+		flex-wrap: wrap;
+		justify-content: flex-end;
 	}
 
 	.stat {
@@ -476,7 +534,7 @@
 
 	.stat .label {
 		font-size: 1.2vmin;
-		color: rgba(255,255,255,0.3);
+		color: var(--app-muted-text);
 		font-weight: 800;
 		letter-spacing: 0.1vmin;
 	}
@@ -484,14 +542,14 @@
 	.stat .value {
 		font-size: 3vmin;
 		font-weight: 900;
-		color: #a5d8f8;
-		text-shadow: 0 0 10px rgba(165, 216, 248, 0.4);
+		color: var(--ice-stat-value);
+		text-shadow: 0 0 10px var(--ice-stat-glow);
 	}
 
 	.nav-extra-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.6);
+		background: var(--ice-secondary-bg);
+		border: 1px solid var(--ice-secondary-border);
+		color: var(--ice-secondary-text);
 		padding: 0.8vmin 1.5vmin;
 		border-radius: 0.8vmin;
 		cursor: pointer;
@@ -501,8 +559,8 @@
 	}
 
 	.nav-extra-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
-		color: white;
+		background: var(--ice-secondary-hover-bg);
+		color: var(--ice-secondary-hover-text);
 		border-color: var(--color-golden);
 	}
 
@@ -519,17 +577,23 @@
 		align-items: center;
 		padding: 1vmin 2vmin;
 		min-height: 0; /* Allow flex child to shrink */
+		overflow: hidden;
+		box-sizing: border-box;
 	}
 
 	.grid-container {
-		width: 70vmin;
-		height: 70vmin;
-		background: rgba(255, 255, 255, 0.02);
-		border: 2px solid rgba(255, 255, 255, 0.1);
+		width: min(70vmin, calc(100vw - 6vmin), calc(100dvh - 34vmin), calc(100% - 1vmin));
+		aspect-ratio: 1 / 1;
+		height: auto;
+		max-width: 100%;
+		max-height: calc(100% - 0.5rem);
+		box-sizing: border-box;
+		background: var(--ice-board-bg);
+		border: 2px solid var(--ice-board-border);
 		border-radius: 2vmin;
 		position: relative;
 		overflow: hidden;
-		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		box-shadow: 0 20px 50px var(--ice-board-shadow);
 	}
 
 	.grid {
@@ -554,7 +618,7 @@
 	}
 
 	.cell {
-		border: 1px solid rgba(255, 255, 255, 0.03);
+		border: 1px solid var(--ice-cell-border);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -570,9 +634,9 @@
 	}
 
 	.cell.sticky {
-		background: rgba(75, 106, 190, 0.2);
+		background: var(--ice-sticky-bg);
 		box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-		border: 1px dashed rgba(255,255,255,0.1);
+		border: 1px dashed var(--ice-sticky-border);
 	}
 
 	.sticky-icon {
@@ -693,5 +757,50 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+	}
+
+	@media (max-width: 900px) {
+		.game-inner :global(.nav-row) {
+			padding: 0.55rem 0.65rem;
+		}
+
+		.game-inner :global(.nav-group) {
+			gap: 0.35rem;
+			min-width: 0;
+		}
+
+		.game-inner :global(.center-content) {
+			flex: 0 1 auto;
+			min-width: 0;
+		}
+
+		.game-inner :global(.back-btn),
+		.game-inner :global(.help-btn),
+		.game-inner :global(.restart-btn) {
+			font-size: 0.66rem;
+			padding: 0.38rem 0.55rem;
+		}
+
+		.stats-center {
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+
+		.stats-center {
+			gap: 0.8rem;
+		}
+
+		.nav-actions {
+			gap: 0.5rem;
+		}
+
+		.nav-extra-btn {
+			font-size: 0.72rem;
+			padding: 0.5rem 0.65rem;
+		}
+
+		.grid-container {
+			width: min(78vmin, calc(100vw - 1.75rem), calc(100dvh - 18.5rem));
+		}
 	}
 </style>

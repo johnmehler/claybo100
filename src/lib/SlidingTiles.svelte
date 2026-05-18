@@ -411,6 +411,15 @@
 		width: 100%;
 		height: 100%;
 		color: white;
+		--sliding-pad-bg: rgba(255, 255, 255, 0.02);
+		--sliding-pad-border: rgba(255, 255, 255, 0.08);
+		--sliding-pad-inset-shadow: rgba(0, 0, 0, 0.5);
+	}
+
+	:global(html[data-theme='light']) .game-inner {
+		--sliding-pad-bg: rgba(255, 245, 228, 0.9);
+		--sliding-pad-border: rgba(120, 94, 62, 0.24);
+		--sliding-pad-inset-shadow: rgba(123, 94, 58, 0.2);
 	}
 
 	.score {
@@ -421,6 +430,7 @@
 
 	.board-wrapper {
 		flex: 1;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
@@ -488,16 +498,17 @@
 	}
 
 	.board-container {
-		width: min(75vmin, calc(100vw - 4vmin), calc(100dvh - 36vmin), calc(100% - 2vmin));
+		width: min(75vmin, calc(100vw - 6vmin), calc(100dvh - 40vmin), calc(100% - 2vmin));
 		aspect-ratio: 1 / 1;
 		height: auto;
 		max-width: 100%;
 		max-height: calc(100% - 2vmin);
+		box-sizing: border-box;
 		padding: 1.5vmin;
-		background: rgba(255,255,255,0.02);
-		border: 1px solid rgba(255,255,255,0.08);
+		background: var(--sliding-pad-bg);
+		border: 1px solid var(--sliding-pad-border);
 		border-radius: 3vmin;
-		box-shadow: inset 0 2px 20px rgba(0,0,0,0.5);
+		box-shadow: inset 0 2px 20px var(--sliding-pad-inset-shadow);
 		position: relative;
 		overflow: hidden;
 	}
