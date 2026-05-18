@@ -266,7 +266,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: () => initGame(false),
 			newShuffle: () => initGame(true),
 			help: () => instructions.open()
 		});
@@ -442,25 +441,27 @@
 		gap: 8vmin;
 		margin-bottom: 2vmin;
 		width: 100%;
+		position: relative;
 	}
 
 	.reshuffle-btn {
-		background: rgba(255, 107, 107, 0.1);
-		border: 1px solid rgba(255, 107, 107, 0.3);
-		color: var(--color-bittersweet);
-		padding: 1vmin 2.8vmin;
-		border-radius: 1vmin;
+		position: absolute;
+		right: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
+		color: var(--app-text);
+		padding: 1vmin 2.5vmin;
+		border-radius: 1.5vmin;
 		cursor: pointer;
 		font-weight: 900;
-		font-size: 1.4vmin;
-		letter-spacing: 0.08vmin;
-		transition: all 0.25s;
+		font-size: 1.8vmin;
+		transition: all 0.2s;
 	}
 
 	.reshuffle-btn:hover {
-		background: var(--color-bittersweet);
-		border-color: var(--color-bittersweet);
-		color: #111;
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 15%);
 	}
 
 	.stat {

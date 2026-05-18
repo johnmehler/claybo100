@@ -228,20 +228,6 @@
 				<span class="label">PROGRESS</span>
 				<span class="value">{moves} <span class="total">/ {SIZE*SIZE}</span></span>
 			</div>
-			{#if gameOver}
-				<div class="stat" transition:fade>
-					<span class="label">STATUS</span>
-					<span class="value status-text" class:perfect={moves === SIZE * SIZE} class:close={moves >= 60 && moves < 64}>
-						{#if moves === SIZE * SIZE}
-							PERFECT TOUR!
-						{:else if moves >= 60}
-							CLOSE!
-						{:else}
-							BETTER LUCK NEXT TIME
-						{/if}
-					</span>
-				</div>
-			{/if}
 		</div>
 
 		<div class="grid">
@@ -322,7 +308,7 @@
 	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; }
 	.stat .value { font-size: 4.5vmin; font-weight: 900; color: var(--app-text); line-height: 1.1; }
 	.stat .total { font-size: 2.2vmin; color: var(--game-text-soft); font-weight: 600; margin-left: 0.5vmin; }
-	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; padding-bottom: 2vmin; }
+	.bottom-bar { height: 12vmin; display: flex; justify-content: center; align-items: center; width: 100%; padding-bottom: 2vmin; background: var(--panel-bg); }
 	
 	.grid { 
 		display: grid;
@@ -344,13 +330,13 @@
 		border: 1px solid var(--knight-cell-border); border-radius: 1.2vmin; cursor: default; 
 		transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box;
 	}
-	.cell.visited { background: rgba(255,255,255,0.12); border-color: var(--knight-cell-visited-border); }
-	.cell.valid { background: rgba(255, 255, 255, 0.1); cursor: pointer; border: 2px solid var(--app-text); }
+	.cell.visited { background: rgba(0,0,0,0.5); border-color: var(--knight-cell-visited-border); }
+	.cell.valid { background: rgba(255, 255, 255, 0.1); cursor: pointer; border: 4px solid var(--app-text); }
 	.cell.valid:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
 	.cell.current { background: var(--app-text); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); border: none; }
 	.cell.mistake { background: rgba(255, 110, 97, 0.25) !important; box-shadow: 0 0 20px rgba(255, 110, 97, 0.4); border: 2px solid var(--color-bittersweet) !important; z-index: 5; }
 	.cell.correct-next { background: rgba(76, 175, 80, 0.15) !important; border: 2px solid #4CAF50 !important; box-shadow: 0 0 20px rgba(76, 175, 80, 0.4); z-index: 5; }
-	.knight-icon { width: 5vmin; height: 5vmin; color: #000; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+	.knight-icon { width: 5vmin; height: 5vmin; color: var(--app-bg); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
 
 	@media (max-width: 900px) {
 		.grid {
@@ -364,16 +350,6 @@
 			height: clamp(1rem, 4.2vmin, 2rem);
 		}
 	}
-	
-	.status-text { 
-		font-size: 3vmin !important; 
-		color: var(--color-bittersweet) !important; 
-		white-space: nowrap; 
-		letter-spacing: -0.02vmin;
-		text-align: center;
-	}
-	.status-text.perfect { color: var(--app-text) !important; text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
-	.status-text.close { color: var(--color-apple) !important; }
 
 	.completion-overlay {
 		position: absolute;
@@ -399,10 +375,10 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 1vmin;
-		background: rgba(15, 23, 42, 0.85);
+		background: var(--panel-bg);
 		padding: 1.2vmin 2.5vmin;
 		border-radius: 2.2vmin;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--panel-border);
 		backdrop-filter: blur(20px);
 		box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 		max-width: 90vw;
@@ -428,7 +404,7 @@
 	}
 
 	.tool-btn:hover:not(:disabled) {
-		background: rgba(255,255,255,0.1);
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 15%);
 		color: var(--game-text-primary);
 	}
 

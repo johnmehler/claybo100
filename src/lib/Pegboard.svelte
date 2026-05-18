@@ -106,7 +106,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: initBoard,
 			help: () => instructions.open()
 		});
 	});
@@ -126,10 +125,7 @@
 				<span class="label">PEGS</span>
 				<span class="value">{pegsRemaining}</span>
 			</div>
-			<div class="stat">
-				<span class="label">MOVES</span>
-				<span class="value">{movesCount}</span>
-			</div>
+			<button class="restart-btn" onclick={initBoard}>RESTART</button>
 		</div>
 
 		<div class="board">
@@ -161,10 +157,28 @@
 	.pegboard-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); position: relative; }
 	.board-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 1vmin 4vmin; box-sizing: border-box; overflow: hidden; }
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
-	.stats { display: flex; justify-content: center; gap: 12vmin; margin-bottom: 2vmin; width: 100%; }
+	.stats { display: flex; justify-content: center; align-items: center; margin-bottom: 2vmin; width: 100%; position: relative; }
 	.stat { display: flex; flex-direction: column; align-items: center; }
 	.label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; }
 	.value { font-size: 5vmin; font-weight: 900; color: var(--app-text); }
+	.restart-btn {
+		position: absolute;
+		right: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		padding: 1vmin 2.5vmin;
+		border-radius: 1.5vmin;
+		font-size: 1.8vmin;
+		font-weight: 900;
+		cursor: pointer;
+		background: var(--panel-bg);
+		color: var(--app-text);
+		border: 1px solid var(--panel-border);
+		transition: all 0.2s;
+	}
+	.restart-btn:hover {
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 15%);
+	}
 
 	.board {
 		display: grid; grid-template-columns: repeat(7, 7.5vmin); gap: 1vmin; padding: 2vmin;
@@ -174,13 +188,13 @@
 
 	.cell { width: 7.5vmin; height: 7.5vmin; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; border: none; background: transparent; cursor: default; }
 	.cell.hidden { visibility: hidden; }
-	.cell.hole { background: rgba(0,0,0,0.3); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s; }
+	.cell.hole { background: rgba(0,0,0,0.3); border: 1px solid rgba(128, 128, 128, 0.3); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s; }
 	.cell.hole:hover { background: rgba(255,255,255,0.05); }
 	.cell.selected { background: rgba(255,255,255,0.15); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
 	.cell.target { background: rgba(105, 175, 75, 0.2); box-shadow: inset 0 0 10px rgba(105, 175, 75, 0.3); }
 
-	.peg { width: 4vmin; height: 4vmin; border-radius: 50%; background: var(--app-text); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-	.selected .peg { background: white; scale: 1.1; }
+	.peg { width: 4vmin; height: 4vmin; border-radius: 50%; background: #f5deb3; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+	.selected .peg { background: #f5deb3; scale: 1.1; }
 
 	.completion-overlay { position: absolute; top: 0; left: -150%; width: 150%; height: 100%; background: rgba(255, 255, 255, 0.3); transform: skewX(-25deg); animation: swoosh 0.8s ease-in-out forwards; pointer-events: none; z-index: 20; }
 	@keyframes swoosh { 0% { left: -150%; } 100% { left: 150%; } }
