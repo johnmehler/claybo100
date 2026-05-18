@@ -139,24 +139,21 @@
 	</nav>
 
 	<div class="sidebar-footer">
-		<button class="theme-toggle-btn" onclick={toggleTheme}>
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Theme Toggle Icon">
-				{#if theme === 'dark'}
-					<path d="M12 3a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1z" />
-					<path d="M12 18a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1z" />
-					<path d="M4.93 4.93a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 0 1-1.42 1.41L4.93 6.34a1 1 0 0 1 0-1.41z" />
-					<path d="M16.24 16.24a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 1 1-1.42 1.41l-1.42-1.42a1 1 0 0 1 0-1.41z" />
-					<path d="M3 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1z" />
-					<path d="M18 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1z" />
-					<path d="M6.34 16.24a1 1 0 0 1 1.42 0 1 1 0 0 1 0 1.41l-1.42 1.42a1 1 0 1 1-1.41-1.42l1.41-1.41z" />
-					<path d="M17.66 4.93a1 1 0 0 1 1.41 1.41l-1.42 1.42a1 1 0 0 1-1.41-1.42l1.42-1.41z" />
+		<div class="theme-buttons">
+			<button class="theme-btn" class:active={theme === 'light'} onclick={() => applyTheme('light')} aria-label="Light mode">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<circle cx="12" cy="12" r="4" />
-				{:else}
+					<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+				</svg>
+				<span>Light</span>
+			</button>
+			<button class="theme-btn" class:active={theme === 'dark'} onclick={() => applyTheme('dark')} aria-label="Dark mode">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0a7 7 0 0 0 9.79 9.79z" />
-				{/if}
-			</svg>
-			<span>{theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}</span>
-		</button>
+				</svg>
+				<span>Dark</span>
+			</button>
+		</div>
 
 		<a href="/" class="menu-back-btn">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Exit Icon"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg>
@@ -414,32 +411,44 @@
 		gap: 1vmin;
 	}
 
-	.theme-toggle-btn {
-		width: 100%;
+	.theme-buttons {
 		display: flex;
+		gap: 0.8vmin;
+	}
+
+	.theme-btn {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 1.5vmin;
-		padding: 1.4vmin 1.6vmin;
+		gap: 0.6vmin;
+		padding: 1.2vmin 1vmin;
 		background: color-mix(in srgb, var(--panel-bg) 86%, var(--color-golden) 8%);
 		border: 1px solid var(--panel-border);
 		border-radius: 1.2vmin;
-		color: var(--app-text);
-		font-weight: 800;
-		font-size: 1.35vmin;
+		color: var(--app-muted-text);
+		font-weight: 700;
+		font-size: 1.2vmin;
 		cursor: pointer;
-		transition: all 0.25s;
-		letter-spacing: 0.08vmin;
+		transition: all 0.25s ease;
 	}
 
-	.theme-toggle-btn:hover {
+	.theme-btn:hover {
 		background: color-mix(in srgb, var(--panel-bg) 74%, var(--color-golden) 18%);
-		transform: translateY(-1px);
+		color: var(--app-text);
 	}
 
-	.theme-toggle-btn svg {
-		width: 1.8vmin;
-		height: 1.8vmin;
+	.theme-btn.active {
+		background: var(--color-golden);
+		border-color: var(--color-golden);
+		color: var(--game-text-on-accent);
+		box-shadow: 0 0.2vmin 0.5vmin rgba(251, 191, 36, 0.3);
+	}
+
+	.theme-btn svg {
+		width: 1.6vmin;
+		height: 1.6vmin;
 	}
 
 	.menu-back-btn {
@@ -549,13 +558,17 @@
 			gap: 0.6rem;
 		}
 
-		.theme-toggle-btn {
-			padding: 0.82rem;
-			font-size: 0.76rem;
-			gap: 0.55rem;
+		.theme-buttons {
+			gap: 0.5rem;
 		}
 
-		.theme-toggle-btn svg {
+		.theme-btn {
+			padding: 0.75rem 0.6rem;
+			font-size: 0.75rem;
+			gap: 0.4rem;
+		}
+
+		.theme-btn svg {
 			width: 1rem;
 			height: 1rem;
 		}
