@@ -22,7 +22,7 @@
 		width: 100%;
 		background: rgba(255, 255, 255, 0.02);
 		border-top: 1px solid rgba(255, 255, 255, 0.06);
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-muted);
 		font-size: 12px;
 	}
 
@@ -36,7 +36,7 @@
 	.footer-content h2 {
 		font-size: 2vmin;
 		font-weight: 800;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-primary);
 		margin: 0 0 1vmin;
 	}
 
@@ -59,7 +59,7 @@
 	}
 
 	a {
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--game-text-soft);
 		text-decoration: none;
 		transition: color 0.2s;
 	}
