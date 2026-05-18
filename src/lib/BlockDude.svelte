@@ -586,7 +586,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		color: white;
+		color: var(--game-text-primary);
 		font-family: "Outfit", "Inter", sans-serif;
 		background: #09090b;
 		padding: 2rem;
@@ -601,7 +601,7 @@
 
 	.level-badge {
 		background: #3b82f6;
-		color: white;
+		color: var(--game-text-on-accent);
 		font-weight: 900;
 		font-size: 0.7rem;
 		padding: 0.2rem 0.8rem;
@@ -750,7 +750,7 @@
 	.btn {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 		padding: 1rem 2rem;
 		border-radius: 12px;
 		font-weight: 800;

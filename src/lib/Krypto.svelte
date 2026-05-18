@@ -982,7 +982,7 @@
 
 	.loser-sub {
 		font-size: 1.8vmin;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-muted);
 		font-weight: 600;
 	}
 

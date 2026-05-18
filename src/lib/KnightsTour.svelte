@@ -424,7 +424,7 @@
 	.tool-btn {
 		background: transparent;
 		border: none;
-		color: rgba(255,255,255,0.6);
+		color: var(--game-text-muted);
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -462,7 +462,7 @@
 	.step-counter {
 		font-size: 1.4vmin;
 		font-weight: 800;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-soft);
 		letter-spacing: 0.1vmin;
 		min-width: 10vmin;
 		text-align: center;

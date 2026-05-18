@@ -35,7 +35,7 @@
 		left: 4vmin;
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-muted);
 		padding: 1vmin 2.5vmin;
 		border-radius: 1vmin;
 		cursor: pointer;
@@ -46,7 +46,7 @@
 
 	.back-btn:hover {
 		background: rgba(255, 255, 255, 0.1);
-		color: white;
+		color: var(--game-text-primary);
 		border-color: rgba(255, 255, 255, 0.3);
 	}
 
@@ -70,7 +70,7 @@
 	}
 
 	p {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-muted);
 		font-size: 2.5vmin;
 		margin-bottom: 4vmin;
 	}

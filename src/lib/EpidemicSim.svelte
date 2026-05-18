@@ -741,7 +741,7 @@
 	.diff-btn.active {
 		background: var(--color-bittersweet);
 		border-color: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		box-shadow: 0 0 15px rgba(255, 110, 97, 0.3);
 	}
 
@@ -849,7 +849,7 @@
 	.action-btn {
 		margin-top: 2vmin;
 		background: var(--color-bittersweet);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: 1.5vmin 4vmin;
 		border-radius: 1vmin;

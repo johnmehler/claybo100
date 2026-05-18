@@ -293,7 +293,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		color: rgba(255, 255, 255, 0.1);
+		color: var(--game-text-soft);
 		transition: all 0.3s;
 		gap: 1.5vmin;
 	}

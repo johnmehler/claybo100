@@ -608,7 +608,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: flex-start;
-		color: white;
+		color: var(--game-text-primary);
 		font-family: "Outfit", "Inter", sans-serif;
 		padding: clamp(0.75rem, 1.8vmin, 1.5rem);
 		position: relative;
@@ -645,7 +645,7 @@
 
 	.random-btn {
 		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: clamp(0.42rem, 1vmin, 0.55rem) clamp(0.8rem, 1.9vmin, 1.2rem);
 		border-radius: 99px;
@@ -688,7 +688,7 @@
 
 	.game-header p {
 		margin: 0;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-muted);
 		font-size: clamp(0.72rem, 1.8vmin, 0.92rem);
 		max-width: 500px;
 		line-height: 1.45;
@@ -726,7 +726,7 @@
 		font-size: 0.7rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1rem;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--game-text-soft);
 		margin-left: 0.5rem;
 	}
 
@@ -757,7 +757,7 @@
 		gap: clamp(0.2rem, 0.7vmin, 0.4rem);
 		cursor: pointer;
 		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.inventory-item:disabled {
@@ -826,7 +826,7 @@
 
 	.inventory-hint {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--game-text-soft);
 		text-align: center;
 		font-style: italic;
 		margin-top: 0.5rem;
@@ -1207,7 +1207,7 @@
 
 	.win-content button {
 		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
-		color: white;
+		color: var(--game-text-on-accent);
 		border: none;
 		padding: 1rem 3rem;
 		font-size: 1.4rem;

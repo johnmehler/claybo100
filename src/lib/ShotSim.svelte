@@ -467,10 +467,12 @@
 	.distance-label {
 		position: absolute;
 		bottom: 2vmin;
+		left: 50%;
+		transform: translateX(-50%);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		color: rgba(255,255,255,0.3);
+		color: var(--game-text-soft);
 		font-size: 1.4vmin;
 		font-weight: 800;
 	}

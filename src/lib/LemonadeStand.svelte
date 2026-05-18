@@ -639,7 +639,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		color: white;
+		color: var(--game-text-primary);
 		font-family: "Outfit", "Inter", sans-serif;
 		background: #09090b;
 		padding: 2rem;
@@ -695,7 +695,7 @@
 
 	.stat .label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -751,7 +751,7 @@
 
 	.price-control .label {
 		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--game-text-primary);
 		font-weight: 600;
 	}
 
@@ -764,7 +764,7 @@
 	.price-buttons button {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 		padding: 0.45rem 0.85rem;
 		border-radius: 8px;
 		font-weight: 700;
@@ -791,7 +791,7 @@
 	.recipe-panel h3 {
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		margin: 0 0 1rem;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -811,7 +811,7 @@
 
 	.recipe-item .label {
 		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--game-text-primary);
 		font-weight: 600;
 	}
 
@@ -824,7 +824,7 @@
 	.recipe-control button {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 		padding: 0.3rem 0.6rem;
 		border-radius: 6px;
 		font-weight: 700;
@@ -896,7 +896,7 @@
 	.secondary-btn {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.secondary-btn:hover {
@@ -950,7 +950,7 @@
 
 	.result .label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -973,7 +973,7 @@
 
 	.next-btn, .restart-btn {
 		background: #10b981;
-		color: white;
+		color: var(--game-text-on-accent);
 		width: 100%;
 	}
 
@@ -995,7 +995,7 @@
 
 	.final-stat .label {
 		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -1017,7 +1017,7 @@
 		font-size: 1rem;
 		font-weight: 700;
 		margin: 0 0 1rem;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 	}
 
 	.history-list {
@@ -1068,7 +1068,7 @@
 	}
 
 	.buy-menu > p {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-muted);
 		margin: 0 0 1.5rem;
 	}
 
@@ -1105,7 +1105,7 @@
 	.buy-table td:nth-child(2) button {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 		padding: 0.4rem 0.8rem;
 		border-radius: 6px;
 		font-weight: 700;
@@ -1161,7 +1161,7 @@
 
 	.buy-btn {
 		background: #10b981;
-		color: white;
+		color: var(--game-text-on-accent);
 	}
 
 	.buy-btn:hover:not(:disabled) {
@@ -1171,7 +1171,7 @@
 	.close-btn {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.close-btn:hover {
@@ -1243,15 +1243,12 @@
 			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
-		.weather-panel,
-		.price-panel,
+		.weather-panel,	
 		.recipe-panel {
 			margin-bottom: 0.6rem;
 		}
 
-		.recipe-panel h3,
-		.price-panel h3,
-		.weather-panel h3 {
+		.recipe-panel h3 {
 			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
@@ -1276,14 +1273,6 @@
 
 		.recipe-controls {
 			gap: 0.4rem;
-		}
-
-		.recipe-slider {
-			padding: 0.4rem;
-		}
-
-		.recipe-slider label {
-			font-size: clamp(0.65rem, 2.5vw, 0.75rem);
 		}
 
 		.action-buttons {

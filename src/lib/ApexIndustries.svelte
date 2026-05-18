@@ -1172,7 +1172,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: flex-start;
-		color: white;
+		color: var(--game-text-primary);
 		font-family: "Outfit", "Inter", sans-serif;
 		background: #09090b;
 		padding: 2rem;
@@ -1187,7 +1187,7 @@
 
 	.turn-badge {
 		background: #3b82f6;
-		color: white;
+		color: var(--game-text-on-accent);
 		font-weight: 900;
 		font-size: 0.7rem;
 		padding: 0.2rem 0.8rem;
@@ -1214,7 +1214,7 @@
 	.tab-btn {
 		background: rgba(255, 255, 255, 0.05);
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		padding: 0.6rem 1rem;
 		border-radius: 8px;
 		font-weight: 600;
@@ -1226,13 +1226,13 @@
 
 	.tab-btn:hover {
 		background: rgba(255, 255, 255, 0.1);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.tab-btn.active {
 		background: #3b82f6;
 		border-color: #3b82f6;
-		color: white;
+		color: var(--game-text-on-accent);
 	}
 
 	@media (max-width: 1024px) {
@@ -1280,13 +1280,13 @@
 	.history-header {
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 		margin: 0 0 0.5rem;
 	}
 
 	.quality-label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
@@ -1309,7 +1309,7 @@
 
 	.inventory-label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
@@ -1324,7 +1324,7 @@
 		padding: 0.4rem 0.8rem;
 		font-size: 0.75rem;
 		background: rgba(239, 68, 68, 0.1);
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--game-text-muted);
 		border: 1px solid rgba(239, 68, 68, 0.3);
 		border-radius: 6px;
 		cursor: pointer;
@@ -1334,7 +1334,7 @@
 	.dump-btn:hover {
 		background: rgba(239, 68, 68, 0.2);
 		border-color: rgba(239, 68, 68, 0.5);
-		color: white;
+		color: var(--game-text-primary);
 	}
 
 	.input-preview {
@@ -1350,14 +1350,14 @@
 
 	.preview-label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
 	.preview-value {
 		font-size: 0.85rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 	}
 
 	.efficiency-preview {
@@ -1373,7 +1373,7 @@
 
 	.efficiency-label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
@@ -1394,7 +1394,7 @@
 	.projections-panel h3 {
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 		margin: 0 0 1rem;
 	}
 
@@ -1427,14 +1427,14 @@
 
 	.projection-label {
 		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
 	.projection-value {
 		font-size: 0.85rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 	}
 
 	.final-charts {
@@ -1444,7 +1444,7 @@
 	.final-charts h3 {
 		font-size: 1rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 		margin: 0 0 1rem;
 	}
 
@@ -1464,7 +1464,7 @@
 	.chart-grid h4 {
 		font-size: 0.85rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--game-text-muted);
 		margin: 0 0 0.75rem;
 	}
 
@@ -1488,18 +1488,18 @@
 	}
 
 	.segment-table th {
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
 	.segment-table td {
-		color: rgba(255, 255, 255, 0.85);
+		color: var(--game-text-muted);
 	}
 
 	.research-card p,
 	.insight-card p {
 		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		margin: 0 0 0.5rem;
 		line-height: 1.5;
 	}
@@ -1507,7 +1507,7 @@
 	.research-note,
 	.insight-note {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-style: italic;
 		margin: 0;
 	}
@@ -1525,7 +1525,7 @@
 
 	.history-stat .label {
 		font-size: 0.7rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		text-transform: uppercase;
 		display: block;
@@ -1539,7 +1539,7 @@
 
 	.no-data {
 		text-align: center;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-size: 0.9rem;
 		padding: 2rem;
 	}
@@ -1552,7 +1552,7 @@
 
 	.insight-table td {
 		padding: 0.5rem;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		font-weight: 600;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 	}
@@ -1579,7 +1579,7 @@
 	.position-label {
 		font-size: 0.8rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 	}
 
 	.ai-team-detail {
@@ -1597,7 +1597,7 @@
 		display: block;
 		margin-bottom: 0.3rem;
 		font-size: 0.85rem;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 	}
 
 	.chart-container {
@@ -1615,7 +1615,7 @@
 		padding: 0.5rem 1rem;
 		font-size: 0.85rem;
 		background: rgba(255, 255, 255, 0.05);
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 6px;
 		cursor: pointer;
@@ -1624,13 +1624,13 @@
 
 	.chart-btn:hover {
 		background: rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 	}
 
 	.chart-btn.active {
 		background: #3b82f6;
 		border-color: #3b82f6;
-		color: white;
+		color: var(--game-text-on-accent);
 	}
 
 	.chart-card {
@@ -1643,7 +1643,7 @@
 	.chart-card h3 {
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.9);
+		color: var(--game-text-primary);
 		margin: 0 0 1rem;
 	}
 
@@ -1690,7 +1690,7 @@
 
 	.stat .label {
 		font-size: 0.7rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -1715,7 +1715,7 @@
 	.inputs-panel h3 {
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		margin: 0 0 1rem;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -1735,7 +1735,7 @@
 
 	.input-group label {
 		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--game-text-soft);
 		font-weight: 600;
 	}
 
@@ -1743,7 +1743,7 @@
 	.input-group input[type="number"] {
 		background: #27272a;
 		border: 1px solid #3f3f46;
-		color: white;
+		color: var(--game-text-primary);
 		padding: 0.6rem 0.8rem;
 		border-radius: 8px;
 		font-weight: 700;
@@ -1774,7 +1774,7 @@
 	.competitor-panel h3 {
 		font-size: 0.8rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		margin: 0 0 0.75rem;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -1788,7 +1788,7 @@
 
 	.competitor-table td {
 		padding: 0.5rem;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 		font-weight: 600;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 	}
@@ -1814,7 +1814,7 @@
 
 	.execute-btn {
 		background: #3b82f6;
-		color: white;
+		color: var(--game-text-on-accent);
 	}
 
 	.execute-btn:hover {
@@ -1846,7 +1846,7 @@
 		border-radius: 8px;
 		margin-bottom: 1.5rem;
 		font-size: 0.9rem;
-		color: rgba(255, 255, 255, 0.8);
+		color: var(--game-text-muted);
 		font-weight: 600;
 	}
 
@@ -1865,7 +1865,7 @@
 
 	.result .label {
 		font-size: 0.75rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -1894,7 +1894,7 @@
 		margin-bottom: 1.5rem;
 		font-size: 0.9rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 	}
 
 	.arrow.up {
@@ -1909,7 +1909,7 @@
 
 	.next-btn, .restart-btn {
 		background: #10b981;
-		color: white;
+		color: var(--game-text-on-accent);
 	}
 
 	.next-btn:hover, .restart-btn:hover {
@@ -1931,7 +1931,7 @@
 
 	.final-stat .label {
 		font-size: 0.8rem;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--game-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -1953,7 +1953,7 @@
 		font-size: 1rem;
 		font-weight: 700;
 		margin: 0 0 1rem;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--game-text-muted);
 	}
 
 	.history-list {
