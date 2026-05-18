@@ -33,7 +33,7 @@
 	// Input options
 	const priceOptions = Array.from({ length: 21 }, (_, i) => i + 5);
 	const qualitySpendingOptions = Array.from({ length: 161 }, (_, i) => i * 100);
-	const marketingOptions = [0, 500, 1000, 2000, 3000, 5000, 8000];
+	const marketingOptions = Array.from({ length: 51 }, (_, i) => i * 100);
 	const productionOptions = [50, 100, 150, 200, 300, 500];
 	const payOptions = Array.from({ length: 16 }, (_, i) => 50 + i * 10);
 
@@ -216,19 +216,31 @@
 	function updateReputation(): void {
 		const Q = quality;
 		const M = marketing / 1000;
-		const nextReputation = 0.97 * reputation + 0.02 * Q + 0.01 * M;
+		// Industry median pay = 100. Pay above median gives small reputation boost.
+		// Pay way below median (sweatshop) damages reputation.
+		const avgPay = payHistory.reduce((s, p) => s + p, 0) / payHistory.length;
+		let payEffect = 0;
+		if (avgPay > 100) {
+			payEffect = 0.01 * Math.min(1, (avgPay - 100) / 100);
+		} else if (avgPay < 70) {
+			payEffect = -0.05 * Math.min(1, (70 - avgPay) / 30);
+		}
+		const nextReputation = 0.97 * reputation + 0.02 * Q + 0.01 * M + payEffect;
 		const clampedReputation = Math.max(0, Math.min(10, nextReputation));
 
 		reputation = Q >= 5 ? Math.max(BASE_REPUTATION, clampedReputation) : clampedReputation;
 	}
 
 	function updateProductionEfficiency(): void {
-		const E = employeePay / 100;
-		const targetEfficiency = 0.9 + 0.25 * E;
+		// Efficiency is driven by sustained pay (history) so consistently
+		// paying above median keeps efficiency high without needing raises.
+		const avgPay = payHistory.reduce((s, p) => s + p, 0) / payHistory.length;
+		const E = (employeePay + avgPay) / 200;
+		const targetEfficiency = 0.9 + 0.5 * E;
 
 		productionEfficiency = Math.max(
-			0.8,
-			Math.min(1.6, 0.98 * productionEfficiency + 0.02 * targetEfficiency)
+			0.7,
+			Math.min(1.6, 0.7 * productionEfficiency + 0.3 * targetEfficiency)
 		);
 	}
 
@@ -269,8 +281,8 @@
 		ai.quality = aiActualQuality;
 		const aiUnitCost = Math.max(2, BASE_COST + 0.4 * ai.quality - 0.35 * (ai.employeePay / 100));
 
-		// Production
-		let aiActualProduction = Math.min(ai.production, Math.floor(ai.production * ai.productionEfficiency));
+		// Production — efficiency above 1.0 yields extra units
+		let aiActualProduction = Math.floor(ai.production * ai.productionEfficiency);
 		if (ai.employeePay < 100 && Math.random() < (100 - ai.employeePay) / 160) {
 			aiActualProduction = Math.floor(aiActualProduction * (0.6 + Math.random() * 0.25));
 		}
@@ -298,15 +310,21 @@
 		const aiProfit = aiRevenue - aiCosts;
 		ai.cash += aiProfit;
 
-		const aiNextReputation = 0.97 * ai.reputation + 0.02 * ai.quality + 0.01 * (ai.marketing / 1000);
+		const aiAveragePayHistory = ai.payHistory.reduce((sum, pay) => sum + pay, 0) / ai.payHistory.length;
+		let aiPayEffect = 0;
+		if (aiAveragePayHistory > 100) {
+			aiPayEffect = 0.01 * Math.min(1, (aiAveragePayHistory - 100) / 100);
+		} else if (aiAveragePayHistory < 70) {
+			aiPayEffect = -0.05 * Math.min(1, (70 - aiAveragePayHistory) / 30);
+		}
+		const aiNextReputation = 0.97 * ai.reputation + 0.02 * ai.quality + 0.01 * (ai.marketing / 1000) + aiPayEffect;
 		const aiClampedReputation = Math.max(0, Math.min(10, aiNextReputation));
 		ai.reputation = ai.quality >= 5 ? Math.max(BASE_REPUTATION, aiClampedReputation) : aiClampedReputation;
 
-		const aiAveragePayHistory = ai.payHistory.reduce((sum, pay) => sum + pay, 0) / ai.payHistory.length;
-		const aiTargetEfficiency = 0.9 + 0.25 * ((ai.employeePay + aiAveragePayHistory) / 200);
+		const aiTargetEfficiency = 0.9 + 0.5 * ((ai.employeePay + aiAveragePayHistory) / 200);
 		ai.productionEfficiency = Math.max(
-			0.8,
-			Math.min(1.6, 0.98 * ai.productionEfficiency + 0.02 * aiTargetEfficiency)
+			0.7,
+			Math.min(1.6, 0.7 * ai.productionEfficiency + 0.3 * aiTargetEfficiency)
 		);
 
 		ai.previousQuality = ai.quality;
@@ -355,8 +373,8 @@
 		// Execute AI competitors for this quarter
 		aiCompetitors.forEach((ai, index) => executeAITurn(ai, aiMarketShares[index]));
 
-		// Production and inventory
-		let actualProduction = Math.min(productionQuantity, Math.floor(productionQuantity * productionEfficiency));
+		// Production and inventory — efficiency above 1.0 yields extra units beyond planned quantity
+		let actualProduction = Math.floor(productionQuantity * productionEfficiency);
 		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
 			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
 		}
@@ -468,8 +486,8 @@
 	const projectedQuality = $derived(calculateQualityFromSpending(qualitySpending, previousQuality));
 
 	const averagePayHistory = $derived(payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length);
-	const currentEfficiency = $derived(0.9 + 0.25 * ((employeePay + averagePayHistory) / 200));
-	const previousEfficiency = $derived(0.9 + 0.25 * ((previousEmployeePay + averagePayHistory) / 200));
+	const currentEfficiency = $derived(0.9 + 0.5 * ((employeePay + averagePayHistory) / 200));
+	const previousEfficiency = $derived(0.9 + 0.5 * ((previousEmployeePay + averagePayHistory) / 200));
 
 	const projectedUnitCost = $derived(BASE_COST + 0.4 * projectedQuality - 0.35 * (employeePay / 100));
 	const projectedProductionCost = $derived(productionQuantity * projectedUnitCost);
@@ -593,11 +611,7 @@
 				</div>
 				<div class="input-group">
 					<label for="marketing">Marketing</label>
-					<select id="marketing" bind:value={marketing}>
-						{#each marketingOptions as option}
-							<option value={option}>${option}</option>
-						{/each}
-					</select>
+					<input type="number" id="marketing" bind:value={marketing} min="0" max="5000" step="100" />
 					<div class="input-preview">
 						<span class="preview-label">Change:</span>
 						<span class="preview-value">${previousMarketing} → ${marketing}</span>
