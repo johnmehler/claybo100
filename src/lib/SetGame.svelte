@@ -44,7 +44,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: init,
 			help: () => instructions.open()
 		});
 	});

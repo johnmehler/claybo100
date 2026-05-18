@@ -577,7 +577,6 @@
 
 	onMount(() => {
 		registerActions({
-			restart: resetGame,
 			newShuffle: resetGame,
 		});
 	});

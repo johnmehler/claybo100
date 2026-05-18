@@ -496,7 +496,6 @@
 		window.addEventListener("keydown", handleKeyDown);
 		window.addEventListener("keyup", handleKeyUp);
 		registerActions({
-			restart: resetLevel,
 			newShuffle: nextLevel,
 		});
 		return () => {

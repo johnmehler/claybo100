@@ -410,7 +410,6 @@
 		currentWeather = generateWeather();
 		
 		registerActions({
-			restart: resetGame,
 			newShuffle: resetGame,
 		});
 	});

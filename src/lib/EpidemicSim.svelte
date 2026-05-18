@@ -203,7 +203,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: initSim,
 			help: () => instructions.open(),
 		});
 	});

@@ -334,7 +334,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: reset,
 			help: () => instructions?.open()
 		});
 	});

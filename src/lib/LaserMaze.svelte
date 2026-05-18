@@ -419,7 +419,6 @@
 	onMount(() => {
 		loadLevel(0);
 		registerActions({
-			restart: () => loadLevel(currentLevel),
 			newShuffle: () => {
 				if (currentLevel === "procedural") {
 					loadLevel("procedural");

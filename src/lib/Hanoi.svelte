@@ -111,7 +111,6 @@
 
 	$effect(() => {
 		registerActions({
-			restart: gameState !== 'start' ? initGame : null,
 			help: () => instructions.open()
 		});
 	});
