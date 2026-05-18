@@ -116,12 +116,18 @@
 	let costs = $state(0);
 	let profit = $state(0);
 	let feedback = $state("");
-	let marketPreference = $state({
-		priceWeight: 1,
-		qualityWeight: 1,
-		marketingWeight: 1,
-		premiumShare: 0.5
-	});
+	// Customer segments — normal distribution of quality preferences.
+	// Each segment has its own willingness-to-pay (correlated with quality preference).
+	type CustomerSegment = { name: string; qualityPreference: number; willingnessToPay: number; weight: number };
+	const BASE_SEGMENTS: CustomerSegment[] = [
+		{ name: "Bargain hunters", qualityPreference: 2,   willingnessToPay: 8,  weight: 0.15 },
+		{ name: "Value seekers",  qualityPreference: 4,   willingnessToPay: 12, weight: 0.25 },
+		{ name: "Mainstream",     qualityPreference: 5.5, willingnessToPay: 16, weight: 0.30 },
+		{ name: "Premium",        qualityPreference: 7,   willingnessToPay: 20, weight: 0.20 },
+		{ name: "Luxury",         qualityPreference: 8.5, willingnessToPay: 25, weight: 0.10 }
+	];
+	let segments = $state<CustomerSegment[]>(BASE_SEGMENTS.map(s => ({ ...s })));
+	let priceSensitivity = $state(1.0); // dynamic — varies round to round
 
 	let history = $state<Array<{
 		turn: number,
@@ -140,22 +146,16 @@
 	// Core equations
 
 	function updateMarketPreference(): void {
-		const rawPriceWeight = marketPreference.priceWeight * (0.97 + Math.random() * 0.06);
-		const rawQualityWeight = marketPreference.qualityWeight * (0.97 + Math.random() * 0.06);
-		const rawMarketingWeight = marketPreference.marketingWeight * (0.97 + Math.random() * 0.06);
+		// Drift each segment's weight slightly (some quarters more bargain hunters, others more luxury)
+		const drifted = segments.map(s => ({
+			...s,
+			weight: Math.max(0.03, s.weight * (0.85 + Math.random() * 0.3))
+		}));
+		const total = drifted.reduce((sum, s) => sum + s.weight, 0);
+		segments = drifted.map(s => ({ ...s, weight: s.weight / total }));
 
-		const averageWeight = (rawPriceWeight + rawQualityWeight + rawMarketingWeight) / 3;
-		const premiumShare = Math.max(
-			0.35,
-			Math.min(0.65, marketPreference.premiumShare + (Math.random() * 0.08 - 0.04))
-		);
-
-		marketPreference = {
-			priceWeight: rawPriceWeight / averageWeight,
-			qualityWeight: rawQualityWeight / averageWeight,
-			marketingWeight: rawMarketingWeight / averageWeight,
-			premiumShare
-		};
+		// Price sensitivity wobbles: some rounds people are pickier about price (1.5x), others not (0.6x)
+		priceSensitivity = Math.max(0.5, Math.min(1.8, priceSensitivity * (0.85 + Math.random() * 0.3)));
 	}
 
 	function calculateDemandScore(
@@ -163,25 +163,28 @@
 		demandNoise: number
 	): number {
 		const payQualityAdjustment = ((company.employeePay - 100) / 100) * 0.4;
-		const adjustedQuality = Math.max(1, (company.quality + payQualityAdjustment) * marketPreference.qualityWeight);
-		const adjustedPrice = Math.max(1, company.price * marketPreference.priceWeight);
-		const adjustedMarketing = Math.max(0, company.marketing * marketPreference.marketingWeight);
+		const effectiveQuality = Math.max(1, company.quality + payQualityAdjustment);
+		const marketingBoost = Math.sqrt(1 + company.marketing / 1000);
 
-		const valueSegmentScore =
-			(Math.log1p(Math.pow(adjustedQuality * 0.85, 1.25)) * Math.sqrt(adjustedMarketing + 1)) /
-			Math.pow(adjustedPrice, 1.5);
-
-		const premiumSegmentScore =
-			(Math.log1p(Math.pow(adjustedQuality * 1.15, 1.4)) * Math.sqrt(adjustedMarketing + 1)) /
-			Math.pow(adjustedPrice, 1.3);
-
-		const segmentScore =
-			(1 - marketPreference.premiumShare) * valueSegmentScore +
-			marketPreference.premiumShare * premiumSegmentScore;
+		// Each segment evaluates the offer independently:
+		// - Quality fit: gaussian penalty for distance from segment's preferred quality
+		// - Price fit: exponential penalty when price exceeds willingness-to-pay
+		const sigma = 1.6; // quality-preference tolerance
+		let segmentScore = 0;
+		for (const seg of segments) {
+			const qualityFit = Math.exp(-Math.pow(effectiveQuality - seg.qualityPreference, 2) / (2 * sigma * sigma));
+			const priceOverWTP = Math.max(0, company.price - seg.willingnessToPay);
+			const pricePenalty = Math.exp(-priceSensitivity * priceOverWTP / 4);
+			// Cheap-bonus: at-or-below WTP gets a small lift scaled by sensitivity
+			const priceBonus = company.price < seg.willingnessToPay
+				? 1 + 0.05 * priceSensitivity * (seg.willingnessToPay - company.price) / seg.willingnessToPay
+				: 1;
+			segmentScore += seg.weight * qualityFit * pricePenalty * priceBonus;
+		}
 
 		const reputationFactor = Math.sqrt(1 + 0.15 * company.reputation);
 
-		return Math.max(0.001, segmentScore * reputationFactor * demandNoise);
+		return Math.max(0.001, segmentScore * marketingBoost * reputationFactor * demandNoise);
 	}
 
 	function calculateUnitCost(): number {
@@ -197,7 +200,7 @@
 
 	function calculateLaborCost(units: number, payPerEmployee: number): number {
 		const employeeCount = calculateEmployeeCount(units);
-		return employeeCount * (payPerEmployee / 10);
+		return employeeCount * payPerEmployee;
 	}
 
 	function calculateQualityFromSpending(spending: number, prevQuality: number): number {
@@ -319,7 +322,8 @@
 		const aiRevenue = aiAvailableUnits * ai.price;
 		const aiProductionCost = aiActualProduction * aiUnitCost;
 		const aiMarketingCost = ai.marketing;
-		const aiLaborCost = (ai.employeePay / 10) * (ai.production / 10);
+		const aiEmployeeCount = calculateEmployeeCount(ai.production);
+		const aiLaborCost = aiEmployeeCount * ai.employeePay;
 		const aiCosts = aiProductionCost + aiMarketingCost + aiLaborCost;
 		const aiProfit = aiRevenue - aiCosts;
 		ai.cash += aiProfit;
@@ -446,8 +450,8 @@
 		// Generate feedback
 		generateFeedback();
 
-		// Update market demand randomly by -1% to 11%
-		const demandChangePercent = (Math.random() * 12 - 1) / 100; // -0.01 to 0.11
+		// Update market demand: -1% to +9% per quarter
+		const demandChangePercent = (Math.random() * 10 - 1) / 100; // -0.01 to 0.09
 		marketDemand = Math.max(100, Math.round(marketDemand * (1 + demandChangePercent)));
 
 		// Record history
@@ -522,6 +526,8 @@
 	const projectedTotalCost = $derived(projectedProductionCost + marketing + projectedLaborCost);
 	const projectedBreakeven = $derived(Math.ceil(projectedTotalCost / price));
 
+	const allTeamsSorted = $derived([playerTeam, ...aiCompetitors.map(ai => ai.name)].sort());
+
 	function dumpInventory(): void {
 		inventory = 0;
 		inventoryQuality = 5;
@@ -556,12 +562,8 @@
 		previousProductionQuantity = 100;
 		previousEmployeePay = 100;
 		payHistory = [100, 100, 100];
-		marketPreference = {
-			priceWeight: 1,
-			qualityWeight: 1,
-			marketingWeight: 1,
-			premiumShare: 0.5
-		};
+		segments = BASE_SEGMENTS.map(s => ({ ...s }));
+		priceSensitivity = 1.0;
 
 		// Reinitialize teams
 		initializeTeams();
@@ -590,7 +592,7 @@
 <div class="apex-container">
 	<div class="header">
 		<div class="turn-badge">Quarter {currentTurn}/{TOTAL_TURNS}</div>
-		<h1>🏭 Apex Industries - Team: {playerTeam}</h1>
+		<h1>Team: {playerTeam}</h1>
 	</div>
 
 	<!-- Tab Navigation -->
@@ -825,6 +827,91 @@
 				{/each}
 			</div>
 		</div>
+
+		<div class="final-charts">
+			<h3>Final Results by Team</h3>
+			<div class="chart-grid">
+				<div class="chart-card">
+					<h4>Total Profit</h4>
+					<svg viewBox="0 0 400 200" class="bar-chart">
+						{#each allTeamsSorted as teamName, teamIndex}
+							{@const isPlayer = teamName === playerTeam}
+							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
+							{@const teamCash = isPlayer ? cash : aiCompetitors[aiIndex].cash}
+							{@const teamProfit = teamCash - INITIAL_CASH}
+							{@const barHeight = Math.min(160, Math.abs(teamProfit) / 10000)}
+							{@const barX = 60 + teamIndex * 70}
+							{@const barY = teamProfit >= 0 ? 180 - barHeight : 180}
+							{@const teamColorIndex = allTeams.indexOf(teamName)}
+							<rect x={barX} y={barY} width="50" height={barHeight} fill={teamProfit >= 0 ? (isPlayer ? '#3b82f6' : '#10b981') : (isPlayer ? '#3b82f6' : '#ef4444')} rx="4" />
+							{#if isPlayer}
+								<rect x={barX - 2} y={barY - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+							{/if}
+							<text x={barX + 25} y={teamProfit >= 0 ? barY - 8 : barY + barHeight + 12} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{formatMoney(teamProfit)}</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+						{/each}
+						<line x1="40" y1="180" x2="380" y2="180" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+					</svg>
+				</div>
+				<div class="chart-card">
+					<h4>Final Cash</h4>
+					<svg viewBox="0 0 400 200" class="bar-chart">
+						{#each allTeamsSorted as teamName, teamIndex}
+							{@const isPlayer = teamName === playerTeam}
+							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
+							{@const teamCash = isPlayer ? cash : aiCompetitors[aiIndex].cash}
+							{@const barHeight = (teamCash / 100000) * 160}
+							{@const barX = 60 + teamIndex * 70}
+							{@const teamColorIndex = allTeams.indexOf(teamName)}
+							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
+							{#if isPlayer}
+								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+							{/if}
+							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>${(teamCash / 1000).toFixed(0)}k</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+						{/each}
+					</svg>
+				</div>
+				<div class="chart-card">
+					<h4>Final Market Share</h4>
+					<svg viewBox="0 0 400 200" class="bar-chart">
+						{#each allTeamsSorted as teamName, teamIndex}
+							{@const isPlayer = teamName === playerTeam}
+							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
+							{@const teamMarketShare = isPlayer ? marketShare : (history.length > 0 ? history[history.length - 1].teams[aiIndex].marketShare : 0.2)}
+							{@const barHeight = teamMarketShare * 160}
+							{@const barX = 60 + teamIndex * 70}
+							{@const teamColorIndex = allTeams.indexOf(teamName)}
+							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
+							{#if isPlayer}
+								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+							{/if}
+							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{(teamMarketShare * 100).toFixed(0)}%</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+						{/each}
+					</svg>
+				</div>
+				<div class="chart-card">
+					<h4>Final Reputation</h4>
+					<svg viewBox="0 0 400 200" class="bar-chart">
+						{#each allTeamsSorted as teamName, teamIndex}
+							{@const isPlayer = teamName === playerTeam}
+							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
+							{@const teamReputation = isPlayer ? reputation : aiCompetitors[aiIndex].reputation}
+							{@const barHeight = (teamReputation / 10) * 160}
+							{@const barX = 60 + teamIndex * 70}
+							{@const teamColorIndex = allTeams.indexOf(teamName)}
+							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
+							{#if isPlayer}
+								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+							{/if}
+							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamReputation.toFixed(1)}</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+						{/each}
+					</svg>
+				</div>
+			</div>
+		</div>
 		<button class="btn restart-btn" onclick={resetGame}>Play Again</button>
 	</div>
 {:else if activeTab === "market"}
@@ -834,17 +921,32 @@
 				<div class="research-card">
 					<h3>Market Demand</h3>
 					<p>Current market demand: <strong>{marketDemand} units</strong></p>
-					<p class="research-note">Demand fluctuates based on economic conditions and competitor activity.</p>
+					<p class="research-note">Market grows -1% to +9% per quarter.</p>
 				</div>
 				<div class="research-card">
 					<h3>Price Sensitivity</h3>
-					<p>Customers are sensitive to price changes. Higher prices reduce demand significantly.</p>
-					<p class="research-note">Optimal pricing balances revenue per unit with sales volume.</p>
+					<p>Current sensitivity: <strong>{priceSensitivity.toFixed(2)}×</strong> {priceSensitivity > 1.2 ? "(customers very picky)" : priceSensitivity < 0.8 ? "(customers tolerant)" : "(normal)"}</p>
+					<p class="research-note">Sensitivity drifts each quarter — sometimes shoppers care a lot about price, sometimes barely.</p>
 				</div>
 				<div class="research-card">
-					<h3>Quality Impact</h3>
-					<p>Quality affects demand with diminishing returns. Quality 5-7 offers best value.</p>
-					<p class="research-note">Higher quality builds reputation over time.</p>
+					<h3>Customer Segments</h3>
+					<p>Different customers want different things. Match your quality to a segment's preference and stay near their willingness-to-pay.</p>
+					<table class="segment-table">
+						<thead>
+							<tr><th>Segment</th><th>Quality</th><th>WTP</th><th>Share</th></tr>
+						</thead>
+						<tbody>
+							{#each segments as seg}
+								<tr>
+									<td>{seg.name}</td>
+									<td>{seg.qualityPreference.toFixed(1)}</td>
+									<td>${seg.willingnessToPay}</td>
+									<td>{(seg.weight * 100).toFixed(0)}%</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+					<p class="research-note">Segment shares shift quarter to quarter.</p>
 				</div>
 				<div class="research-card">
 					<h3>Marketing Effectiveness</h3>
@@ -1308,6 +1410,65 @@
 		font-size: 0.85rem;
 		font-weight: 700;
 		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.final-charts {
+		margin-top: 2rem;
+	}
+
+	.final-charts h3 {
+		font-size: 1rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.9);
+		margin: 0 0 1rem;
+	}
+
+	.chart-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
+	}
+
+	.chart-grid .chart-card {
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.02);
+		border-radius: 8px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.chart-grid h4 {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.8);
+		margin: 0 0 0.75rem;
+	}
+
+	.bar-chart {
+		width: 100%;
+		height: auto;
+	}
+
+	.segment-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 0.5rem 0;
+		font-size: 0.8rem;
+	}
+
+	.segment-table th,
+	.segment-table td {
+		text-align: left;
+		padding: 0.25rem 0.5rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.segment-table th {
+		color: rgba(255, 255, 255, 0.6);
+		font-weight: 600;
+	}
+
+	.segment-table td {
+		color: rgba(255, 255, 255, 0.85);
 	}
 
 	.research-card p,
