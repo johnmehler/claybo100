@@ -194,15 +194,15 @@
 	.stat .label { font-size: 1.4vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.2vmin; text-transform: uppercase; margin-bottom: 0.5vmin; }
 	.status-msg { font-size: 3.5vmin; font-weight: 900; letter-spacing: 1px; min-width: 30vmin; text-align: center; }
 
-	.mode-select { display: flex; gap: 0.5vmin; background: rgba(255,255,255,0.05); padding: 0.5vmin; border-radius: 1.2vmin; border: 1px solid rgba(255,255,255,0.1); }
+	.mode-select { display: flex; gap: 0.5vmin; background: var(--panel-bg); padding: 0.5vmin; border-radius: 1.2vmin; border: 1px solid var(--panel-border); }
 	.mode-btn { background: transparent; border: none; color: var(--game-text-muted); padding: 0.8vmin 2vmin; border-radius: 0.8vmin; font-size: 1.4vmin; font-weight: 900; cursor: pointer; transition: all 0.3s; }
-	.mode-btn.active { background: var(--color-apple); color: black; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
+	.mode-btn.active { background: var(--color-apple); color: var(--app-bg); box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
 
 	.heaps-container {
 		position: relative;
 		padding: 3vmin 6vmin;
-		background: rgba(255,255,255,0.015);
-		border: 1px solid rgba(255,255,255,0.08);
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
 		border-radius: 4vmin; 
 		backdrop-filter: blur(10px);
 		overflow: hidden;
@@ -216,17 +216,17 @@
 	.heap { display: flex; flex-direction: column; gap: 0.8vmin; align-items: center; justify-content: flex-end; width: 6vmin; min-height: 6vmin; }
 	.dot { 
 		width: 6vmin; height: 6vmin; border-radius: 50%; 
-		background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); 
+		background: var(--panel-bg); border: 2px solid var(--panel-border); 
 		cursor: pointer; transition: all 0.3s; 
 	}
 	.dot:hover:not(:disabled) { transform: scale(1.05); }
-	.dot.selected { background: var(--color-apple); border-color: white; box-shadow: 0 0 3vmin rgba(78, 205, 196, 0.4); transform: scale(1.1); }
-	.dot.hover-preview:not(.selected) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); }
-	.empty-heap { width: 6vmin; height: 1.2vmin; background: rgba(255,255,255,0.05); border-radius: 1vmin; }
+	.dot.selected { background: var(--color-apple); border-color: var(--app-text); box-shadow: 0 0 3vmin rgba(78, 205, 196, 0.4); transform: scale(1.1); }
+	.dot.hover-preview:not(.selected) { background: color-mix(in srgb, var(--panel-bg) 90%, var(--app-text) 10%); border-color: var(--panel-border); }
+	.empty-heap { width: 6vmin; height: 1.2vmin; background: var(--panel-bg); border-radius: 1vmin; }
 
 	.bottom-bar { 
 		height: 12vmin; display: flex; justify-content: center; align-items: center; gap: 3vmin; width: 100%; 
-		background: rgba(0,0,0,0.1);
+		background: var(--panel-bg);
 	}
 	
 	.action-btn { 
@@ -234,7 +234,7 @@
 	}
 	
 	.action-btn.restart, .action-btn.take { 
-		background: var(--color-apple); color: black; 
+		background: var(--color-apple); color: var(--app-bg); 
 		box-shadow: 0 10px 20px -5px rgba(78, 205, 196, 0.3); 
 	}
 	.action-btn.restart:hover, .action-btn.take:hover:not(:disabled) { 
@@ -244,7 +244,7 @@
 	.action-btn.take:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
 	
 	.action-btn.menu { 
-		background: rgba(255,255,255,0.05); color: var(--game-text-primary); border: 1px solid rgba(255,255,255,0.1);
+		background: var(--panel-bg); color: var(--game-text-primary); border: 1px solid var(--panel-border);
 	}
 	.action-btn.menu:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); }
 
