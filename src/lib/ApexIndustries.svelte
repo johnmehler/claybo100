@@ -1570,7 +1570,7 @@
 
 	.position-bar {
 		height: 8px;
-		background: linear-gradient(90deg, #3b82f6, #10b981);
+		background: var(--color-indigo);
 		border-radius: 4px;
 		margin-bottom: 0.5rem;
 		transition: width 0.3s ease;

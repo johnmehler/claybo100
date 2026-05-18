@@ -226,7 +226,7 @@
 
 	.bottom-bar { 
 		height: 12vmin; display: flex; justify-content: center; align-items: center; gap: 3vmin; width: 100%; 
-		background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
+		background: rgba(0,0,0,0.1);
 	}
 	
 	.action-btn { 
@@ -254,7 +254,7 @@
 		left: -150%;
 		width: 150%;
 		height: 100%;
-		background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(200, 200, 200, 0.2) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(200, 200, 200, 0.2) 70%, rgba(255, 255, 255, 0) 100%);
+		background: rgba(255, 255, 255, 0.3);
 		transform: skewX(-25deg);
 		animation: swoosh 0.8s ease-in-out forwards;
 		pointer-events: none;

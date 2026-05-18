@@ -1280,7 +1280,7 @@
 			position: sticky;
 			bottom: 0;
 			padding-top: 0.4rem;
-			background: linear-gradient(to bottom, rgba(24, 24, 27, 0), #18181b 30%);
+			background: rgba(24, 24, 27, 0.3);
 		}
 
 		.btn {

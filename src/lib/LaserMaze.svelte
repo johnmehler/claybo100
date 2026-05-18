@@ -644,7 +644,7 @@
 	}
 
 	.random-btn {
-		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
+		background: var(--color-bittersweet);
 		color: var(--game-text-on-accent);
 		border: none;
 		padding: clamp(0.42rem, 1vmin, 0.55rem) clamp(0.8rem, 1.9vmin, 1.2rem);
@@ -680,9 +680,7 @@
 		font-size: clamp(1.5rem, 4.8vmin, 2.6rem);
 		font-weight: 900;
 		margin: 0;
-		background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.6) 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--game-text-primary);
 		letter-spacing: -0.04rem;
 	}
 
@@ -985,10 +983,7 @@
 		background: #050505;
 		border: 1px solid #222;
 		border-radius: 8px;
-		background-image: 
-			linear-gradient(45deg, #111 25%, transparent 25%),
-			linear-gradient(-45deg, #111 25%, transparent 25%);
-		background-size: 8px 8px;
+		background: rgba(0, 0, 0, 0.3);
 		box-shadow: inset 0 0 10px black;
 	}
 
@@ -1006,7 +1001,7 @@
 	.mirror-surface {
 		width: 4px;
 		height: 90%;
-		background: linear-gradient(to bottom, #00f2fe, #4facfe);
+		background: var(--color-indigo);
 		box-shadow: 0 0 20px rgba(0, 242, 254, 0.8), inset 0 0 5px white;
 		border-radius: 4px;
 		transform: rotate(45deg);
@@ -1199,14 +1194,12 @@
 	.win-content h2 {
 		font-size: 3rem;
 		margin: 0;
-		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--color-bittersweet);
 		font-weight: 900;
 	}
 
 	.win-content button {
-		background: linear-gradient(135deg, #ff6e61 0%, #ff4d4d 100%);
+		background: var(--color-bittersweet);
 		color: var(--game-text-on-accent);
 		border: none;
 		padding: 1rem 3rem;

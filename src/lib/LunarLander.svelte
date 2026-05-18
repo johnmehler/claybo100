@@ -807,7 +807,7 @@
 		overflow: hidden;
 		border-radius: 2vmin;
 		margin: 0 2vmin;
-		background: linear-gradient(180deg, #05050f 0%, #0a0a20 40%, #12122e 100%);
+		background: var(--app-bg);
 		border: 1px solid rgba(255,255,255,0.06);
 	}
 
@@ -817,7 +817,7 @@
 		place-items: center;
 		margin: 0 2vmin;
 		border-radius: 2vmin;
-		background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.06), rgba(8, 8, 20, 0.96));
+		background: var(--panel-bg);
 		border: 1px solid rgba(255,255,255,0.08);
 	}
 

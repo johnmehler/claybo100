@@ -588,7 +588,7 @@
 		justify-content: center;
 		color: var(--game-text-primary);
 		font-family: "Outfit", "Inter", sans-serif;
-		background: #09090b;
+		background: var(--app-bg);
 		padding: 2rem;
 		position: relative;
 		overflow: hidden;
@@ -618,10 +618,10 @@
 	}
 
 	.game-viewport {
-		background: #18181b;
+		background: var(--panel-bg);
 		padding: 1rem;
 		border-radius: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--panel-border);
 		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 	}
 
@@ -748,8 +748,8 @@
 	}
 
 	.btn {
-		background: #27272a;
-		border: 1px solid #3f3f46;
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
 		color: var(--game-text-primary);
 		padding: 1rem 2rem;
 		border-radius: 12px;
@@ -759,20 +759,20 @@
 	}
 
 	.btn:hover {
-		background: #3f3f46;
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 15%);
 	}
 	.btn.action {
-		background: #3b82f6;
-		border-color: #60a5fa;
+		background: var(--color-indigo);
+		border-color: var(--color-indigo);
 		min-width: 120px;
 	}
 	.btn.action:hover {
-		background: #2563eb;
+		background: color-mix(in srgb, var(--color-indigo) 85%, black 15%);
 	}
 
 	.hint {
 		font-size: 0.8rem;
-		color: #52525b;
+		color: var(--app-muted-text);
 	}
 
 	.win-overlay {
@@ -787,22 +787,23 @@
 	}
 
 	.win-card {
-		background: #18181b;
+		background: var(--panel-bg);
 		padding: 3rem;
 		border-radius: 2rem;
 		text-align: center;
-		border: 1px solid #27272a;
+		border: 1px solid var(--panel-border);
 		box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
 	}
 
 	.win-card h2 {
 		font-size: 2rem;
 		margin-bottom: 2rem;
+		color: var(--app-text);
 	}
 
 	.next-btn {
-		background: white;
-		color: black;
+		background: var(--app-text);
+		color: var(--app-bg);
 		padding: 1rem 3rem;
 		border-radius: 99px;
 		font-weight: 900;

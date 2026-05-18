@@ -1024,14 +1024,7 @@
 		left: -150%;
 		width: 150%;
 		height: 100%;
-		background: linear-gradient(
-			to right,
-			rgba(255, 255, 255, 0) 0%,
-			rgba(200, 200, 200, 0.1) 30%,
-			rgba(255, 255, 255, 0.3) 50%,
-			rgba(200, 200, 200, 0.1) 70%,
-			rgba(255, 255, 255, 0) 100%
-		);
+		background: rgba(255, 255, 255, 0.2);
 		transform: skewX(-25deg);
 		animation: swoosh 0.8s ease-in-out forwards;
 		pointer-events: none;

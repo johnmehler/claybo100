@@ -348,9 +348,9 @@
 		transition: all 0.3s ease;
 	}
 
-	.bottom-bar { 
-		height: 12vmin; display: flex; justify-content: center; align-items: center; gap: 3vmin; width: 100%; 
-		background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
+	.bottom-bar {
+		height: 12vmin; display: flex; justify-content: center; align-items: center; gap: 3vmin; width: 100%;
+		background: rgba(0,0,0,0.1);
 	}
 	
 	.action-btn { 

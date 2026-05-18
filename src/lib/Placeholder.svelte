@@ -64,9 +64,7 @@
 		font-size: 5vmin;
 		font-weight: 800;
 		margin-bottom: 2vmin;
-		background: linear-gradient(to right, #6366f1, #a855f7);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--color-indigo);
 	}
 
 	p {

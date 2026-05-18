@@ -182,6 +182,6 @@
 	.peg { width: 4vmin; height: 4vmin; border-radius: 50%; background: var(--app-text); box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 	.selected .peg { background: white; scale: 1.1; }
 
-	.completion-overlay { position: absolute; top: 0; left: -150%; width: 150%; height: 100%; background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(200, 200, 200, 0.2) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(200, 200, 200, 0.2) 70%, rgba(255, 255, 255, 0) 100%); transform: skewX(-25deg); animation: swoosh 0.8s ease-in-out forwards; pointer-events: none; z-index: 20; }
+	.completion-overlay { position: absolute; top: 0; left: -150%; width: 150%; height: 100%; background: rgba(255, 255, 255, 0.3); transform: skewX(-25deg); animation: swoosh 0.8s ease-in-out forwards; pointer-events: none; z-index: 20; }
 	@keyframes swoosh { 0% { left: -150%; } 100% { left: 150%; } }
 </style>

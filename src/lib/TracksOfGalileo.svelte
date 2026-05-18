@@ -491,9 +491,9 @@
 	.label-text { fill: var(--game-text-muted); font-size: 16px; font-weight: 800; letter-spacing: 1px; }
 	.ball { fill: var(--color-bittersweet); filter: drop-shadow(0 0 15px var(--color-bittersweet)); }
 
-	.bottom-bar { 
-		height: 12vmin; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1.5vmin; width: 100%; 
-		background: linear-gradient(to top, rgba(0,0,0,0.2), transparent); padding-bottom: 2vmin;
+	.bottom-bar {
+		height: 12vmin; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1.5vmin; width: 100%;
+		background: rgba(0,0,0,0.1); padding-bottom: 2vmin;
 	}
 	
 	.controls-row { display: flex; gap: 2vmin; }

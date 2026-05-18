@@ -627,7 +627,7 @@
 	}
 
 	.cell.wall {
-		background: linear-gradient(135deg, #4b6abe 0%, #2a3d70 100%);
+		background: var(--color-indigo);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
 		border-radius: 0.5vmin;
