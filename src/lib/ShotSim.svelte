@@ -208,7 +208,8 @@
 			</div>
 		</div>
 
-		<div class="court">
+		<div class="court-container">
+			<div class="court">
 			<svg class="trajectory-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
 				{#if trajectory.length > 1}
 					<path 
@@ -269,6 +270,7 @@
 				<div class="feedback" in:fade>{feedback}</div>
 			{/if}
 		</div>
+		</div>
 	</div>
 
 	<div class="bottom-bar">
@@ -311,10 +313,13 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		justify-content: center;
+		align-items: center;
 		width: 100%;
 		padding: 1vmin 4vmin;
 		box-sizing: border-box;
 		overflow: hidden;
+		min-height: 0;
 	}
 
 	.game-stats {
@@ -324,24 +329,29 @@
 		gap: 8vmin;
 		margin-bottom: 2vmin;
 		width: 100%;
+		flex-shrink: 0;
 	}
 
-	.stat {
+	.court-container {
+		flex: 1;
 		display: flex;
-		flex-direction: column;
+		justify-content: center;
 		align-items: center;
+		width: 100%;
+		min-height: 0;
+		overflow: hidden;
 	}
-
-	.label { font-size: 1.2vmin; color: var(--game-text-soft); font-weight: 800; letter-spacing: 0.1vmin; text-transform: uppercase; }
-	.value { font-size: 4vmin; font-weight: 900; color: var(--color-bittersweet); }
 
 	.court {
-		flex: 1;
 		position: relative;
-		background: rgba(255,255,255,0.015);
+		background: var(--panel-bg);
 		border-radius: 3vmin;
-		border: 1px solid rgba(255,255,255,0.08);
+		border: 1px solid var(--panel-border);
 		overflow: hidden;
+		width: min(50vmin, calc(100vw - 12vmin), calc(100% - 4vmin));
+		height: min(35vmin, calc(100dvh - 34vmin), calc(100% - 4vmin));
+		max-width: 100%;
+		max-height: 100%;
 	}
 
 	.bottom-bar {
@@ -373,8 +383,8 @@
 	}
 
 	.step-btn {
-		background: rgba(255,255,255,0.05);
-		border: 1px solid rgba(255,255,255,0.1);
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
 		color: var(--game-text-primary);
 		width: 4.5vmin;
 		height: 4.5vmin;
@@ -386,7 +396,7 @@
 	}
 
 	.step-btn:hover:not(:disabled) {
-		background: rgba(255,255,255,0.15);
+		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 15%);
 		color: var(--app-text);
 	}
 
@@ -395,7 +405,7 @@
 		appearance: none;
 		-webkit-appearance: none;
 		height: 0.6vmin;
-		background: rgba(255,255,255,0.1);
+		background: var(--panel-border);
 		border-radius: 1vmin;
 		outline: none;
 	}
@@ -479,21 +489,21 @@
 	.dist-line {
 		width: 100%;
 		height: 1px;
-		border-top: 1px dashed rgba(255,255,255,0.2);
+		border-top: 1px dashed var(--panel-border);
 		margin-bottom: 0.5vmin;
 	}
 
 	.cannon-container { position: absolute; width: 10vmin; height: 10vmin; }
-	.cannon-base { position: absolute; bottom: 0; left: 10%; width: 80%; height: 4vmin; background: #333; border-radius: 1vmin 1vmin 0 0; }
-	.cannon-barrel { position: absolute; bottom: 2.5vmin; right: 50%; width: 12vmin; height: 5vmin; background: #444; border-radius: 1vmin; transform-origin: right center; display: flex; align-items: center; justify-content: flex-start; padding-left: 2vmin; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+	.cannon-base { position: absolute; bottom: 0; left: 10%; width: 80%; height: 4vmin; background: var(--app-text); border-radius: 1vmin 1vmin 0 0; }
+	.cannon-barrel { position: absolute; bottom: 2.5vmin; right: 50%; width: 12vmin; height: 5vmin; background: color-mix(in srgb, var(--app-text) 80%, black 20%); border-radius: 1vmin; transform-origin: right center; display: flex; align-items: center; justify-content: flex-start; padding-left: 2vmin; }
 	.barrel-stats { display: flex; flex-direction: column; font-size: 1.2vmin; font-weight: 800; color: var(--app-text); }
 
-	.backboard { position: absolute; background: rgba(255,255,255,0.8); border-radius: 0.2vmin; }
+	.backboard { position: absolute; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 0.2vmin; }
 	.rim { position: absolute; background: var(--color-bittersweet); border-radius: 0.2vmin; z-index: 2; }
-	.net { position: absolute; background: rgba(255,255,255,0.1); border-radius: 0 0 1vmin 1vmin; border: 1px dashed rgba(255,255,255,0.2); z-index: 1; }
-	.ball { position: absolute; width: 3vmin; height: 3vmin; background: #ff8c00; border-radius: 50%; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+	.net { position: absolute; background: var(--panel-bg); border-radius: 0 0 1vmin 1vmin; border: 1px dashed var(--panel-border); z-index: 1; }
+	.ball { position: absolute; width: 3vmin; height: 3vmin; background: var(--color-bittersweet); border-radius: 50%; z-index: 10; }
 	.trajectory-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-	.feedback { position: absolute; top: 20%; left: 0; right: 0; text-align: center; font-size: 6vmin; font-weight: 900; color: var(--app-text); text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+	.feedback { position: absolute; top: 20%; left: 0; right: 0; text-align: center; font-size: 6vmin; font-weight: 900; color: var(--app-text); }
 
 	@media (max-width: 1024px) {
 		.board-wrapper {
