@@ -680,10 +680,10 @@
 		font-size: 3vmin;
 		color: var(--game-text-primary);
 		font-family: "Outfit", sans-serif;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--panel-bg);
 		padding: 2vmin 4vmin;
 		border-radius: 2vmin;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--panel-border);
 	}
 
 	.formula {
@@ -701,7 +701,7 @@
 
 	.new-puzzle-btn {
 		background: var(--app-text);
-		color: black;
+		color: var(--app-bg);
 		border: none;
 		padding: 1.5vmin 4vmin;
 		border-radius: 1vmin;
@@ -801,6 +801,7 @@
 		height: 8vmin;
 		font-size: 4vmin;
 		font-weight: 900;
+		line-height: 1;
 		border-radius: 50%;
 		background: rgba(255, 255, 255, 0.04);
 		border: 1px solid rgba(255, 255, 255, 0.1);
@@ -822,8 +823,7 @@
 	.op.selected {
 		background: var(--app-text);
 		border-color: var(--app-text);
-		color: black;
-		box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+		color: var(--app-bg);
 	}
 
 	@media (max-width: 768px) {
@@ -873,7 +873,7 @@
 		border-color: var(--krypto-text-btn-hover-border);
 	}
 	.diff-btn.active {
-		color: black;
+		color: var(--app-bg);
 		background: var(--app-text);
 		border-color: var(--app-text);
 		box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
@@ -920,7 +920,7 @@
 	.victory-icon {
 		width: 10vmin;
 		height: 10vmin;
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--panel-bg);
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
