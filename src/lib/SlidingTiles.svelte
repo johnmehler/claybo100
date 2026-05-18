@@ -329,6 +329,7 @@
 				<span class="label">MOVES</span>
 				<span class="value">{moves}</span>
 			</div>
+			<button class="reshuffle-btn" onclick={() => initGame(true)}>RESHUFFLE</button>
 			{#if isWon}
 				<div class="stat" transition:fade>
 					<span class="label">RATING</span>
@@ -433,9 +434,29 @@
 	.game-stats {
 		display: flex;
 		justify-content: center;
+		align-items: end;
 		gap: 8vmin;
 		margin-bottom: 2vmin;
 		width: 100%;
+	}
+
+	.reshuffle-btn {
+		background: rgba(255, 107, 107, 0.1);
+		border: 1px solid rgba(255, 107, 107, 0.3);
+		color: var(--color-bittersweet);
+		padding: 1vmin 2.8vmin;
+		border-radius: 1vmin;
+		cursor: pointer;
+		font-weight: 900;
+		font-size: 1.4vmin;
+		letter-spacing: 0.08vmin;
+		transition: all 0.25s;
+	}
+
+	.reshuffle-btn:hover {
+		background: var(--color-bittersweet);
+		border-color: var(--color-bittersweet);
+		color: #111;
 	}
 
 	.stat {
@@ -467,8 +488,11 @@
 	}
 
 	.board-container {
-		width: 75vmin;
-		height: 75vmin;
+		width: min(75vmin, calc(100vw - 4vmin), calc(100dvh - 36vmin), calc(100% - 2vmin));
+		aspect-ratio: 1 / 1;
+		height: auto;
+		max-width: 100%;
+		max-height: calc(100% - 2vmin);
 		padding: 1.5vmin;
 		background: rgba(255,255,255,0.02);
 		border: 1px solid rgba(255,255,255,0.08);
@@ -491,6 +515,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		aspect-ratio: 1 / 1;
 		font-size: 5vmin;
 		font-weight: 800;
 		border-radius: 1vmin;

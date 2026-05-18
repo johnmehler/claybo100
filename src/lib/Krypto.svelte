@@ -791,6 +791,18 @@
 		box-shadow: 0 0 20px rgba(255, 230, 109, 0.3);
 	}
 
+	@media (max-width: 768px) {
+		.operators {
+			gap: 3.5vmin;
+		}
+
+		.op {
+			width: 13vmin;
+			height: 13vmin;
+			font-size: 6vmin;
+		}
+	}
+
 	.bottom-bar {
 		height: 10vmin;
 		display: flex;

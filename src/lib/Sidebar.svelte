@@ -4,12 +4,15 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 
+	const THEME_STORAGE_KEY = 'mathmuseum-theme';
+
 	let { 
 		activeGameActions = { restart: null, newShuffle: null, help: null }
 	} = $props();
 
-	let isSidebarCollapsed = $state(false);
+	let isSidebarCollapsed = $state(true);
 	let isMobile = $state(false);
+	let theme = $state<'light' | 'dark'>('dark');
 	const gameCategories = getGamesByCategory();
 	let openCategories = $state(Object.fromEntries(gameCategories.map(c => [c.name, true])));
 
@@ -21,12 +24,26 @@
 		}
 	};
 
+	function applyTheme(nextTheme: 'light' | 'dark') {
+		theme = nextTheme;
+		document.documentElement.dataset.theme = nextTheme;
+		localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+	}
+
+	function toggleTheme() {
+		applyTheme(theme === 'dark' ? 'light' : 'dark');
+	}
+
 	onMount(() => {
+		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+		if (savedTheme === 'light' || savedTheme === 'dark') {
+			applyTheme(savedTheme);
+		} else {
+			applyTheme('dark');
+		}
+
 		const syncViewportState = () => {
 			isMobile = window.innerWidth <= 1024;
-			if (isMobile) {
-				isSidebarCollapsed = true;
-			}
 		};
 
 		syncViewportState();
@@ -132,6 +149,25 @@
 	</nav>
 
 	<div class="sidebar-footer">
+		<button class="theme-toggle-btn" onclick={toggleTheme}>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Theme Toggle Icon">
+				{#if theme === 'dark'}
+					<path d="M12 3a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1z" />
+					<path d="M12 18a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1z" />
+					<path d="M4.93 4.93a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 0 1-1.42 1.41L4.93 6.34a1 1 0 0 1 0-1.41z" />
+					<path d="M16.24 16.24a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 1 1-1.42 1.41l-1.42-1.42a1 1 0 0 1 0-1.41z" />
+					<path d="M3 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1z" />
+					<path d="M18 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1z" />
+					<path d="M6.34 16.24a1 1 0 0 1 1.42 0 1 1 0 0 1 0 1.41l-1.42 1.42a1 1 0 1 1-1.41-1.42l1.41-1.41z" />
+					<path d="M17.66 4.93a1 1 0 0 1 1.41 1.41l-1.42 1.42a1 1 0 0 1-1.41-1.42l1.42-1.41z" />
+					<circle cx="12" cy="12" r="4" />
+				{:else}
+					<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0a7 7 0 0 0 9.79 9.79z" />
+				{/if}
+			</svg>
+			<span>{theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}</span>
+		</button>
+
 		<a href="/" class="menu-back-btn">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Exit Icon"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg>
 			<span>EXIT TO MENU</span>
@@ -144,8 +180,8 @@
 	.sidebar {
 		width: 32vmin;
 		height: 100vh;
-		background: rgba(255, 255, 255, 0.02);
-		border-right: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--panel-bg);
+		border-right: 1px solid var(--panel-border);
 		display: flex;
 		flex-direction: column;
 		padding: 3vmin 2vmin;
@@ -180,10 +216,10 @@
 		left: 26vmin;
 		width: 6vmin;
 		height: 6vmin;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: color-mix(in srgb, var(--panel-bg) 85%, transparent);
+		border: 1px solid var(--panel-border);
 		border-radius: 1.5vmin;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--app-muted-text);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -194,8 +230,8 @@
 	}
 
 	.sidebar-toggle-floating:hover {
-		background: rgba(255, 255, 255, 0.1);
-		color: white;
+		background: color-mix(in srgb, var(--panel-bg) 70%, var(--color-bittersweet) 12%);
+		color: var(--app-text);
 		transform: scale(1.1);
 	}
 
@@ -203,7 +239,7 @@
 		left: 3vmin;
 		background: var(--color-bittersweet);
 		border-color: var(--color-bittersweet);
-		color: black;
+		color: #111;
 	}
 
 	.sidebar-toggle-floating svg {
@@ -254,7 +290,7 @@
 
 	.sidebar-category-label {
 		font-size: 1.8vmin;
-		color: rgba(255, 255, 255, 0.85);
+		color: color-mix(in srgb, var(--app-text) 88%, transparent);
 		font-weight: 800;
 		letter-spacing: 0.1vmin;
 		text-transform: uppercase;
@@ -263,7 +299,7 @@
 
 	.controls-label {
 		font-size: 1.8vmin;
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--app-muted-text);
 		font-weight: 800;
 		letter-spacing: 0.2vmin;
 		text-transform: uppercase;
@@ -285,13 +321,13 @@
 	}
 
 	.dropdown-toggle:hover {
-		background: rgba(255,255,255,0.05);
+		background: color-mix(in srgb, var(--panel-bg) 88%, var(--app-text) 5%);
 	}
 
 	.chevron {
 		width: 1.5vmin;
 		height: 1.5vmin;
-		color: rgba(255,255,255,0.2);
+		color: var(--app-muted-text);
 		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
@@ -315,7 +351,7 @@
 		border-radius: 1.2vmin;
 		border: 1px solid transparent;
 		background: transparent;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--app-muted-text);
 		cursor: pointer;
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		text-align: left;
@@ -324,21 +360,22 @@
 	}
 
 	.nav-button:hover {
-		background: rgba(255, 255, 255, 0.03);
-		color: white;
+		background: color-mix(in srgb, var(--panel-bg) 86%, var(--app-text) 6%);
+		color: var(--app-text);
 		transform: translateX(0.5vmin);
 	}
 
 	.nav-button.active {
-		background: rgba(255, 255, 255, 0.06);
-		color: white;
-		border-color: rgba(255, 255, 255, 0.05);
+		background: color-mix(in srgb, var(--panel-bg) 80%, var(--color-bittersweet) 12%);
+		color: var(--app-text);
+		border-color: var(--panel-border);
 	}
 
 	.control-btn.help { color: var(--color-illusion); }
 	.control-btn.restart { color: var(--color-indigo); }
 	.control-btn.shuffle { color: var(--color-bittersweet); }
 	.control-btn:hover { background: rgba(255, 255, 255, 0.05); }
+	.control-btn:hover { background: color-mix(in srgb, var(--panel-bg) 82%, var(--app-text) 8%); }
 
 	.nav-icon {
 		width: 3.5vmin;
@@ -382,7 +419,38 @@
 	.sidebar-footer {
 		margin-top: auto;
 		padding-top: 2vmin;
-		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		border-top: 1px solid var(--panel-border);
+		display: flex;
+		flex-direction: column;
+		gap: 1vmin;
+	}
+
+	.theme-toggle-btn {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1.5vmin;
+		padding: 1.4vmin 1.6vmin;
+		background: color-mix(in srgb, var(--panel-bg) 86%, var(--color-golden) 8%);
+		border: 1px solid var(--panel-border);
+		border-radius: 1.2vmin;
+		color: var(--app-text);
+		font-weight: 800;
+		font-size: 1.35vmin;
+		cursor: pointer;
+		transition: all 0.25s;
+		letter-spacing: 0.08vmin;
+	}
+
+	.theme-toggle-btn:hover {
+		background: color-mix(in srgb, var(--panel-bg) 74%, var(--color-golden) 18%);
+		transform: translateY(-1px);
+	}
+
+	.theme-toggle-btn svg {
+		width: 1.8vmin;
+		height: 1.8vmin;
 	}
 
 	.menu-back-btn {
@@ -392,10 +460,10 @@
 		justify-content: center;
 		gap: 1.5vmin;
 		padding: 1.8vmin;
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.06);
+		background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
+		border: 1px solid var(--panel-border);
 		border-radius: 1.2vmin;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--app-muted-text);
 		font-weight: 800;
 		font-size: 1.5vmin;
 		cursor: pointer;
@@ -407,7 +475,7 @@
 	.menu-back-btn:hover {
 		background: rgba(255, 110, 97, 0.05);
 		border-color: var(--color-bittersweet);
-		color: white;
+		color: var(--app-text);
 		transform: translateY(-1px);
 	}
 
@@ -490,6 +558,17 @@
 			padding: 0.9rem;
 			font-size: 0.82rem;
 			gap: 0.6rem;
+		}
+
+		.theme-toggle-btn {
+			padding: 0.82rem;
+			font-size: 0.76rem;
+			gap: 0.55rem;
+		}
+
+		.theme-toggle-btn svg {
+			width: 1rem;
+			height: 1rem;
 		}
 
 		.menu-back-btn svg {

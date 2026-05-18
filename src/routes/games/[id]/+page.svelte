@@ -223,7 +223,7 @@
 	.main-container {
 		width: 100vw;
 		min-height: 100vh;
-		background: #09090b;
+		background: var(--app-bg);
 		display: flex;
 	}
 
@@ -247,7 +247,7 @@
 		position: relative;
 		background: radial-gradient(
 			circle at 50% 50%,
-			rgba(255, 110, 97, 0.03) 0%,
+			var(--game-mat-glow) 0%,
 			transparent 70%
 		);
 		overflow: hidden;
@@ -256,11 +256,11 @@
 	.game-frame-adaptive {
 		width: 98vmin;
 		height: 98vmin;
-		background: rgba(255, 255, 255, 0.015);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--game-frame-bg);
+		border: 1px solid var(--game-frame-border);
 		border-radius: 2vmin;
 		backdrop-filter: blur(30px);
-		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+		box-shadow: inset 0 0 0 1px var(--game-frame-inner-border);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -279,7 +279,7 @@
 		align-items: center;
 		justify-content: center;
 		height: 100%;
-		color: white;
+		color: var(--app-text);
 	}
 
 	.error-view a {
@@ -291,7 +291,7 @@
 		max-width: 720px;
 		margin: 4vmin auto 0;
 		padding: 0 3vmin;
-		color: rgba(255, 255, 255, 0.85);
+		color: color-mix(in srgb, var(--app-text) 86%, transparent);
 		font-size: 15px;
 		line-height: 1.6;
 		font-weight: 500;
@@ -301,7 +301,7 @@
 		max-width: 720px;
 		margin: 0 auto;
 		padding: 2vmin 3vmin 4vmin;
-		color: rgba(255, 255, 255, 0.7);
+		color: color-mix(in srgb, var(--app-text) 74%, transparent);
 		font-size: 14px;
 		line-height: 1.7;
 	}
@@ -309,7 +309,7 @@
 	.game-guide :global(h2) {
 		font-size: 1.4rem;
 		font-weight: 800;
-		color: rgba(255, 255, 255, 0.9);
+		color: color-mix(in srgb, var(--app-text) 90%, transparent);
 		margin-bottom: 1rem;
 		letter-spacing: -0.02em;
 	}
@@ -317,7 +317,7 @@
 	.game-guide :global(h3) {
 		font-size: 1.05rem;
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.8);
+		color: color-mix(in srgb, var(--app-text) 82%, transparent);
 		margin-top: 1.5rem;
 		margin-bottom: 0.5rem;
 	}
@@ -331,7 +331,7 @@
 		margin: 0 auto 3vmin;
 		padding: 0 3vmin;
 		font-size: 12px;
-		color: rgba(255, 255, 255, 0.35);
+		color: color-mix(in srgb, var(--app-text) 38%, transparent);
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
 	}

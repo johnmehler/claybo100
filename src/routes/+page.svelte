@@ -42,7 +42,7 @@
 	.main-container {
 		width: 100vw;
 		min-height: 100vh;
-		background: #09090b;
+		background: var(--app-bg);
 		display: flex;
 	}
 
@@ -73,7 +73,7 @@
 		font-weight: 900;
 		letter-spacing: -0.08em;
 		margin: 0;
-		color: white;
+		color: var(--app-text);
 		text-transform: uppercase;
 		line-height: 1;
 	}
@@ -85,7 +85,7 @@
 	p.app-subtitle {
 		font-size: clamp(0.68rem, 1.35vmin, 0.95rem);
 		font-weight: 700;
-		color: rgba(255, 255, 255, 0.4);
+		color: var(--app-muted-text);
 		letter-spacing: 0.24em;
 		margin-top: 0.3rem;
 	}
@@ -99,8 +99,8 @@
 	}
 
 	.category {
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
 		border-radius: 16px;
 		padding: clamp(0.85rem, 1.9vmin, 1.25rem);
 		backdrop-filter: blur(8px);
@@ -113,7 +113,7 @@
 		font-weight: 800;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+		border-bottom: 1px solid var(--panel-border);
 		padding-bottom: 0.4rem;
 	}
 
@@ -125,8 +125,8 @@
 	}
 
 	.game-card {
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: color-mix(in srgb, var(--panel-bg) 95%, transparent);
+		border: 1px solid var(--panel-border);
 		border-radius: 14px;
 		padding: 0.8rem 0.85rem;
 		display: flex;
@@ -138,19 +138,19 @@
 		position: relative;
 		overflow: hidden;
 		backdrop-filter: blur(6px);
-		color: white;
+		color: var(--app-text);
 		text-decoration: none;
 		min-height: 78px;
 	}
 
 	.game-card:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: color-mix(in srgb, var(--panel-bg) 82%, var(--app-text) 8%);
 		border-color: var(--color-illusion);
 		transform: translateY(-1px);
 	}
 
 	.card-icon {
-		background: rgba(255, 255, 255, 0.05);
+		background: color-mix(in srgb, var(--panel-bg) 86%, var(--app-text) 6%);
 		width: 2.65rem;
 		height: 2.65rem;
 		flex-shrink: 0;
@@ -176,7 +176,7 @@
 	.card-content p {
 		margin: 0;
 		font-size: clamp(0.74rem, 1.18vmin, 0.86rem);
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--app-muted-text);
 		line-height: 1.35;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;

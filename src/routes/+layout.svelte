@@ -1,7 +1,15 @@
 <script lang="ts">
 	import Footer from '$lib/Footer.svelte';
+	import { onMount } from 'svelte';
 
 	let { children } = $props();
+	const THEME_STORAGE_KEY = 'mathmuseum-theme';
+
+	onMount(() => {
+		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+		const theme = savedTheme === 'light' ? 'light' : 'dark';
+		document.documentElement.dataset.theme = theme;
+	});
 
 	$effect(() => {
 		function blockArrowScroll(e: KeyboardEvent) {
@@ -32,15 +40,35 @@
 		--color-apple: #69af4b;
 		--color-indigo: #4b6abe;
 		--color-illusion: #f8a5c2;
-		--bg-dark: #09090b;
+		--app-bg: #09090b;
+		--app-text: #ffffff;
+		--app-muted-text: rgba(255, 255, 255, 0.55);
+		--panel-bg: rgba(255, 255, 255, 0.03);
+		--panel-border: rgba(255, 255, 255, 0.08);
+		--game-frame-bg: rgba(255, 255, 255, 0.015);
+		--game-frame-border: rgba(255, 255, 255, 0.08);
+		--game-frame-inner-border: rgba(255, 255, 255, 0.05);
+		--game-mat-glow: rgba(255, 110, 97, 0.03);
+	}
+
+	:global(html[data-theme='light']) {
+		--app-bg: #f4f6fb;
+		--app-text: #111827;
+		--app-muted-text: rgba(17, 24, 39, 0.65);
+		--panel-bg: rgba(255, 255, 255, 0.78);
+		--panel-border: rgba(17, 24, 39, 0.14);
+		--game-frame-bg: rgba(255, 255, 255, 0.9);
+		--game-frame-border: rgba(17, 24, 39, 0.14);
+		--game-frame-inner-border: rgba(17, 24, 39, 0.08);
+		--game-mat-glow: rgba(255, 110, 97, 0.07);
 	}
 
 	:global(html, body) {
 		margin: 0;
 		padding: 0;
-		background: var(--bg-dark);
+		background: var(--app-bg);
 		font-family: 'Outfit', sans-serif;
-		color: white;
+		color: var(--app-text);
 	}
 
 	:global(*) {
