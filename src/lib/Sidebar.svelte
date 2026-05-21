@@ -200,7 +200,7 @@
 	.sidebar-toggle-floating {
 		position: fixed;
 		top: 3vmin;
-		left: 26vmin;
+		left: calc(32vmin - 6vmin - 2vmin);
 		width: 6vmin;
 		height: 6vmin;
 		background: color-mix(in srgb, var(--panel-bg) 85%, transparent);
@@ -223,7 +223,7 @@
 	}
 
 	.sidebar-toggle-floating.is-collapsed {
-		left: 3vmin;
+		left: 2vmin;
 		background: var(--color-bittersweet);
 		border-color: var(--color-bittersweet);
 		color: #111;
@@ -255,7 +255,7 @@
 	}
 
 	.sidebar-title {
-		font-size: 2.2vmin;
+		font-size: 2.0vmin;
 		font-weight: 900;
 		letter-spacing: -0.05vmin;
 		margin: 0;
@@ -494,8 +494,7 @@
 
 		.sidebar-toggle-floating {
 			top: 1rem;
-			left: min(82vw, 360px);
-			transform: translateX(-0.75rem);
+			left: calc(min(82vw, 360px) - 2.8rem - 1rem);
 			width: 2.8rem;
 			height: 2.8rem;
 			border-radius: 0.8rem;
@@ -503,7 +502,6 @@
 
 		.sidebar-toggle-floating.is-collapsed {
 			left: 1rem;
-			transform: none;
 		}
 
 		.sidebar-toggle-floating svg {
