@@ -47,6 +47,7 @@
 	let marketDemand = $state(500);
 	let marketShare = $state(0.25);
 	let lastPotentialDemand = $state(0);
+	let productionDisrupted = $state(false);
 	let playerTeam = $state("");
 
 	// AI Competitors (3 competitors with names)
@@ -146,7 +147,8 @@
 			name: string,
 			quality: number,
 			price: number,
-			marketShare: number
+			marketShare: number,
+			employeePay: number
 		}>
 	}>>([]);
 
@@ -169,7 +171,7 @@
 		company: { price: number; quality: number; marketing: number; reputation: number; employeePay: number },
 		demandNoise: number
 	): number {
-		const payQualityAdjustment = ((company.employeePay - 100) / 100) * 0.4;
+		const payQualityAdjustment = ((company.employeePay - 80) / 80) * 0.5;
 		const effectiveQuality = Math.max(1, company.quality + payQualityAdjustment);
 		const marketingBoost = Math.sqrt(1 + company.marketing / 1000);
 
@@ -194,11 +196,11 @@
 		return Math.max(0.001, segmentScore * marketingBoost * reputationFactor * demandNoise);
 	}
 
-	function calculateUnitCost(): number {
+	function calculateUnitCost(q: number, pay: number): number {
 		const B = BASE_COST;
-		const E = employeePay / 100;
+		const E = pay / 100;
 
-		return Math.max(2, B + 0.4 * quality - 0.35 * E);
+		return Math.max(2, B + 0.4 * q - 0.35 * E);
 	}
 
 	function calculateEmployeeCount(units: number): number {
@@ -231,23 +233,28 @@
 		const baselinePay = 80;
 		const marketingEffect =
 			1.8 * (Math.log1p(marketingSpend / 400) - Math.log1p(baselineMarketing / 400));
-		const payEffect = 0.028 * (pay - baselinePay);
+		const payEffect = 0.03 * (pay - baselinePay);
 		return marketingEffect + payEffect;
 	}
 
 	function computeEfficiencyTarget(currentPay: number, history: number[]): number {
 		const averagePay = history.reduce((s, p) => s + p, 0) / history.length;
-		const payChanges: number[] = [];
-		for (let i = 0; i < history.length - 1; i++) {
-			payChanges.push(Math.abs(history[i] - history[i + 1]));
+		
+		// Volatility: penalty only if pay changes direction (whipsaw)
+		let whipsawPenalty = 0;
+		if (history.length >= 3) {
+			const diff1 = history[0] - history[1];
+			const diff2 = history[1] - history[2];
+			if ((diff1 > 0 && diff2 < 0) || (diff1 < 0 && diff2 > 0)) {
+				whipsawPenalty = Math.min(0.35, (Math.abs(diff1) + Math.abs(diff2)) / 120);
+			}
 		}
-		const averageVolatility = payChanges.length > 0
-			? payChanges.reduce((sum, c) => sum + c, 0) / payChanges.length
-			: 0;
-		const sustainedPayBonus = Math.max(0, (averagePay - 100) / 100) * 0.5;
-		const currentPayBonus = Math.max(0, (currentPay - 100) / 100) * 0.2;
-		const whipsawPenalty = Math.min(0.35, averageVolatility / 90);
-		return Math.max(0.7, Math.min(1.6, 0.95 + sustainedPayBonus + currentPayBonus - whipsawPenalty));
+		
+		// Center bonus/penalty around baseline 80
+		const sustainedPayEffect = ((averagePay - 80) / 80) * 0.2;
+		const currentPayEffect = ((currentPay - 80) / 80) * 0.1;
+		
+		return Math.max(0.7, Math.min(1.6, 1.0 + sustainedPayEffect + currentPayEffect - whipsawPenalty));
 	}
 
 	function updateReputation(): void {
@@ -304,7 +311,7 @@
 	function executeAITurn(ai: AICompetitor, demandShareFraction: number): number {
 		const aiActualQuality = calculateQualityFromSpending(ai.qualitySpending, ai.previousQuality);
 		ai.quality = aiActualQuality;
-		const aiUnitCost = Math.max(2, BASE_COST + 0.4 * ai.quality - 0.35 * (ai.employeePay / 100));
+		const aiUnitCost = calculateUnitCost(ai.quality, ai.employeePay);
 
 		// Production — efficiency reduces cost, not output
 		let aiActualProduction = ai.production;
@@ -358,6 +365,9 @@
 	}
 
 	function executeTurn(): void {
+		// Clamp employee pay input
+		employeePay = Math.max(50, Math.min(200, Math.round(employeePay)));
+
 		// Save previous input values
 		previousPrice = price;
 		previousQualitySpending = qualitySpending;
@@ -401,8 +411,10 @@
 
 		// Production and inventory — efficiency reduces cost per unit, not output
 		let actualProduction = productionQuantity;
+		productionDisrupted = false;
 		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
 			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
+			productionDisrupted = true;
 		}
 
 		if (inventory === 0) {
@@ -427,7 +439,7 @@
 
 		// Revenue and costs
 		revenue = unitsSold * price;
-		unitCost = calculateUnitCost();
+		unitCost = calculateUnitCost(quality, employeePay);
 		const effectiveUnitsForCost = Math.floor(productionQuantity / productionEfficiency);
 		const productionCost = effectiveUnitsForCost * unitCost;
 		const marketingCost = marketing;
@@ -457,12 +469,13 @@
 
 		// Record history
 		const teamSnapshots = [
-			{ name: playerTeam, quality, price, marketShare },
+			{ name: playerTeam, quality, price, marketShare, employeePay },
 			...aiCompetitors.map((ai, index) => ({
 				name: ai.name,
 				quality: ai.quality,
 				price: ai.price,
-				marketShare: aiActualMarketShares[index]
+				marketShare: aiActualMarketShares[index],
+				employeePay: ai.employeePay
 			}))
 		];
 
@@ -484,6 +497,8 @@
 
 	function generateFeedback(): void {
 		const messages: string[] = [];
+
+		if (productionDisrupted) messages.push("Labor dissatisfaction caused production slowdowns");
 
 		// Calculate average competitor values
 		const avgPrice = aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / aiCompetitors.length;
@@ -519,10 +534,9 @@
 	const projectedQuality = $derived(calculateQualityFromSpending(qualitySpending, previousQuality));
 
 	const averagePayHistory = $derived(payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length);
-	const currentEfficiency = $derived(computeEfficiencyTarget(employeePay, payHistory));
-	const previousEfficiency = $derived(computeEfficiencyTarget(previousEmployeePay, payHistory));
+	const projectedEfficiency = $derived(Math.max(0.7, Math.min(1.6, 0.7 * productionEfficiency + 0.3 * computeEfficiencyTarget(employeePay, payHistory))));
 
-	const projectedUnitCost = $derived(Math.max(2, BASE_COST + 0.4 * projectedQuality - 0.35 * (employeePay / 100)));
+	const projectedUnitCost = $derived(calculateUnitCost(projectedQuality, employeePay));
 	const projectedProductionCost = $derived(productionQuantity * projectedUnitCost);
 	const projectedTotalCost = $derived(projectedProductionCost + marketing + projectedLaborCost);
 	const projectedBreakeven = $derived(Math.ceil(projectedTotalCost / price));
@@ -549,6 +563,7 @@
 		marketDemand = 500;
 		marketShare = 0.25;
 		lastPotentialDemand = 0;
+		productionDisrupted = false;
 
 		price = 18.00;
 		quality = 5;
@@ -624,6 +639,16 @@
 				<span class="label">Reputation</span>
 				<span class="value">{reputation.toFixed(2)}</span>
 			</div>
+			{#if currentTurn > 1}
+				<div class="stat">
+					<span class="label">Last Sales</span>
+					<span class="value">{unitsSold}</span>
+				</div>
+			{/if}
+			<div class="stat">
+				<span class="label">Inventory</span>
+				<span class="value">{inventory}</span>
+			</div>
 		</div>
 
 		<div class="inputs-panel">
@@ -673,7 +698,7 @@
 					<input type="number" id="pay" bind:value={employeePay} min="50" max="200" step="10" />
 					<div class="efficiency-preview">
 						<span class="efficiency-label">Efficiency (avg pay: ${averagePayHistory.toFixed(0)}):</span>
-						<span class="efficiency-value">{previousEfficiency.toFixed(2)} → {currentEfficiency.toFixed(2)}</span>
+						<span class="efficiency-value">{productionEfficiency.toFixed(2)} → {projectedEfficiency.toFixed(2)}</span>
 					</div>
 				</div>
 			</div>
@@ -925,6 +950,11 @@
 			<h2>📊 Projections</h2>
 			<div class="research-content">
 				<div class="research-card">
+					<h3>Your Quality</h3>
+					<p>Your current quality score: <strong>{quality.toFixed(2)}</strong></p>
+					<p class="research-note">Compare this with customer segment preferences below.</p>
+				</div>
+				<div class="research-card">
 					<h3>Market Demand</h3>
 					<p>Current market demand: <strong>{marketDemand} units</strong></p>
 					<p class="research-note">Market grows -1% to +9% per quarter.</p>
@@ -1040,7 +1070,7 @@
 						</div>
 					{:else if activeChart === "pay"}
 						<div class="chart-card">
-							<h3>Average Employee Pay (Current Quarter)</h3>
+							<h3>Employee Pay (Current Quarter)</h3>
 							<div class="chart">
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
@@ -1049,17 +1079,11 @@
 										<text x="30" y={200 - ((y - 50) / 150) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
-										{@const isPlayer = team.name === playerTeam}
-										{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === team.name)}
-										{@const teamAveragePay = isPlayer
-											? payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length
-											: aiIndex >= 0
-												? aiCompetitors[aiIndex].payHistory.reduce((sum, pay) => sum + pay, 0) / aiCompetitors[aiIndex].payHistory.length
-												: 80}
-										{@const barHeight = ((teamAveragePay - 50) / 150) * 160}
+										{@const teamPay = team.employeePay}
+										{@const barHeight = ((teamPay - 50) / 150) * 160}
 										{@const barX = 60 + teamIndex * 70}
 										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${teamAveragePay.toFixed(0)}</text>
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${teamPay.toFixed(0)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
@@ -1074,7 +1098,7 @@
 						<button class="chart-btn" class:active={activeChart === "quality"} onclick={() => activeChart = "quality"}>Quality</button>
 						<button class="chart-btn" class:active={activeChart === "price"} onclick={() => activeChart = "price"}>Price</button>
 						<button class="chart-btn" class:active={activeChart === "market"} onclick={() => activeChart = "market"}>Market Share</button>
-						<button class="chart-btn" class:active={activeChart === "pay"} onclick={() => activeChart = "pay"}>Avg Pay</button>
+						<button class="chart-btn" class:active={activeChart === "pay"} onclick={() => activeChart = "pay"}>Pay</button>
 					</div>
 				</div>
 
@@ -1114,40 +1138,52 @@
 				</div>
 				<div class="insight-card">
 					<h3>AI Team Details</h3>
-					{#if currentTurn === 1}
-						<p>AI teams are initializing their strategies...</p>
-					{:else}
-						{#each aiCompetitors as ai}
-							<div class="ai-team-detail">
-								<strong>{ai.name}</strong>
-								<table class="insight-table">
-									<tbody>
-										<tr>
-											<td>Price</td>
-											<td>${ai.price.toFixed(2)}</td>
-											<td class:positive={price < ai.price} class:negative={price > ai.price}>
-												{price < ai.price ? "Lower ✓" : price > ai.price ? "Higher ✗" : "Equal"}
-											</td>
-										</tr>
-										<tr>
-											<td>Quality</td>
-											<td>{ai.quality}</td>
-											<td class:positive={quality > ai.quality} class:negative={quality < ai.quality}>
-												{quality > ai.quality ? "Higher ✓" : quality < ai.quality ? "Lower ✗" : "Equal"}
-											</td>
-										</tr>
-										<tr>
-											<td>Marketing</td>
-											<td>${ai.marketing}</td>
-											<td class:positive={marketing > ai.marketing} class:negative={marketing < ai.marketing}>
-												{marketing > ai.marketing ? "Higher ✓" : marketing < ai.marketing ? "Lower ✗" : "Equal"}
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						{/each}
-					{/if}
+					{#each aiCompetitors as ai}
+						{@const aiIndex = aiCompetitors.findIndex(comp => comp.name === ai.name)}
+						{@const aiMarketShare = history.length > 0 ? history[history.length - 1].teams[aiIndex + 1].marketShare : 0.25}
+						<div class="ai-team-detail">
+							<strong>{ai.name}</strong>
+							<table class="insight-table">
+								<tbody>
+									<tr>
+										<td>Price</td>
+										<td>${ai.price.toFixed(2)}</td>
+										<td class:positive={price < ai.price} class:negative={price > ai.price}>
+											{price < ai.price ? "Lower ✓" : price > ai.price ? "Higher ✗" : "Equal"}
+										</td>
+									</tr>
+									<tr>
+										<td>Quality</td>
+										<td>{ai.quality.toFixed(2)}</td>
+										<td class:positive={quality > ai.quality} class:negative={quality < ai.quality}>
+											{quality > ai.quality ? "Higher ✓" : quality < ai.quality ? "Lower ✗" : "Equal"}
+										</td>
+									</tr>
+									<tr>
+										<td>Marketing</td>
+										<td>${ai.marketing}</td>
+										<td class:positive={marketing > ai.marketing} class:negative={marketing < ai.marketing}>
+											{marketing > ai.marketing ? "Higher ✓" : marketing < ai.marketing ? "Lower ✗" : "Equal"}
+										</td>
+									</tr>
+									<tr>
+										<td>Reputation</td>
+										<td>{ai.reputation.toFixed(2)}</td>
+										<td class:positive={reputation > ai.reputation} class:negative={reputation < ai.reputation}>
+											{reputation > ai.reputation ? "Higher ✓" : reputation < ai.reputation ? "Lower ✗" : "Equal"}
+										</td>
+									</tr>
+									<tr>
+										<td>Market Share</td>
+										<td>{formatPercent(aiMarketShare)}</td>
+										<td class:positive={marketShare > aiMarketShare} class:negative={marketShare < aiMarketShare}>
+											{marketShare > aiMarketShare ? "Higher ✓" : marketShare < aiMarketShare ? "Lower ✗" : "Equal"}
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					{/each}
 				</div>
 				<div class="insight-card">
 					<h3>Competitor Behavior</h3>
@@ -1728,7 +1764,7 @@
 
 	.stats-panel {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
 		gap: 0.75rem;
 		margin-bottom: 2rem;
 		padding-bottom: 1rem;
