@@ -15,7 +15,7 @@
 
 	let nextRowIdx = $derived(rows.reduce((minIdx, curr, idx, arr) => curr.length < arr[minIdx].length ? idx : minIdx, 0));
 
-	const colors = ['#ef4444', '#22c55e', '#3b82f6'];
+	const colors = ['#dc2626', '#16a34a', '#7c3aed']; // Red, Green, Purple
 
 	function init() {
 		let temp = [];
@@ -44,8 +44,20 @@
 
 	$effect(() => {
 		registerActions({
+			restart: () => init(),
+			newShuffle: () => init(),
 			help: () => instructions.open()
 		});
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+			const key = e.key.toLowerCase();
+			if (key === 'r' || key === 'n') {
+				init();
+			}
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
 	});
 
 	function clickCard(id: number) {
@@ -134,9 +146,15 @@
 
 <svg width="0" height="0" style="position: absolute;">
 	<defs>
-		<pattern id="stripes-0" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="#ef4444" /></pattern>
-		<pattern id="stripes-1" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="#22c55e" /></pattern>
-		<pattern id="stripes-2" patternUnits="userSpaceOnUse" width="4" height="4"><rect width="2" height="4" fill="#3b82f6" /></pattern>
+		<pattern id="stripes-0" patternUnits="userSpaceOnUse" width="8" height="8">
+			<rect width="3" height="8" fill="#dc2626" />
+		</pattern>
+		<pattern id="stripes-1" patternUnits="userSpaceOnUse" width="8" height="8">
+			<rect width="3" height="8" fill="#16a34a" />
+		</pattern>
+		<pattern id="stripes-2" patternUnits="userSpaceOnUse" width="8" height="8">
+			<rect width="3" height="8" fill="#7c3aed" />
+		</pattern>
 	</defs>
 </svg>
 
@@ -145,6 +163,7 @@
 		<p><strong>Goal:</strong> Find a "Set" of three cards.</p>
 		<p>For each of the four attributes (Color, Shape, Number, Shading), the three cards must either be <strong>all the same</strong> or <strong>all entirely different</strong>.</p>
 		<p>Scan the board carefully. There is almost always a valid Set hidden in plain sight!</p>
+		<p><strong>Shortcuts:</strong> Press <strong>R</strong> or <strong>N</strong> to reshuffle and start a new game.</p>
 	</Instructions>
 
 	<div class="board-wrapper">
@@ -152,6 +171,11 @@
 			<div class="stat">
 				<span class="label">SETS FOUND</span>
 				<span class="value">{score}</span>
+			</div>
+			<div class="stat-divider"></div>
+			<div class="stat">
+				<span class="label">DECK REMAINING</span>
+				<span class="value">{deck.length}</span>
 			</div>
 		</div>
 
@@ -170,22 +194,24 @@
 								out:scale={{ duration: 400, start: 0.7, opacity: 0 }}
 							>
 								{#each Array(card.n + 1) as _}
-									<svg class="shape" viewBox="0 0 24 12" style="color: {colors[card.c]}">
+									<svg class="shape" viewBox="0 0 100 50" style="color: {colors[card.c]}">
 										{#if card.s === 0}
 											<!-- Oval -->
-											<rect x="2" y="1" width="20" height="10" rx="5" 
+											<rect x="6" y="6" width="88" height="38" rx="19" ry="19" 
 												fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-												stroke="currentColor" stroke-width="2" />
+												stroke="currentColor" stroke-width="6" />
 										{:else if card.s === 1}
 											<!-- Diamond -->
-											<polygon points="12,1 22,6 12,11 2,6" 
+											<polygon points="50,6 94,25 50,44 6,25" 
 												fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-												stroke="currentColor" stroke-width="2" />
+												stroke="currentColor" stroke-width="6" stroke-linejoin="round" />
 										{:else}
 											<!-- Squiggle -->
-											<path d="M2,7 C2,2 9,1 12,6 C15,11 22,10 22,5 C22,0 15,1 12,6 C9,11 2,12 2,7 Z" 
-												fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
-												stroke="currentColor" stroke-width="2" />
+											<g transform="translate(50, 25) scale(0.85) rotate(90) translate(-25, -50)">
+												<path d="M38.4,63.4c0,16.1,11,19.9,10.6,28.3c-0.5,9.2-21.1,12.2-33.4,3.8s-15.8-21.2-9.3-38c3.7-7.5,4.9-14,4.8-20c0-16.1-11-19.9-10.6-28.3C1,0.1,21.6-3,33.9,5.5s15.8,21.2,9.3,38C40.4,50.6,38.5,57.4,38.4,63.4z" 
+													fill={card.f === 0 ? 'currentColor' : (card.f === 2 ? `url(#stripes-${card.c})` : 'none')} 
+													stroke="currentColor" stroke-width="7" stroke-linejoin="round" />
+											</g>
 										{/if}
 									</svg>
 								{/each}
@@ -204,22 +230,39 @@
 					onclick={addCards} 
 					in:fade
 				>
-					<div class="plus">+</div>
-					<div class="label">ADD 3</div>
+					<div class="deck-pattern">
+						<svg viewBox="0 0 100 150" class="deck-svg">
+							<rect x="5" y="5" width="90" height="140" rx="10" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+							<rect x="10" y="10" width="80" height="130" rx="8" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4 2" />
+							<circle cx="50" cy="75" r="25" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+							<circle cx="50" cy="75" r="18" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+							<circle cx="50" cy="75" r="10" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" />
+							<line x1="10" y1="10" x2="90" y2="140" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+							<line x1="90" y1="10" x2="10" y2="140" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+						</svg>
+					</div>
+					<div class="deck-label-container">
+						<div class="plus">+3</div>
+						<div class="label">DRAW</div>
+					</div>
 				</button>
 			{/if}
 		</div>
-
-
-
-
 	</div>
 
 	<div class="bottom-bar"></div>
 </div>
 
 <style>
-	.game-container { display: flex; flex-direction: column; width: 100%; height: 100%; color: var(--game-text-primary); align-items: center; }
+	.game-container { 
+		display: flex; 
+		flex-direction: column; 
+		width: 100%; 
+		height: 100%; 
+		color: var(--game-text-primary); 
+		align-items: center; 
+		justify-content: center;
+	}
 
 	.board-wrapper { 
 		flex: 1; 
@@ -228,15 +271,39 @@
 		justify-content: center; 
 		align-items: center; 
 		width: 100%; 
-		padding: 2vmin 4vmin; 
+		padding: 4vmin; 
 		box-sizing: border-box;
+		background: radial-gradient(circle at center, #0f5132 0%, #052c16 100%); /* Forest green card table felt */
+		border-radius: 3vmin;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: inset 0 0 10vmin rgba(0, 0, 0, 0.5), 0 15px 30px rgba(0, 0, 0, 0.3);
+		margin: 2vmin 0;
+	}
+
+	:global(html[data-theme='light']) .board-wrapper {
+		background: radial-gradient(circle at center, #f1f5f9 0%, #cbd5e1 100%);
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		box-shadow: inset 0 0 8vmin rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.05);
 	}
 
 	.game-stats {
 		display: flex;
 		justify-content: center;
-		margin-bottom: 2vmin;
-		width: 100%;
+		align-items: center;
+		gap: 6vmin;
+		margin-bottom: 3vmin;
+		padding: 1.5vmin 4vmin;
+		background: rgba(15, 23, 42, 0.45);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		backdrop-filter: blur(10px);
+		border-radius: 2vmin;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+	}
+
+	:global(html[data-theme='light']) .game-stats {
+		background: rgba(255, 255, 255, 0.85);
+		border-color: rgba(0, 0, 0, 0.08);
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 	}
 
 	.stat {
@@ -246,64 +313,194 @@
 	}
 
 	.stat .label {
-		font-size: 1.4vmin;
-		color: var(--game-text-soft);
+		font-size: 1.1vmin;
+		color: rgba(255, 255, 255, 0.45);
 		font-weight: 800;
-		letter-spacing: 0.2vmin;
+		letter-spacing: 0.15vmin;
 		text-transform: uppercase;
+		margin-bottom: 0.2vmin;
+	}
+
+	:global(html[data-theme='light']) .stat .label {
+		color: rgba(0, 0, 0, 0.5);
 	}
 
 	.stat .value {
-		font-size: 5vmin;
+		font-size: 3.5vmin;
 		font-weight: 900;
-		color: var(--app-text);
+		color: #ffffff;
+		line-height: 1;
 	}
 
-	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
+	:global(html[data-theme='light']) .stat .value {
+		color: #0f172a;
+	}
+
+	.stat-divider {
+		width: 1px;
+		height: 4vmin;
+		background: rgba(255, 255, 255, 0.12);
+	}
+
+	:global(html[data-theme='light']) .stat-divider {
+		background: rgba(0, 0, 0, 0.08);
+	}
+
+	.bottom-bar { height: 2vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
 	
 	.board { 
 		display: grid;
-		grid-template-rows: repeat(3, 22vmin);
-		grid-auto-columns: 15vmin;
+		grid-template-rows: repeat(3, 20vmin);
+		grid-auto-columns: 13.5vmin;
 		gap: 2vmin;
 		justify-content: center;
 		width: max-content; 
 	}
-	.card-slot { width: 15vmin; height: 22vmin; }
+	.card-slot { width: 13.5vmin; height: 20vmin; }
 	
 	.card { 
-		display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8vmin;
-		width: 100%; height: 100%; background: rgba(255,255,255,0.02); 
-		border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5vmin; cursor: pointer; transition: all 0.3s; 
+		position: relative;
+		display: flex; 
+		flex-direction: column; 
+		align-items: center; 
+		justify-content: center; 
+		gap: 0.8vmin;
+		width: 100%; 
+		height: 100%; 
+		background: #ffffff; 
+		border: 1px solid #cbd5e1; 
+		border-radius: 1.5vmin; 
+		cursor: pointer; 
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		padding: 1.2vmin;
+		overflow: hidden;
 	}
-	.card:not(.placeholder):hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-0.5vmin); }
-	.card.selected { border-color: var(--app-text); box-shadow: 0 0 2vmin rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); }
-	.card.placeholder { background: transparent; border: 1px dashed rgba(255, 255, 255, 0.03); pointer-events: none; }
-	.shape { width: 11vmin; height: 5.5vmin; flex-shrink: 0; }
+
+	.card::before {
+		content: '';
+		position: absolute;
+		top: 0.8vmin;
+		left: 0.8vmin;
+		right: 0.8vmin;
+		bottom: 0.8vmin;
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		border-radius: 1vmin;
+		pointer-events: none;
+	}
+
+	.card:not(.placeholder):hover { 
+		transform: translateY(-0.8vmin); 
+		box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
+		border-color: #94a3b8; 
+	}
+
+	.card:not(.placeholder):hover::before {
+		border-color: rgba(0, 0, 0, 0.08);
+	}
+
+	.card.selected { 
+		transform: translateY(-1vmin) scale(1.03);
+		border-color: #3b82f6; 
+		box-shadow: 0 0 0 3px #3b82f6, 0 15px 25px rgba(59, 130, 246, 0.25); 
+		background: #f8fafc; 
+	}
+
+	.card.selected::before {
+		border-color: rgba(59, 130, 246, 0.2);
+	}
+
+	.card.placeholder { 
+		background: rgba(0, 0, 0, 0.15); 
+		border: 2px dashed rgba(255, 255, 255, 0.15); 
+		box-shadow: none;
+		pointer-events: none; 
+	}
+
+	.card.placeholder::before {
+		display: none;
+	}
+
+	:global(html[data-theme='light']) .card.placeholder {
+		background: rgba(0, 0, 0, 0.04);
+		border-color: rgba(0, 0, 0, 0.1);
+	}
+
+	.shape { 
+		width: 10vmin; 
+		height: 5vmin; 
+		flex-shrink: 0; 
+		overflow: visible;
+	}
 
 	.add-cards-btn {
-		width: 15vmin;
-		height: 100%;
-		background: rgba(255, 255, 255, 0.015);
-		border: 2px dashed rgba(255, 255, 255, 0.05);
+		position: relative;
+		align-self: center;
+		width: 13.5vmin;
+		height: 20vmin;
+		background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%); /* Indigo premium card back */
+		border: 1px solid #4338ca;
 		border-radius: 1.5vmin;
 		cursor: pointer;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		color: var(--game-text-soft);
-		transition: all 0.3s;
-		gap: 1.5vmin;
+		color: #ffffff;
+		box-shadow: 
+			0 1px 1px rgba(0,0,0,0.2),
+			2px 2px 0 0 #4f46e5,
+			2px 2px 1px rgba(0,0,0,0.2),
+			4px 4px 0 0 #312e81,
+			4px 4px 2px rgba(0,0,0,0.3),
+			6px 6px 15px rgba(0,0,0,0.4);
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		gap: 1.2vmin;
 	}
 
 	.add-cards-btn:hover {
-		background: rgba(255, 255, 255, 0.05);
-		border-color: var(--app-text);
-		color: var(--app-text);
-		transform: translateY(-2px);
+		transform: translateY(-0.8vmin) scale(1.02);
+		box-shadow: 
+			0 1px 1px rgba(0,0,0,0.2),
+			2px 2px 0 0 #4f46e5,
+			2px 2px 1px rgba(0,0,0,0.2),
+			4px 4px 0 0 #312e81,
+			4px 4px 2px rgba(0,0,0,0.3),
+			8px 8px 25px rgba(0,0,0,0.5);
+		filter: brightness(1.1);
 	}
 
-	.add-cards-btn .plus { font-size: 5vmin; font-weight: 200; }
-	.add-cards-btn .label { font-size: 1.5vmin; font-weight: 900; letter-spacing: 1px; }
+	.deck-pattern {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		border-radius: 1.5vmin;
+		overflow: hidden;
+		pointer-events: none;
+	}
+
+	.deck-svg {
+		width: 100%;
+		height: 100%;
+		opacity: 0.85;
+	}
+
+	.deck-label-container {
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		background: rgba(15, 23, 42, 0.75);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		backdrop-filter: blur(4px);
+		padding: 1vmin 1.8vmin;
+		border-radius: 1vmin;
+		box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+	}
+
+	.add-cards-btn .plus { font-size: 2.8vmin; font-weight: 800; line-height: 1; color: #ffffff; }
+	.add-cards-btn .label { font-size: 1.1vmin; font-weight: 900; letter-spacing: 0.15vmin; margin-top: 0.2vmin; color: rgba(255, 255, 255, 0.9); }
 </style>
