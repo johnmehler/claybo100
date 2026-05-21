@@ -399,14 +399,19 @@
 			</div>
 
 			<div class="operators">
-				{#each ["+", "-", "x", "÷"] as op}
+				{#each [
+					{ symbol: "+", display: "+" },
+					{ symbol: "-", display: "−" },
+					{ symbol: "x", display: "×" },
+					{ symbol: "÷", display: "÷" }
+				] as op}
 					<button
-						class="op {selectedOp === op ? 'selected' : ''}"
+						class="op {selectedOp === op.symbol ? 'selected' : ''}"
 						disabled={selectedBlockId === null || !!status}
 						onclick={() =>
-							(selectedOp = selectedOp === op ? null : op)}
+							(selectedOp = selectedOp === op.symbol ? null : op.symbol)}
 					>
-						{op}
+						{op.display}
 					</button>
 				{/each}
 			</div>
@@ -871,7 +876,7 @@
 		height: 8vmin;
 		font-size: 4vmin;
 		font-weight: 900;
-		line-height: 1;
+		padding: 0;
 		border-radius: 50%;
 		background: var(--krypto-op-bg);
 		border: 1px solid var(--krypto-op-border);
@@ -906,6 +911,7 @@
 			width: 13vmin;
 			height: 13vmin;
 			font-size: 6vmin;
+			padding: 0;
 		}
 	}
 
