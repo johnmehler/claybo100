@@ -77,37 +77,75 @@
 		setTimeout(() => (loserPopup = false), 1500);
 	}
 
+	const KRYPTO_DECK = [
+		// 1-6: 3 of each
+		1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6,
+		// 7-10: 4 of each
+		7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10,
+		// 11-17: 2 of each
+		11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17,
+		// 18-25: 1 of each
+		18, 19, 20, 21, 22, 23, 24, 25
+	];
+
+	function shuffle<T>(arr: T[]): T[] {
+		let shuffled = [...arr];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+		}
+		return shuffled;
+	}
+
+	function getCardColorClass(val: Fraction): string {
+		const num = val.toValue();
+		if (val.d !== 1) return 'card-combined';
+		if (num >= 1 && num <= 10) return 'card-black';
+		if (num >= 11 && num <= 17) return 'card-red';
+		if (num >= 18 && num <= 25) return 'card-blue';
+		return 'card-combined';
+	}
+
 	function generate() {
 		nextId = 0;
 		let nums: number[] = [];
 		let t = 0;
 
-		function getNum(min: number, max: number) {
-			return Math.floor(Math.random() * (max - min + 1)) + min;
+		while (true) {
+			let drawn: number[] = [];
+			if (difficulty === "easy") {
+				// Primary Krypto uses only cards <= 10.
+				// Since we deal without replacement, we filter the deck first.
+				const easyDeck = KRYPTO_DECK.filter((card) => card <= 10);
+				drawn = shuffle(easyDeck).slice(0, 6);
+			} else {
+				// Medium and Hard use the full deck
+				drawn = shuffle(KRYPTO_DECK).slice(0, 6);
+			}
+
+			const tempNums = drawn.slice(0, 5);
+			const tempTarget = drawn[5];
+
+			if (difficulty === "easy") {
+				nums = tempNums;
+				t = tempTarget;
+				break;
+			} else if (difficulty === "medium") {
+				nums = tempNums;
+				t = tempTarget;
+				break;
+			} else if (difficulty === "hard") {
+				// Hard requires playing cards with at least two >= 10, and at least one >= 18
+				const count10 = tempNums.filter((n) => n >= 10).length;
+				const count18 = tempNums.filter((n) => n >= 18).length;
+				if (count10 >= 2 && count18 >= 1) {
+					nums = tempNums;
+					t = tempTarget;
+					break;
+				}
+			}
 		}
 
-		if (difficulty === "easy") {
-			for (let i = 0; i < 5; i++) nums.push(getNum(1, 10));
-			t = getNum(1, 20);
-		} else if (difficulty === "medium") {
-			while (true) {
-				nums = [];
-				for (let i = 0; i < 5; i++) nums.push(getNum(1, 19));
-				if (nums.filter((n) => n >= 10).length >= 2) break;
-			}
-			t = getNum(1, 29);
-		} else if (difficulty === "hard") {
-			while (true) {
-				nums = [];
-				for (let i = 0; i < 5; i++) nums.push(getNum(1, 29));
-				const count10 = nums.filter((n) => n >= 10).length;
-				const count20 = nums.filter((n) => n >= 20).length;
-				if (count10 >= 2 && count20 >= 1) break;
-			}
-			t = getNum(1, 29);
-		}
-
-		nums.sort(() => Math.random() - 0.5);
 		initialNums = [...nums];
 
 		// Use Set of strings for fractions to check solvability
@@ -336,8 +374,10 @@
 	<div class="board-wrapper">
 		<div class="game-stats">
 			<div class="stat">
-				<span class="label">TARGET</span>
-				<div class="target-val">{target}</div>
+				<span class="label">TARGET CARD</span>
+				<div class="target-card">
+					<div class="val {getCardColorClass(new Fraction(target))}">{target}</div>
+				</div>
 			</div>
 		</div>
 
@@ -352,7 +392,7 @@
 						in:fade
 					>
 						<div class="shortcut">{i + 1}</div>
-						<div class="val">{b.val.toString()}</div>
+						<div class="val {getCardColorClass(b.val)}">{b.val.toString()}</div>
 						<div class="expr">{b.expr}</div>
 					</button>
 				{/each}
@@ -1003,5 +1043,57 @@
 		60% {
 			transform: translate(-50%, -50%) translate3d(4px, 0, 0);
 		}
+	}
+
+	.target-card {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 14vmin;
+		height: 17vmin;
+		border-radius: 2.5vmin;
+		box-sizing: border-box;
+		position: relative;
+		border: 1px solid var(--krypto-card-border);
+		background: var(--krypto-card-bg);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+		transition: all 0.3s;
+	}
+	.target-card:hover {
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 15px rgba(255, 255, 255, 0.1);
+	}
+	.target-card .val {
+		font-size: 5.5vmin;
+		font-weight: 900;
+	}
+
+	.val.card-black {
+		color: #ffffff !important;
+	}
+	:global(html[data-theme='light']) .val.card-black {
+		color: #1a1a1a !important;
+	}
+
+	.val.card-red {
+		color: #ff6b6b !important;
+		text-shadow: 0 0 8px rgba(255, 107, 107, 0.25);
+	}
+	:global(html[data-theme='light']) .val.card-red {
+		color: #d32f2f !important;
+	}
+
+	.val.card-blue {
+		color: #4da3ff !important;
+		text-shadow: 0 0 8px rgba(77, 163, 255, 0.25);
+	}
+	:global(html[data-theme='light']) .val.card-blue {
+		color: #1976d2 !important;
+	}
+
+	.val.card-combined {
+		color: #eaeaea !important;
+	}
+	:global(html[data-theme='light']) .val.card-combined {
+		color: #5c5346 !important;
 	}
 </style>
