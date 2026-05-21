@@ -530,7 +530,13 @@
 		--krypto-card-bg: rgba(255, 255, 255, 0.02);
 		--krypto-card-border: rgba(255, 255, 255, 0.08);
 		--krypto-card-hover-bg: rgba(255, 255, 255, 0.08);
-		--krypto-card-hover-border: rgba(255, 255, 255, 0.2);
+		--krypto-card-hover-border: #4da3ff;
+		--krypto-card-selected-bg: rgba(0, 0, 0, 0.45);
+		--krypto-op-bg: rgba(255, 255, 255, 0.04);
+		--krypto-op-border: rgba(255, 255, 255, 0.1);
+		--krypto-op-hover-bg: rgba(255, 255, 255, 0.15);
+		--krypto-op-hover-border: #4da3ff;
+		--krypto-op-selected-bg: rgba(0, 0, 0, 0.55);
 		--krypto-card-value-text: #ffffff;
 		--krypto-card-expr-text: rgba(255, 255, 255, 0.4);
 		--krypto-shortcut-text: rgba(255, 255, 255, 0.28);
@@ -548,7 +554,13 @@
 		--krypto-card-bg: rgba(255, 248, 237, 0.92);
 		--krypto-card-border: rgba(120, 94, 62, 0.45);
 		--krypto-card-hover-bg: rgba(255, 241, 221, 0.96);
-		--krypto-card-hover-border: rgba(120, 94, 62, 0.62);
+		--krypto-card-hover-border: #1976d2;
+		--krypto-card-selected-bg: rgba(215, 200, 180, 0.95);
+		--krypto-op-bg: rgba(120, 94, 62, 0.06);
+		--krypto-op-border: rgba(120, 94, 62, 0.25);
+		--krypto-op-hover-bg: rgba(120, 94, 62, 0.12);
+		--krypto-op-hover-border: #1976d2;
+		--krypto-op-selected-bg: rgba(120, 94, 62, 0.3);
 		--krypto-card-value-text: #2f251c;
 		--krypto-card-expr-text: rgba(47, 37, 28, 0.72);
 		--krypto-shortcut-text: rgba(47, 37, 28, 0.72);
@@ -629,7 +641,15 @@
 		box-shadow: 0 2vmin 6vmin rgba(0, 0, 0, 0.5);
 		backdrop-filter: blur(20px);
 		animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-		max-width: min(90vmin, 560px);
+		width: min(90vmin, 560px);
+		max-width: 90vw;
+		box-sizing: border-box;
+	}
+
+	:global(html[data-theme='light']) .status-card {
+		background: rgba(255, 248, 237, 0.95);
+		border: 1px solid rgba(120, 94, 62, 0.25);
+		box-shadow: 0 2vmin 6vmin rgba(120, 94, 62, 0.15);
 	}
 
 	.status-card.is-impossible {
@@ -711,23 +731,35 @@
 		color: var(--app-text);
 		text-shadow: 0 0 3vmin rgba(255, 255, 255, 0.4);
 	}
+	:global(html[data-theme='light']) .status-card.is-impossible .status-text {
+		text-shadow: 0 0 3vmin rgba(47, 37, 28, 0.2);
+	}
 
 	.winning-formula {
 		display: flex;
 		align-items: center;
-		gap: 2vmin;
-		font-size: 3vmin;
+		justify-content: center;
+		gap: 1.5vmin;
+		font-size: clamp(14px, 2.5vmin, 22px);
 		color: var(--game-text-primary);
 		font-family: "Outfit", sans-serif;
 		background: var(--panel-bg);
-		padding: 2vmin 4vmin;
+		padding: 2vmin 3vmin;
 		border-radius: 2vmin;
 		border: 1px solid var(--panel-border);
+		white-space: nowrap;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+		overflow: hidden;
 	}
 
 	.formula {
 		opacity: 0.8;
 		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.equals {
 		color: var(--app-text);
@@ -797,7 +829,6 @@
 	}
 	.block:hover {
 		background: var(--krypto-card-hover-bg);
-		transform: translateY(-0.5vmin);
 		border-color: var(--krypto-card-hover-border);
 	}
 	.shortcut {
@@ -815,8 +846,8 @@
 	}
 	.block.selected {
 		border-color: var(--app-text);
-		box-shadow: 0 0 2vmin rgba(255, 255, 255, 0.2);
-		background: rgba(255, 255, 255, 0.05);
+		box-shadow: inset 0 0 1.5vmin rgba(0, 0, 0, 0.2);
+		background: var(--krypto-card-selected-bg);
 	}
 	.block .val {
 		font-size: 4.5vmin;
@@ -842,8 +873,8 @@
 		font-weight: 900;
 		line-height: 1;
 		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: var(--krypto-op-bg);
+		border: 1px solid var(--krypto-op-border);
 		color: var(--krypto-card-value-text);
 		cursor: pointer;
 		display: flex;
@@ -856,13 +887,14 @@
 		cursor: not-allowed;
 	}
 	.op:not(:disabled):hover {
-		background: rgba(255, 255, 255, 0.15);
-		transform: scale(1.1);
+		background: var(--krypto-op-hover-bg);
+		border-color: var(--krypto-op-hover-border);
 	}
 	.op.selected {
-		background: var(--app-text);
 		border-color: var(--app-text);
-		color: var(--app-bg);
+		box-shadow: inset 0 0 1.5vmin rgba(0, 0, 0, 0.2);
+		background: var(--krypto-op-selected-bg);
+		color: var(--krypto-card-value-text);
 	}
 
 	@media (max-width: 768px) {
