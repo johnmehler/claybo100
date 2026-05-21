@@ -46,6 +46,7 @@
 	let inventory = $state(100);
 	let marketDemand = $state(500);
 	let marketShare = $state(0.25);
+	let lastPotentialDemand = $state(0);
 	let playerTeam = $state("");
 
 	// AI Competitors (3 competitors with names)
@@ -393,6 +394,7 @@
 		const playerDemandFraction = totalDemandScore > 0 ? playerDemandScore / totalDemandScore : 0.25;
 		const aiDemandFractions = aiDemandScores.map(score => (totalDemandScore > 0 ? score / totalDemandScore : 0.25));
 		const playerPotentialDemand = Math.floor(marketDemand * playerDemandFraction);
+		lastPotentialDemand = playerPotentialDemand;
 
 		// Execute AI competitors for this quarter and capture their actual units sold
 		const aiUnitsSoldArr = aiCompetitors.map((ai, index) => executeAITurn(ai, aiDemandFractions[index]));
@@ -504,7 +506,7 @@
 		else if (productionEfficiency > 1.3) messages.push("High efficiency — lower production costs");
 
 		if (inventory > productionQuantity * 0.5) messages.push("Inventory building up");
-		else if (unitsSold < Math.floor(marketDemand * marketShare) * 0.7) messages.push("Stockouts limiting sales");
+		else if (lastPotentialDemand > 0 && unitsSold < lastPotentialDemand * 0.7) messages.push("Stockouts limiting sales");
 
 		if (profit < 0) messages.push("Losses this turn");
 		else if (profit > 5000) messages.push("Strong profitability");
@@ -520,7 +522,7 @@
 	const currentEfficiency = $derived(computeEfficiencyTarget(employeePay, payHistory));
 	const previousEfficiency = $derived(computeEfficiencyTarget(previousEmployeePay, payHistory));
 
-	const projectedUnitCost = $derived(BASE_COST + 0.4 * projectedQuality - 0.35 * (employeePay / 100));
+	const projectedUnitCost = $derived(Math.max(2, BASE_COST + 0.4 * projectedQuality - 0.35 * (employeePay / 100)));
 	const projectedProductionCost = $derived(productionQuantity * projectedUnitCost);
 	const projectedTotalCost = $derived(projectedProductionCost + marketing + projectedLaborCost);
 	const projectedBreakeven = $derived(Math.ceil(projectedTotalCost / price));
@@ -546,6 +548,7 @@
 		inventoryQuality = 5;
 		marketDemand = 500;
 		marketShare = 0.25;
+		lastPotentialDemand = 0;
 
 		price = 18.00;
 		quality = 5;
@@ -573,6 +576,8 @@
 		showResults = false;
 		gameOver = false;
 		history = [];
+		activeTab = "game";
+		activeChart = "quality";
 	}
 
 	function formatMoney(value: number): string {
@@ -711,15 +716,15 @@
 					{#if currentTurn === 1}
 						<tr>
 							<td>Price</td>
-							<td>$15.00</td>
+							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / Math.max(1, aiCompetitors.length)).toFixed(2)}</td>
 						</tr>
 						<tr>
 							<td>Quality</td>
-							<td>5</td>
+							<td>{(aiCompetitors.reduce((sum, ai) => sum + ai.quality, 0) / Math.max(1, aiCompetitors.length)).toFixed(1)}</td>
 						</tr>
 						<tr>
 							<td>Marketing</td>
-							<td>$1,000</td>
+							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.marketing, 0) / Math.max(1, aiCompetitors.length)).toFixed(0)}</td>
 						</tr>
 					{:else}
 						<tr>
@@ -760,7 +765,7 @@
 			</div>
 			<div class="result">
 				<span class="label">Revenue</span>
-				<span class="value positive">${formatMoney(revenue)}</span>
+				<span class="value" class:positive={revenue > 0}>${formatMoney(revenue)}</span>
 			</div>
 			<div class="result">
 				<span class="label">Costs</span>
@@ -879,7 +884,7 @@
 						{#each allTeamsSorted as teamName, teamIndex}
 							{@const isPlayer = teamName === playerTeam}
 							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
-							{@const teamMarketShare = isPlayer ? marketShare : (history.length > 0 ? history[history.length - 1].teams[aiIndex].marketShare : 0.2)}
+							{@const teamMarketShare = isPlayer ? marketShare : (history.length > 0 ? history[history.length - 1].teams[aiIndex + 1].marketShare : 0.25)}
 							{@const barHeight = teamMarketShare * 160}
 							{@const barX = 60 + teamIndex * 70}
 							{@const teamColorIndex = allTeams.indexOf(teamName)}
