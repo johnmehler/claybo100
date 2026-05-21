@@ -8,6 +8,7 @@
 <svelte:head>
 	<title>Online Math Games - Free Online Math and Puzzle Games</title>
 	<meta name="description" content="onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
+	<meta name="keywords" content="free math games, online logic puzzles, interactive physics simulations, browser strategy games, classroom math games unblocked, math museum games, onlinemath.games" />
 </svelte:head>
 
 <main id="main-view" class="main-container centered">

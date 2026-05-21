@@ -203,6 +203,28 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 			{ name: 'Build staircases', text: 'Use multiple blocks to build steps to reach high ledges that you cannot climb normally.' },
 			{ name: 'Reach the exit', text: 'Navigate to the green exit door to complete the level.' }
 		]
+	},
+	'lemonadestand': {
+		name: 'How to play Lemonade Stand',
+		description: 'Manage your budget, buy supplies, craft the recipe, and set pricing to maximize profit.',
+		steps: [
+			{ name: 'Buy supplies', text: 'Purchase cups, lemons, sugar, and ice in bulk. Ice melts at the end of the day, so buy only what you need.' },
+			{ name: 'Check the weather', text: 'Sunny or hot weather boosts visitor count and price tolerance. Cloudy, cold, or rainy weather reduces demand.' },
+			{ name: 'Set your recipe', text: 'Mix lemons, sugar, and ice per cup. Aim for the ideal balance (1 lemon, 1 sugar, 2 ice) to maximize your taste score.' },
+			{ name: 'Determine the price', text: 'Adjust the price per cup based on weather conditions. You can charge more on hot days but should lower prices on cold days.' },
+			{ name: 'Sell and analyze', text: 'Run the day to see your sales and revenue, then adjust your strategy for the next day.' }
+		]
+	},
+	'apexindustries': {
+		name: 'How to play Apex Industries',
+		description: 'Formulate strategy across price, quality, marketing, production, and wages to beat AI competitors.',
+		steps: [
+			{ name: 'Set product pricing', text: 'Analyze average competitor prices and customer segment preferences. Balance high margins against high sales volume.' },
+			{ name: 'Invest in quality & marketing', text: 'Allocate budget to quality spending to build long-term brand reputation, and marketing to generate immediate demand.' },
+			{ name: 'Optimize production capacity', text: 'Select production volume based on projected demand. Keep employee wages high to maximize production efficiency and avoid labor strikes or output reductions.' },
+			{ name: 'Execute the quarter', text: 'Run the turn simulation to compete against three AI-controlled corporations and review your market share, sales, and profits.' },
+			{ name: 'Reinvest profits', text: 'Adapt to shifting price sensitivity and customer segment weights to grow your cash reserves over the 6-quarter run.' }
+		]
 	}
 };
 
@@ -325,5 +347,19 @@ export const gameSEO: Record<string, GameSEO> = {
 		keywords: ['block dude online', 'play block dude', 'ti-84 block dude', 'calculator games online', 'block dude unblocked', 'stacking block puzzle'],
 		genre: 'Puzzle',
 		about: 'Block Dude is a legendary puzzle game from the TI-83/84 calculator era. Move blocks, build staircases, and find your way to the exit in this grid-based logic classic.'
+	},
+	'lemonadestand': {
+		title: 'Lemonade Stand Game Online — Play the Classic Business Sim Free',
+		description: 'Play the classic Lemonade Stand business simulator game free online. Manage inventory, set prices, adjust recipes for the weather, and maximize profits.',
+		keywords: ['lemonade stand game', 'play lemonade stand online', 'classic lemonade stand', 'business simulator game', 'lemonade game free', 'lemonade stand unblocked'],
+		genre: 'Simulation',
+		about: 'Lemonade Stand is a modern adaptation of the classic 1973 MECC business simulation. Manage your budget, buy supplies, craft the perfect recipe, and set prices to optimize your daily profit over a 7-day run.'
+	},
+	'apexindustries': {
+		title: 'Apex Industries Game Online — Play the Business Management Sim Free',
+		description: 'Play Apex Industries free online. Make strategic decisions on price, quality, marketing, production, and wages to build your corporate empire and beat the AI.',
+		keywords: ['apex industries game', 'business strategy simulator', 'play apex industries online', 'management game free', 'corporate simulator unblocked'],
+		genre: 'Simulation',
+		about: 'Apex Industries is an advanced multi-competitor business simulation. Formulate your strategy across price, quality spending, marketing, production volume, and employee wages to capture market share and maximize cumulative profits.'
 	}
 };

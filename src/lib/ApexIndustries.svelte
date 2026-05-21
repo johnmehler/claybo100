@@ -838,12 +838,12 @@
 							{@const teamColorIndex = allTeams.indexOf(teamName)}
 							<rect x={barX} y={barY} width="50" height={barHeight} fill={teamProfit >= 0 ? (isPlayer ? '#3b82f6' : '#10b981') : (isPlayer ? '#3b82f6' : '#ef4444')} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={barY - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={barY - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={teamProfit >= 0 ? barY - 8 : barY + barHeight + 12} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{formatMoney(teamProfit)}</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={teamProfit >= 0 ? barY - 8 : barY + barHeight + 12} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{formatMoney(teamProfit)}</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
 						{/each}
-						<line x1="40" y1="180" x2="380" y2="180" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+						<line x1="40" y1="180" x2="380" y2="180" stroke="var(--chart-baseline)" stroke-width="1" />
 					</svg>
 				</div>
 				<div class="chart-card">
@@ -858,10 +858,10 @@
 							{@const teamColorIndex = allTeams.indexOf(teamName)}
 							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>${(teamCash / 1000).toFixed(0)}k</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>${(teamCash / 1000).toFixed(0)}k</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
 						{/each}
 					</svg>
 				</div>
@@ -877,10 +877,10 @@
 							{@const teamColorIndex = allTeams.indexOf(teamName)}
 							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{(teamMarketShare * 100).toFixed(0)}%</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{(teamMarketShare * 100).toFixed(0)}%</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
 						{/each}
 					</svg>
 				</div>
@@ -896,10 +896,10 @@
 							{@const teamColorIndex = allTeams.indexOf(teamName)}
 							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="white" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="white" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamReputation.toFixed(1)}</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamReputation.toFixed(1)}</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
 						{/each}
 					</svg>
 				</div>
@@ -963,18 +963,18 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [1, 3, 5, 7, 9] as y}
-										<line x1="40" y1={200 - (y / 9) * 160} x2="380" y2={200 - (y / 9) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-										<text x="30" y={200 - (y / 9) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">{y}</text>
+										<line x1="40" y1={200 - (y / 9) * 160} x2="380" y2={200 - (y / 9) * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={200 - (y / 9) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">{y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
 										{@const barHeight = (team.quality / 9) * 160}
 										{@const barX = 60 + teamIndex * 70}
 										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">{team.quality.toFixed(1)}</text>
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">{team.quality.toFixed(1)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
-										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
 							</div>
@@ -986,18 +986,18 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [5, 10, 15, 20, 25, 30] as y}
-										<line x1="40" y1={200 - ((y - 5) / 25) * 160} x2="380" y2={200 - ((y - 5) / 25) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-										<text x="30" y={200 - ((y - 5) / 25) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">${y}</text>
+										<line x1="40" y1={200 - ((y - 5) / 25) * 160} x2="380" y2={200 - ((y - 5) / 25) * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={200 - ((y - 5) / 25) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
 										{@const barHeight = ((team.price - 5) / 25) * 160}
 										{@const barX = 60 + teamIndex * 70}
 										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">${team.price.toFixed(0)}</text>
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${team.price.toFixed(0)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
-										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
 							</div>
@@ -1009,18 +1009,18 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [0, 0.2, 0.4, 0.6, 0.8, 1.0] as y}
-										<line x1="40" y1={200 - y * 160} x2="380" y2={200 - y * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-										<text x="30" y={200 - y * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">{(y * 100).toFixed(0)}%</text>
+										<line x1="40" y1={200 - y * 160} x2="380" y2={200 - y * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={200 - y * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">{(y * 100).toFixed(0)}%</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
 										{@const barHeight = team.marketShare * 160}
 										{@const barX = 60 + teamIndex * 70}
 										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">{(team.marketShare * 100).toFixed(0)}%</text>
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">{(team.marketShare * 100).toFixed(0)}%</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
-										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
 							</div>
@@ -1032,8 +1032,8 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [50, 80, 110, 140, 170, 200] as y}
-										<line x1="40" y1={200 - ((y - 50) / 150) * 160} x2="380" y2={200 - ((y - 50) / 150) * 160} stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-										<text x="30" y={200 - ((y - 50) / 150) * 160 + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="10">${y}</text>
+										<line x1="40" y1={200 - ((y - 50) / 150) * 160} x2="380" y2={200 - ((y - 50) / 150) * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={200 - ((y - 50) / 150) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
 										{@const isPlayer = team.name === playerTeam}
@@ -1046,11 +1046,11 @@
 										{@const barHeight = ((teamAveragePay - 50) / 150) * 160}
 										{@const barX = 60 + teamIndex * 70}
 										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="white" font-size="11" font-weight="bold">${teamAveragePay.toFixed(0)}</text>
+										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${teamAveragePay.toFixed(0)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
-										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">{team.name}</text>
+										<text x={60 + teamIndex * 70 + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10">{team.name}</text>
 									{/each}
 								</svg>
 							</div>
@@ -1173,10 +1173,55 @@
 		justify-content: flex-start;
 		color: var(--game-text-primary);
 		font-family: "Outfit", "Inter", sans-serif;
-		background: #09090b;
+		background: var(--apex-bg);
 		padding: 2rem;
 		position: relative;
 		overflow-y: auto;
+
+		/* Default Dark Theme variables */
+		--apex-bg: #09090b;
+		--apex-panel-bg: #18181b;
+		--apex-panel-border: rgba(255, 255, 255, 0.1);
+		--apex-panel-shadow: rgba(0, 0, 0, 0.5);
+		--apex-card-bg: rgba(255, 255, 255, 0.03);
+		--apex-card-border: rgba(255, 255, 255, 0.05);
+		--apex-tab-btn-bg: rgba(255, 255, 255, 0.05);
+		--apex-tab-btn-border: rgba(255, 255, 255, 0.1);
+		--apex-tab-btn-hover-bg: rgba(255, 255, 255, 0.1);
+		--apex-input-bg: #27272a;
+		--apex-input-border: #3f3f46;
+		--apex-input-hover-bg: #3f3f46;
+		--apex-input-hover-border: #52525b;
+
+		/* Chart variable overrides */
+		--chart-text: white;
+		--chart-text-muted: rgba(255, 255, 255, 0.7);
+		--chart-grid-line: rgba(255, 255, 255, 0.1);
+		--chart-baseline: rgba(255, 255, 255, 0.3);
+		--chart-stroke-player: white;
+	}
+
+	:global(html[data-theme='light']) .apex-container {
+		--apex-bg: #f7f1e6;
+		--apex-panel-bg: rgba(255, 250, 241, 0.95);
+		--apex-panel-border: rgba(106, 84, 58, 0.24);
+		--apex-panel-shadow: rgba(106, 84, 58, 0.18);
+		--apex-card-bg: rgba(255, 255, 255, 0.4);
+		--apex-card-border: rgba(106, 84, 58, 0.15);
+		--apex-tab-btn-bg: rgba(106, 84, 58, 0.06);
+		--apex-tab-btn-border: rgba(106, 84, 58, 0.18);
+		--apex-tab-btn-hover-bg: rgba(106, 84, 58, 0.12);
+		--apex-input-bg: rgba(255, 255, 255, 0.85);
+		--apex-input-border: rgba(106, 84, 58, 0.35);
+		--apex-input-hover-bg: rgba(255, 255, 255, 0.95);
+		--apex-input-hover-border: rgba(106, 84, 58, 0.55);
+
+		/* Chart variable overrides */
+		--chart-text: #2f251c;
+		--chart-text-muted: rgba(47, 37, 28, 0.65);
+		--chart-grid-line: rgba(106, 84, 58, 0.15);
+		--chart-baseline: rgba(106, 84, 58, 0.4);
+		--chart-stroke-player: #2f251c;
 	}
 
 	.header {
@@ -1186,7 +1231,7 @@
 
 	.turn-badge {
 		background: #3b82f6;
-		color: var(--game-text-on-accent);
+		color: #ffffff;
 		font-weight: 900;
 		font-size: 0.7rem;
 		padding: 0.2rem 0.8rem;
@@ -1211,8 +1256,8 @@
 	}
 
 	.tab-btn {
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: var(--apex-tab-btn-bg);
+		border: 1px solid var(--apex-tab-btn-border);
 		color: var(--game-text-muted);
 		padding: 0.6rem 1rem;
 		border-radius: 8px;
@@ -1224,14 +1269,14 @@
 	}
 
 	.tab-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--apex-tab-btn-hover-bg);
 		color: var(--game-text-primary);
 	}
 
 	.tab-btn.active {
 		background: #3b82f6;
 		border-color: #3b82f6;
-		color: var(--game-text-on-accent);
+		color: #ffffff;
 	}
 
 	@media (max-width: 1024px) {
@@ -1242,11 +1287,11 @@
 	}
 
 	.tab-panel {
-		background: #18181b;
+		background: var(--apex-panel-bg);
 		padding: 2rem;
 		border-radius: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		border: 1px solid var(--apex-panel-border);
+		box-shadow: 0 20px 50px var(--apex-panel-shadow);
 		min-width: 400px;
 		max-width: 600px;
 		width: 100%;
@@ -1268,10 +1313,10 @@
 	.research-card,
 	.insight-card,
 	.history-card {
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--apex-card-bg);
 		padding: 1rem;
 		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--apex-card-border);
 	}
 
 	.research-card h3,
@@ -1342,9 +1387,9 @@
 		align-items: center;
 		margin-top: 0.4rem;
 		padding: 0.4rem 0.6rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--apex-tab-btn-bg);
 		border-radius: 6px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--apex-tab-btn-border);
 	}
 
 	.preview-label {
@@ -1385,9 +1430,9 @@
 	.projections-panel {
 		margin-bottom: 2rem;
 		padding: 1rem;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--apex-card-bg);
 		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--apex-card-border);
 	}
 
 	.projections-panel h3 {
@@ -1408,7 +1453,7 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 0.5rem 0.75rem;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--apex-card-bg);
 		border-radius: 6px;
 	}
 
@@ -1455,9 +1500,9 @@
 
 	.chart-grid .chart-card {
 		padding: 1rem;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--apex-card-bg);
 		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--apex-card-border);
 	}
 
 	.chart-grid h4 {
@@ -1483,7 +1528,7 @@
 	.segment-table td {
 		text-align: left;
 		padding: 0.25rem 0.5rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid var(--apex-card-border);
 	}
 
 	.segment-table th {
@@ -1561,7 +1606,7 @@
 	}
 
 	.position-indicator {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--apex-tab-btn-bg);
 		border-radius: 8px;
 		padding: 0.5rem;
 		margin-bottom: 0.5rem;
@@ -1584,7 +1629,8 @@
 	.ai-team-detail {
 		padding: 0.5rem;
 		margin-bottom: 0.5rem;
-		background: rgba(255, 255, 255, 0.02);
+		background: var(--apex-card-bg);
+		border: 1px solid var(--apex-card-border);
 		border-radius: 6px;
 	}
 
@@ -1613,30 +1659,30 @@
 	.chart-btn {
 		padding: 0.5rem 1rem;
 		font-size: 0.85rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--apex-tab-btn-bg);
 		color: var(--game-text-muted);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--apex-tab-btn-border);
 		border-radius: 6px;
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
 
 	.chart-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--apex-tab-btn-hover-bg);
 		color: var(--game-text-primary);
 	}
 
 	.chart-btn.active {
 		background: #3b82f6;
 		border-color: #3b82f6;
-		color: var(--game-text-on-accent);
+		color: #ffffff;
 	}
 
 	.chart-card {
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--apex-card-bg);
 		padding: 1rem;
 		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--apex-card-border);
 	}
 
 	.chart-card h3 {
@@ -1656,11 +1702,11 @@
 	}
 
 	.game-viewport {
-		background: #18181b;
+		background: var(--apex-panel-bg);
 		padding: 2rem;
 		border-radius: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		border: 1px solid var(--apex-panel-border);
+		box-shadow: 0 20px 50px var(--apex-panel-shadow);
 		min-width: 500px;
 		max-width: 600px;
 		width: 100%;
@@ -1673,7 +1719,7 @@
 		gap: 0.75rem;
 		margin-bottom: 2rem;
 		padding-bottom: 1rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		border-bottom: 1px solid var(--apex-panel-border);
 	}
 
 	.stat {
@@ -1681,10 +1727,10 @@
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--apex-card-bg);
 		padding: 0.75rem 0.5rem;
 		border-radius: 8px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--apex-card-border);
 	}
 
 	.stat .label {
@@ -1740,8 +1786,8 @@
 
 	.input-group select,
 	.input-group input[type="number"] {
-		background: #27272a;
-		border: 1px solid #3f3f46;
+		background: var(--apex-input-bg);
+		border: 1px solid var(--apex-input-border);
 		color: var(--game-text-primary);
 		padding: 0.6rem 0.8rem;
 		border-radius: 8px;
@@ -1753,8 +1799,8 @@
 
 	.input-group select:hover,
 	.input-group input[type="number"]:hover {
-		background: #3f3f46;
-		border-color: #52525b;
+		background: var(--apex-input-hover-bg);
+		border-color: var(--apex-input-hover-border);
 	}
 
 	.input-group select:focus,
@@ -1766,7 +1812,8 @@
 	.competitor-panel {
 		margin-bottom: 2rem;
 		padding: 1rem;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--apex-card-bg);
+		border: 1px solid var(--apex-card-border);
 		border-radius: 8px;
 	}
 
@@ -1789,7 +1836,7 @@
 		padding: 0.5rem;
 		color: var(--game-text-muted);
 		font-weight: 600;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid var(--apex-card-border);
 	}
 
 	.competitor-table tr:last-child td {
@@ -1813,7 +1860,7 @@
 
 	.execute-btn {
 		background: #3b82f6;
-		color: var(--game-text-on-accent);
+		color: #ffffff;
 	}
 
 	.execute-btn:hover {
@@ -1821,11 +1868,11 @@
 	}
 
 	.results-panel, .game-over-panel {
-		background: #18181b;
+		background: var(--apex-panel-bg);
 		padding: 2rem;
 		border-radius: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		border: 1px solid var(--apex-panel-border);
+		box-shadow: 0 20px 50px var(--apex-panel-shadow);
 		min-width: 400px;
 		max-width: 500px;
 		width: 100%;
@@ -1840,7 +1887,8 @@
 	}
 
 	.feedback-message {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--apex-card-bg);
+		border: 1px solid var(--apex-card-border);
 		padding: 1rem;
 		border-radius: 8px;
 		margin-bottom: 1.5rem;
@@ -1857,7 +1905,8 @@
 	}
 
 	.result {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--apex-card-bg);
+		border: 1px solid var(--apex-card-border);
 		padding: 1rem;
 		border-radius: 8px;
 	}
@@ -1908,7 +1957,7 @@
 
 	.next-btn, .restart-btn {
 		background: #10b981;
-		color: var(--game-text-on-accent);
+		color: #ffffff;
 	}
 
 	.next-btn:hover, .restart-btn:hover {
@@ -1958,7 +2007,8 @@
 	.history-list {
 		max-height: none;
 		overflow: visible;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--apex-card-bg);
+		border: 1px solid var(--apex-card-border);
 		border-radius: 8px;
 		padding: 0.5rem;
 	}
@@ -1968,7 +2018,7 @@
 		grid-template-columns: 1fr 1fr 1fr;
 		gap: 0.5rem;
 		padding: 0.5rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid var(--apex-card-border);
 		font-size: 0.85rem;
 	}
 
