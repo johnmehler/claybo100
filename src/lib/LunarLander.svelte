@@ -645,18 +645,24 @@
 			{#if gameState === 'playing'}
 				<button class="touch-btn rotate-btn"
 					aria-label="Rotate left"
-					onpointerdown={startRotateLeft} onpointerup={stopRotateLeft} onpointerleave={stopRotateLeft}>
+					onpointerdown={(e) => { e.preventDefault(); startRotateLeft(); }}
+					onpointerup={(e) => { e.preventDefault(); stopRotateLeft(); }}
+					onpointerleave={(e) => { e.preventDefault(); stopRotateLeft(); }}>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg>
 				</button>
 				<button class="touch-btn thrust-btn"
-					onpointerdown={startThrust} onpointerup={stopThrust} onpointerleave={stopThrust}
+					onpointerdown={(e) => { e.preventDefault(); startThrust(); }}
+					onpointerup={(e) => { e.preventDefault(); stopThrust(); }}
+					onpointerleave={(e) => { e.preventDefault(); stopThrust(); }}
 					class:active-thrust={thrusting && fuel > 0}>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
 					<span class="thrust-label">THRUST</span>
 				</button>
 				<button class="touch-btn rotate-btn"
 					aria-label="Rotate right"
-					onpointerdown={startRotateRight} onpointerup={stopRotateRight} onpointerleave={stopRotateRight}>
+					onpointerdown={(e) => { e.preventDefault(); startRotateRight(); }}
+					onpointerup={(e) => { e.preventDefault(); stopRotateRight(); }}
+					onpointerleave={(e) => { e.preventDefault(); stopRotateRight(); }}>
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
 				</button>
 			{:else}
@@ -963,6 +969,9 @@
 		touch-action: none;
 		user-select: none;
 		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		-webkit-tap-highlight-color: transparent;
 	}
 
 	.rotate-btn {

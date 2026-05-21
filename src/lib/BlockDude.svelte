@@ -551,7 +551,13 @@
 				onpointerleave={() => stopDirectionalHold(-1)}
 			>←</button
 			>
-			<button class="btn" onclick={action}>↓</button>
+			<button
+				class="btn"
+				onpointerdown={(e) => {
+					e.preventDefault();
+					action();
+				}}
+			>↓</button>
 			<button
 				class="btn"
 				onpointerdown={(e) => {
@@ -755,6 +761,12 @@
 		font-weight: 800;
 		cursor: pointer;
 		transition: all 0.2s;
+		user-select: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		touch-action: none;
+		-webkit-tap-highlight-color: transparent;
 	}
 
 	.btn:hover {
