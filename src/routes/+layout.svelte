@@ -30,7 +30,11 @@
 	<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
 	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 	<link rel="manifest" href="/site.webmanifest" />
-	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" media="print" onload="this.media='all'" />
+	<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" /></noscript>
 </svelte:head>
 
 <style>
