@@ -9,6 +9,12 @@
 		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
 		const theme = savedTheme === 'light' ? 'light' : 'dark';
 		document.documentElement.dataset.theme = theme;
+
+		// Load Google Fonts asynchronously to avoid render-blocking
+		const fontLink = document.createElement('link');
+		fontLink.rel = 'stylesheet';
+		fontLink.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap';
+		document.head.appendChild(fontLink);
 	});
 
 	$effect(() => {
@@ -33,8 +39,6 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" />
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" media="print" onload="this.media='all'" />
-	<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" /></noscript>
 </svelte:head>
 
 <style>
