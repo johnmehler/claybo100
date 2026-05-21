@@ -20,7 +20,7 @@
 	let employeePay = $state(80);
 	let qualitySpending = $state(5000);
 	let previousQuality = $state(5);
-	let previousMarketShare = $state(0.2);
+	let previousMarketShare = $state(0.25);
 	let inventoryQuality = $state(5);
 
 	let previousPrice = $state(18.00);
@@ -45,7 +45,7 @@
 	let productionEfficiency = $state(1.0);
 	let inventory = $state(100);
 	let marketDemand = $state(500);
-	let marketShare = $state(0.2);
+	let marketShare = $state(0.25);
 	let playerTeam = $state("");
 
 	// AI Competitors (3 competitors with names)
@@ -84,7 +84,7 @@
 			name,
 			price: 18.00,
 			quality: 5,
-			qualitySpending: 2000,
+			qualitySpending: 5000,
 			previousQuality: 5,
 			marketing: 300,
 			production: 100,
@@ -300,7 +300,7 @@
 		});
 	}
 
-	function executeAITurn(ai: AICompetitor, aiMarketShare: number): void {
+	function executeAITurn(ai: AICompetitor, demandShareFraction: number): number {
 		const aiActualQuality = calculateQualityFromSpending(ai.qualitySpending, ai.previousQuality);
 		ai.quality = aiActualQuality;
 		const aiUnitCost = Math.max(2, BASE_COST + 0.4 * ai.quality - 0.35 * (ai.employeePay / 100));
@@ -321,12 +321,12 @@
 		}
 
 		// Sales (AI gets their share of market demand)
-		const aiActualDemand = Math.floor(marketDemand * aiMarketShare);
-		const aiAvailableUnits = Math.min(ai.inventory, aiActualDemand);
-		ai.inventory -= aiAvailableUnits;
+		const aiActualDemand = Math.floor(marketDemand * demandShareFraction);
+		const aiUnitsSold = Math.min(ai.inventory, aiActualDemand);
+		ai.inventory -= aiUnitsSold;
 
 		// Revenue and costs
-		const aiRevenue = aiAvailableUnits * ai.price;
+		const aiRevenue = aiUnitsSold * ai.price;
 		const aiEffectiveUnitsForCost = Math.floor(ai.production / ai.productionEfficiency);
 		const aiProductionCost = aiEffectiveUnitsForCost * aiUnitCost;
 		const aiMarketingCost = ai.marketing;
@@ -352,6 +352,8 @@
 
 		ai.previousQuality = ai.quality;
 		ai.payHistory = [ai.employeePay, ...ai.payHistory.slice(0, 2)];
+
+		return aiUnitsSold;
 	}
 
 	function executeTurn(): void {
@@ -366,7 +368,7 @@
 		quality = actualQuality;
 		updateMarketPreference();
 
-		// Calculate demand
+		// Calculate demand scores to allocate potential demand from the market
 		const playerDemandScore = calculateDemandScore(
 			{ price, quality, marketing, reputation, employeePay },
 			0.96 + Math.random() * 0.08
@@ -383,18 +385,17 @@
 				0.96 + Math.random() * 0.08
 			)
 		);
-		const totalAIDemandScore = aiDemandScores.reduce((sum, score) => sum + score, 0);
-		const totalDemandScore = playerDemandScore + totalAIDemandScore;
+		const totalDemandScore = playerDemandScore + aiDemandScores.reduce((sum, score) => sum + score, 0);
 
 		demandScore = playerDemandScore;
 
-		// Market share (player vs 3 AI competitors)
-		marketShare = totalDemandScore > 0 ? playerDemandScore / totalDemandScore : 0;
-		const aiMarketShares = aiDemandScores.map(score => (totalDemandScore > 0 ? score / totalDemandScore : 0));
-		const actualDemand = Math.floor(marketDemand * marketShare);
+		// Demand share fractions (used to allocate potential buyers, NOT market share)
+		const playerDemandFraction = totalDemandScore > 0 ? playerDemandScore / totalDemandScore : 0.25;
+		const aiDemandFractions = aiDemandScores.map(score => (totalDemandScore > 0 ? score / totalDemandScore : 0.25));
+		const playerPotentialDemand = Math.floor(marketDemand * playerDemandFraction);
 
-		// Execute AI competitors for this quarter
-		aiCompetitors.forEach((ai, index) => executeAITurn(ai, aiMarketShares[index]));
+		// Execute AI competitors for this quarter and capture their actual units sold
+		const aiUnitsSoldArr = aiCompetitors.map((ai, index) => executeAITurn(ai, aiDemandFractions[index]));
 
 		// Production and inventory — efficiency reduces cost per unit, not output
 		let actualProduction = productionQuantity;
@@ -412,9 +413,15 @@
 		}
 
 		// Sales
-		const availableUnits = Math.min(inventory, actualDemand);
+		const availableUnits = Math.min(inventory, playerPotentialDemand);
 		unitsSold = availableUnits;
 		inventory -= availableUnits;
+
+		// Market share = actual units sold / total units sold by all teams
+		const totalAIUnitsSold = aiUnitsSoldArr.reduce((sum, u) => sum + u, 0);
+		const totalAllUnitsSold = unitsSold + totalAIUnitsSold;
+		marketShare = totalAllUnitsSold > 0 ? unitsSold / totalAllUnitsSold : 0.25;
+		const aiActualMarketShares = aiUnitsSoldArr.map(u => (totalAllUnitsSold > 0 ? u / totalAllUnitsSold : 0.25));
 
 		// Revenue and costs
 		revenue = unitsSold * price;
@@ -453,7 +460,7 @@
 				name: ai.name,
 				quality: ai.quality,
 				price: ai.price,
-				marketShare: aiMarketShares[index]
+				marketShare: aiActualMarketShares[index]
 			}))
 		];
 
@@ -538,12 +545,13 @@
 		inventory = 100;
 		inventoryQuality = 5;
 		marketDemand = 500;
+		marketShare = 0.25;
 
 		price = 18.00;
 		quality = 5;
 		qualitySpending = 5000;
 		previousQuality = 5;
-		previousMarketShare = 0.2;
+		previousMarketShare = 0.25;
 		marketing = 300;
 		productionQuantity = 100;
 		employeePay = 80;
