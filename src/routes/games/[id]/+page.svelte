@@ -245,11 +245,7 @@
 		align-items: center;
 		justify-content: center;
 		position: relative;
-		background: radial-gradient(
-			circle at 50% 50%,
-			var(--game-mat-glow) 0%,
-			transparent 70%
-		);
+		background: transparent;
 		overflow: hidden;
 	}
 

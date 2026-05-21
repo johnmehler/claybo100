@@ -457,11 +457,23 @@
 	.game-container {
 		display: flex;
 		flex-direction: column;
-		width: 100%;
-		height: 100%;
+		min-width: 100%;
+		width: max-content;
+		min-height: 100%;
+		height: max-content;
 		color: var(--game-text-primary);
 		align-items: center;
 		justify-content: center;
+		background: #0b3d26; /* Forest green card table felt */
+		box-shadow: inset 0 0 10vmin rgba(0, 0, 0, 0.5);
+		border-radius: 2vmin;
+		box-sizing: border-box;
+		padding: 6vmin 4vmin 4vmin;
+	}
+
+	:global(html[data-theme="light"]) .game-container {
+		background: #e2e8f0;
+		box-shadow: inset 0 0 8vmin rgba(0, 0, 0, 0.05);
 	}
 
 	.board-wrapper {
@@ -471,27 +483,7 @@
 		justify-content: center;
 		align-items: center;
 		width: 100%;
-		padding: 4vmin;
 		box-sizing: border-box;
-		background: radial-gradient(
-			circle at center,
-			#0f5132 0%,
-			#052c16 100%
-		); /* Forest green card table felt */
-		border-radius: 3vmin;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		box-shadow:
-			inset 0 0 10vmin rgba(0, 0, 0, 0.5),
-			0 15px 30px rgba(0, 0, 0, 0.3);
-		margin: 2vmin 0;
-	}
-
-	:global(html[data-theme="light"]) .board-wrapper {
-		background: radial-gradient(circle at center, #f1f5f9 0%, #cbd5e1 100%);
-		border: 1px solid rgba(0, 0, 0, 0.08);
-		box-shadow:
-			inset 0 0 8vmin rgba(0, 0, 0, 0.05),
-			0 10px 20px rgba(0, 0, 0, 0.05);
 	}
 
 	.game-header {
@@ -573,16 +565,16 @@
 
 	.board {
 		display: grid;
-		grid-template-rows: repeat(3, 20vmin);
-		grid-auto-columns: 13.5vmin;
+		grid-template-rows: repeat(3, 18vmin);
+		grid-auto-columns: 12vmin;
 		grid-auto-flow: column;
 		gap: 2vmin;
 		justify-content: center;
 		width: max-content;
 	}
 	.card-slot {
-		width: 13.5vmin;
-		height: 20vmin;
+		width: 12vmin;
+		height: 18vmin;
 	}
 
 	.card {
@@ -657,8 +649,8 @@
 	}
 
 	.shape {
-		width: 10vmin;
-		height: 5vmin;
+		width: 9vmin;
+		height: 4.5vmin;
 		flex-shrink: 0;
 		overflow: visible;
 	}
@@ -666,13 +658,9 @@
 	.deck-btn {
 		position: relative;
 		align-self: center;
-		width: 18vmin;
-		height: 12vmin;
-		background: linear-gradient(
-			135deg,
-			#4f46e5 0%,
-			#312e81 100%
-		); /* Indigo premium card back */
+		width: 16.2vmin;
+		height: 10.8vmin;
+		background: #3730a3; /* Indigo premium card back */
 		border: 1px solid #4338ca;
 		border-radius: 1.5vmin;
 		cursor: pointer;
@@ -704,7 +692,7 @@
 	}
 
 	.deck-btn:disabled {
-		background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+		background: #334155;
 		border-color: #334155;
 		cursor: not-allowed;
 		box-shadow:
@@ -746,11 +734,7 @@
 	}
 
 	.deck-btn.red-flash {
-		background: linear-gradient(
-			135deg,
-			#dc2626 0%,
-			#7f1d1d 100%
-		) !important;
+		background: #dc2626 !important;
 		border-color: #ef4444 !important;
 		box-shadow: 0 0 25px rgba(220, 38, 38, 0.7) !important;
 		animation: shake 0.4s ease-in-out;
