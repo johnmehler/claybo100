@@ -536,11 +536,15 @@
 									<div class="laser-dot"></div>
 								</div>
 							{:else if grid[y][x]?.type === "target"}
-								<div class="target-icon" class:active={hitTargets.has(`${x},${y}`)}>
+								<div 
+									class="target-icon" 
+									class:active={hitTargets.has(`${x},${y}`)}
+									style="--req-color: {grid[y][x]?.requirement === 'white' ? 'var(--lm-target-white-color, white)' : grid[y][x]?.requirement};"
+								>
 									<div class="target-ring outer"></div>
 									<div class="target-ring middle"></div>
 									<div class="target-ring inner"></div>
-									<div class="target-core" style="--req-color: {grid[y][x]?.requirement}"></div>
+									<div class="target-core"></div>
 									<svg class="target-svg" viewBox="0 0 100 100">
 										<circle cx="50" cy="50" r="45" class="target-path" />
 									</svg>
@@ -612,6 +616,71 @@
 		padding: clamp(0.75rem, 1.8vmin, 1.5rem);
 		position: relative;
 		overflow: auto;
+
+		/* Default Dark Theme variable tokens */
+		--lm-panel-bg: rgba(255, 255, 255, 0.05);
+		--lm-panel-border: rgba(255, 255, 255, 0.1);
+		--lm-item-bg: rgba(255, 255, 255, 0.03);
+		--lm-item-border: rgba(255, 255, 255, 0.1);
+		--lm-item-hover-bg: rgba(255, 255, 255, 0.08);
+		--lm-grid-container-bg: rgba(255, 255, 255, 0.01);
+		--lm-grid-container-border: rgba(255, 255, 255, 0.05);
+		--lm-cell-bg: rgba(255, 255, 255, 0.03);
+		--lm-cell-border: transparent;
+		--lm-cell-hover-bg: rgba(255, 255, 255, 0.08);
+		--lm-cell-hover-border: rgba(255, 255, 255, 0.2);
+		--lm-shadow-panel: 0 20px 40px rgba(0, 0, 0, 0.4);
+		--lm-shadow-grid: 0 30px 60px rgba(0, 0, 0, 0.6);
+		--lm-blocker-bg: rgba(0, 0, 0, 0.3);
+		--lm-blocker-border: #222;
+		--lm-blocker-shadow: inset 0 0 10px black;
+		--lm-target-ring-border: rgba(255, 255, 255, 0.1);
+		--lm-target-svg-stroke: rgba(255, 255, 255, 0.2);
+		--lm-target-core-bg: rgba(255, 255, 255, 0.1);
+		--lm-target-white-color: white;
+		--lm-header-controls-bg: rgba(255, 255, 255, 0.03);
+		--lm-header-controls-border: rgba(255, 255, 255, 0.05);
+		--lm-overlay-bg: rgba(0, 0, 0, 0.85);
+		--lm-win-bg: #000;
+		--lm-win-border: rgba(255, 255, 255, 0.1);
+		--lm-preview-color: #00f2fe;
+		--lm-preview-glow: 0 0 10px #00f2fe;
+		--lm-splitter-glass-bg: rgba(0, 242, 254, 0.2);
+		--lm-splitter-glass-border: rgba(0, 242, 254, 0.4);
+		--lm-source-bg: #000;
+	}
+
+	:global(html[data-theme='light']) .lasermaze-container {
+		--lm-panel-bg: rgba(255, 249, 238, 0.92);
+		--lm-panel-border: rgba(106, 84, 58, 0.2);
+		--lm-item-bg: rgba(255, 255, 255, 0.5);
+		--lm-item-border: rgba(106, 84, 58, 0.15);
+		--lm-item-hover-bg: rgba(255, 255, 255, 0.9);
+		--lm-grid-container-bg: rgba(255, 249, 238, 0.92);
+		--lm-grid-container-border: rgba(106, 84, 58, 0.2);
+		--lm-cell-bg: rgba(106, 84, 58, 0.04);
+		--lm-cell-border: rgba(106, 84, 58, 0.08);
+		--lm-cell-hover-bg: rgba(106, 84, 58, 0.08);
+		--lm-cell-hover-border: rgba(106, 84, 58, 0.3);
+		--lm-shadow-panel: 0 10px 30px rgba(106, 84, 58, 0.1);
+		--lm-shadow-grid: 0 20px 45px rgba(106, 84, 58, 0.15);
+		--lm-blocker-bg: #44372b;
+		--lm-blocker-border: #6a543a;
+		--lm-blocker-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+		--lm-target-ring-border: rgba(106, 84, 58, 0.25);
+		--lm-target-svg-stroke: rgba(106, 84, 58, 0.3);
+		--lm-target-core-bg: rgba(106, 84, 58, 0.08);
+		--lm-target-white-color: #ff6e61;
+		--lm-header-controls-bg: rgba(255, 255, 255, 0.5);
+		--lm-header-controls-border: rgba(106, 84, 58, 0.15);
+		--lm-overlay-bg: rgba(47, 37, 28, 0.35);
+		--lm-win-bg: rgba(255, 250, 241, 0.95);
+		--lm-win-border: rgba(106, 84, 58, 0.2);
+		--lm-preview-color: #008fa0;
+		--lm-preview-glow: 0 0 6px rgba(0, 242, 254, 0.4);
+		--lm-splitter-glass-bg: rgba(0, 143, 160, 0.15);
+		--lm-splitter-glass-border: rgba(0, 143, 160, 0.45);
+		--lm-source-bg: #2f251c;
 	}
 
 	.game-header {
@@ -627,11 +696,11 @@
 		display: flex;
 		align-items: center;
 		gap: clamp(0.6rem, 1.2vmin, 1rem);
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--lm-header-controls-bg);
 		padding: clamp(0.3rem, 0.8vmin, 0.5rem) clamp(0.3rem, 0.8vmin, 0.5rem)
 			clamp(0.3rem, 0.8vmin, 0.5rem) clamp(0.7rem, 1.6vmin, 1rem);
 		border-radius: 99px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--lm-header-controls-border);
 	}
 
 	.level-badge {
@@ -701,16 +770,16 @@
 	}
 
 	.inventory-bar {
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--lm-panel-bg);
 		backdrop-filter: blur(20px);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--lm-panel-border);
 		border-radius: clamp(0.9rem, 1.8vmin, 1.4rem);
 		padding: clamp(0.7rem, 1.4vmin, 1.1rem);
 		display: flex;
 		flex-direction: column;
 		gap: clamp(0.45rem, 1vmin, 0.8rem);
 		width: clamp(170px, 18vw, 240px);
-		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+		box-shadow: var(--lm-shadow-panel);
 	}
 
 	.inventory-section {
@@ -744,8 +813,8 @@
 	}
 
 	.inventory-item {
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: var(--lm-item-bg);
+		border: 1px solid var(--lm-item-border);
 		border-radius: clamp(0.55rem, 1.2vmin, 0.8rem);
 		padding: clamp(0.4rem, 0.9vmin, 0.6rem);
 		display: flex;
@@ -764,7 +833,7 @@
 	}
 
 	.inventory-item:not(:disabled):hover {
-		background: rgba(255, 255, 255, 0.08);
+		background: var(--lm-item-hover-bg);
 		border-color: #ff6e61;
 		transform: translateY(-2px);
 	}
@@ -787,20 +856,20 @@
 	.mirror::before {
 		content: "";
 		position: absolute;
-		width: clamp(1px, 0.35vmin, 3px);
+		width: clamp(2px, 0.45vmin, 4px);
 		height: 80%;
-		background: #00f2fe;
-		box-shadow: 0 0 10px #00f2fe;
+		background: var(--lm-preview-color);
+		box-shadow: var(--lm-preview-glow);
 		border-radius: 4px;
 	}
 
 	.splitter::before {
 		content: "";
 		position: absolute;
-		width: clamp(1px, 0.35vmin, 3px);
+		width: clamp(2px, 0.45vmin, 4px);
 		height: 80%;
-		background: #00f2fe;
-		box-shadow: 0 0 10px #00f2fe;
+		background: var(--lm-preview-color);
+		box-shadow: var(--lm-preview-glow);
 		border-radius: 4px;
 	}
 	.splitter::after {
@@ -808,8 +877,8 @@
 		position: absolute;
 		width: clamp(0.8rem, 1.7vmin, 1.1rem);
 		height: clamp(0.8rem, 1.7vmin, 1.1rem);
-		background: rgba(0, 242, 254, 0.2);
-		border: 1px solid rgba(0, 242, 254, 0.4);
+		background: var(--lm-splitter-glass-bg);
+		border: 1px solid var(--lm-splitter-glass-border);
 		border-radius: 2px;
 	}
 
@@ -832,10 +901,10 @@
 	.grid-container {
 		position: relative;
 		padding: clamp(0.5rem, 1.2vmin, 1rem);
-		background: rgba(255, 255, 255, 0.01);
+		background: var(--lm-grid-container-bg);
 		border-radius: clamp(0.9rem, 1.8vmin, 1.4rem);
-		border: 1px solid rgba(255, 255, 255, 0.05);
-		box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+		border: 1px solid var(--lm-grid-container-border);
+		box-shadow: var(--lm-shadow-grid);
 	}
 
 	.grid {
@@ -849,19 +918,19 @@
 	}
 
 	.cell {
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--lm-cell-bg);
 		border-radius: clamp(4px, 0.8vmin, 8px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		position: relative;
 		transition: all 0.2s;
-		border: 1px solid transparent;
+		border: 1px solid var(--lm-cell-border);
 	}
 
 	.cell.clickable:hover {
-		background: rgba(255, 255, 255, 0.08);
-		border-color: rgba(255, 255, 255, 0.2);
+		background: var(--lm-cell-hover-bg);
+		border-color: var(--lm-cell-hover-border);
 		cursor: pointer;
 		transform: scale(1.05);
 		z-index: 5;
@@ -870,7 +939,7 @@
 	.source-icon {
 		width: 70%;
 		height: 70%;
-		background: #000;
+		background: var(--lm-source-bg);
 		border-radius: 6px;
 		position: relative;
 		border: 2px solid var(--source-color, #ff6e61);
@@ -942,7 +1011,7 @@
 	.target-ring {
 		position: absolute;
 		border-radius: 50%;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--lm-target-ring-border);
 		transition: all 0.5s;
 	}
 
@@ -953,7 +1022,7 @@
 	.target-core {
 		width: 25%;
 		height: 25%;
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--lm-target-core-bg);
 		border-radius: 50%;
 		transition: all 0.4s;
 		border: 2px solid var(--req-color, white);
@@ -965,7 +1034,7 @@
 		width: 100%;
 		height: 100%;
 		fill: none;
-		stroke: rgba(255, 255, 255, 0.2);
+		stroke: var(--lm-target-svg-stroke);
 		stroke-width: 1;
 		pointer-events: none;
 	}
@@ -979,11 +1048,10 @@
 	.blocker-icon {
 		width: 85%;
 		height: 85%;
-		background: #050505;
-		border: 1px solid #222;
+		background: var(--lm-blocker-bg);
+		border: 1px solid var(--lm-blocker-border);
 		border-radius: 8px;
-		background: rgba(0, 0, 0, 0.3);
-		box-shadow: inset 0 0 10px black;
+		box-shadow: var(--lm-blocker-shadow);
 	}
 
 	.mirror-icon, .splitter-icon {
@@ -1170,7 +1238,7 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: rgba(0, 0, 0, 0.85);
+		background: var(--lm-overlay-bg);
 		backdrop-filter: blur(10px);
 		display: flex;
 		align-items: center;
@@ -1181,10 +1249,10 @@
 
 	.win-content {
 		text-align: center;
-		background: #000;
+		background: var(--lm-win-bg);
 		padding: 3rem;
 		border-radius: 2rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--lm-win-border);
 		display: flex;
 		flex-direction: column;
 		gap: 2rem;
