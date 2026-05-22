@@ -231,7 +231,7 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 export const gameSEO: Record<string, GameSEO> = {
 	'sliding-tiles': {
 		title: 'Sliding Tiles Puzzle — Play the 15 Puzzle Online Free',
-		description: 'Play the classic 15 puzzle online free. Slide numbered tiles into order in your browser. No downloads, no ads, works on mobile and at school.',
+		description: 'Play the classic 15 puzzle online free. Slide numbered tiles into order in your browser. No downloads, works on mobile and at school.',
 		keywords: ['sliding tiles puzzle', '15 puzzle online', 'fifteen puzzle', 'slide puzzle game', 'sliding puzzle unblocked', 'classic tile puzzle'],
 		genre: 'Puzzle',
 		about: 'The 15 puzzle — a 4x4 grid with one missing tile — has been a benchmark for solvers since 1874. Slide tiles into numerical order using the fewest moves you can manage.'
@@ -259,7 +259,7 @@ export const gameSEO: Record<string, GameSEO> = {
 	},
 	'set': {
 		title: 'Set Card Game Online — Play SET Free in Your Browser',
-		description: 'Play the SET card game online free. Spot sets of three cards matching the famous shape/color/number/shading rule. No login, no ads, mobile and school friendly.',
+		description: 'Play the SET card game online free. Spot sets of three cards matching the famous shape/color/number/shading rule. No login, mobile and school friendly.',
 		keywords: ['set card game online', 'play set online', 'set game free', 'set card game unblocked', 'pattern matching card game', 'marsha falco set'],
 		genre: 'Card',
 		about: 'SET is a pattern-recognition card game invented by geneticist Marsha Falco in 1974. Each card has four attributes; a valid set requires each attribute to be all-same or all-different across three cards.'

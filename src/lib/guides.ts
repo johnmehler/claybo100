@@ -8,7 +8,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The 8-puzzle is the 3×3 version, common in AI coursework. The 24-puzzle uses a 5×5 grid. Half of all random starting positions are unsolvable — a fact Sam Loyd exploited in his famous 1880 prize challenge.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. It runs entirely in your browser, has no ads, no chat, no logins, and no tracking pixels. It works on Chromebooks and phones, so it's safe for classroom use and short study breaks.</p>
+<p>Yes. It runs entirely in your browser, has no chat, no logins, and no tracking pixels. It works on Chromebooks and phones, so it's safe for classroom use and short study breaks.</p>
 `,
 
 	'pegboard': `<h2>Peg Solitaire: History, Rules &amp; Strategy</h2>
@@ -20,7 +20,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The European board uses 37 holes instead of 33, which (surprisingly) makes the central-finish version unsolvable. The triangular 15-hole board is popular in American diners and is solvable from any starting hole. "Reverse solitaire" requires the last peg to land in a specific target hole.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes — no ads, no chat, no account required. It loads instantly in any browser and works on Chromebooks, tablets, and phones, making it a quiet, screen-friendly classroom activity.</p>
+<p>Yes — no chat, no account required. It loads instantly in any browser and works on Chromebooks, tablets, and phones, making it a quiet, screen-friendly classroom activity.</p>
 `,
 
 	'hanoi': `<h2>Tower of Hanoi: History, Rules &amp; Strategy</h2>
@@ -32,7 +32,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The Frame–Stewart algorithm handles 4+ pegs ("Reve's Puzzle"). "Bicolor Hanoi" alternates disc colors on each peg. "Cyclic Hanoi" allows moves only in one rotational direction. The minimum move count for <em>n</em> discs on 3 pegs is always 2ⁿ−1.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes — ad-free, login-free, and runs in any browser. It's commonly used in CS classrooms to introduce recursion, and on this site it works on phones and Chromebooks with no installation.</p>
+<p>Yes — login-free and runs in any browser. It's commonly used in CS classrooms to introduce recursion, and on this site it works on phones and Chromebooks with no installation.</p>
 `,
 
 	'knights-tour': `<h2>The Knight's Tour: History, Rules &amp; Strategy</h2>
@@ -44,7 +44,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>A <em>closed</em> tour returns the knight to its starting square (forming a Hamiltonian cycle); an <em>open</em> tour does not. Closed tours exist on the 8×8 board but not on every board size. Magic knight's tours number the squares 1–64 in visit order such that rows and columns sum to a magic constant.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no signups, no chat, no tracking. Loads instantly in any browser and is a great example of graph theory and Hamiltonian paths for classroom use.</p>
+<p>Yes. No signups, no chat, no tracking. Loads instantly in any browser and is a great example of graph theory and Hamiltonian paths for classroom use.</p>
 `,
 
 	'set': `<h2>The Set Card Game: History, Rules &amp; Strategy</h2>
@@ -56,7 +56,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>"No-set" hands are possible — the maximum cap set on 12 cards is well-studied in combinatorics; on the full 81-card deck the largest set-free collection has 20 cards (a result extended to higher dimensions in the 2016 cap-set problem breakthrough by Croot, Lev, Pach, Ellenberg, and Gijswijt). Speed Set, Team Set, and Set Memory are common house-rule variants.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. The SET card game online here has no ads, no chat, and no logins. It's a teacher-favorite because it builds pattern recognition and finite-field intuition — and it works on phones, tablets, and Chromebooks.</p>
+<p>Yes. The SET card game online here has no chat and no logins. It's a teacher-favorite because it builds pattern recognition and finite-field intuition — and it works on phones, tablets, and Chromebooks.</p>
 `,
 
 	'dotsandboxes': `<h2>Dots and Boxes: History, Rules &amp; Strategy</h2>
@@ -68,7 +68,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>"Swedish" or Nimstring is a related impartial game where boxes don't score but completing one still gives another turn. "Dots and Triangles" uses a triangular grid. Larger 7×7 and 9×9 boards reward chain control over short-term greed.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no signups, no chat — just you vs the AI. Works on phones and Chromebooks, making it a clean alternative to ad-heavy "unblocked games" sites.</p>
+<p>Yes. No signups, no chat — just you vs the AI. Works on phones and Chromebooks, making it a clean alternative to ad-heavy "unblocked games" sites.</p>
 `,
 
 	'iceslider': `<h2>Ice Slider Puzzle: History, Rules &amp; Strategy</h2>
@@ -80,7 +80,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>Pokémon's HeartGold/SoulSilver ice gym, Adventures of Lolo, and Baba Is You all use slide-until-wall mechanics. Some variants add holes, conveyors, or breakable ice that disappears after a single use.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes — ad-free, login-free, mobile friendly, and runs in any browser. Good for short brain breaks or as a logic-and-pathfinding warm-up.</p>
+<p>Yes — login-free, mobile friendly, and runs in any browser. Good for short brain breaks or as a logic-and-pathfinding warm-up.</p>
 `,
 
 	'nim': `<h2>Nim: History, Rules &amp; Strategy</h2>
@@ -92,7 +92,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>Misère Nim reverses the goal: whoever takes the last object loses. Wythoff's game restricts moves to one row or equal-amount removal from two rows. "Multi-pile" Nim with bounded takes underlies Sprague–Grundy theory for all impartial games.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no chat, no accounts. Nim is a staple of math-club curricula and pairs naturally with a lesson on binary representation.</p>
+<p>Yes. No chat, no accounts. Nim is a staple of math-club curricula and pairs naturally with a lesson on binary representation.</p>
 `,
 
 	'hex': `<h2>Hex: History, Rules &amp; Strategy</h2>
@@ -104,7 +104,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The swap rule mitigates first-player advantage: player two may either accept the first move or swap colors. Y, Havannah, and TwixT are related connection games. On boards above 9×9, perfect play is unknown despite Nash's existence proof.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no signups, no chat. Excellent classroom material for introducing topology, connectivity, and non-constructive proofs.</p>
+<p>Yes. No signups, no chat. Excellent classroom material for introducing topology, connectivity, and non-constructive proofs.</p>
 `,
 
 	'krypto': `<h2>Krypto: History, Rules &amp; Strategy</h2>
@@ -116,7 +116,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>"Primary Krypto" uses smaller numbers for younger players. "24 Game" is a 4-card cousin with a fixed target of 24. "Countdown" (UK TV) uses six numbers and any target between 100 and 999.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. The Krypto math game online here has no ads, no logins, no chat — it's a teacher-approved mental-arithmetic drill and works on Chromebooks and phones.</p>
+<p>Yes. The Krypto math game online here has no logins, no chat — it's a teacher-approved mental-arithmetic drill and works on Chromebooks and phones.</p>
 `,
 
 	'shotsim': `<h2>ShotSim - Projectile Physics: History, Rules &amp; Strategy</h2>
@@ -128,7 +128,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>Classic Scorched Earth, Worms, and Angry Birds all run on the same projectile-motion math. Real-world artillery and basketball free throws are governed by the same equations, with adjustments for drag and spin.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no chat, no logins. It's a great hands-on companion to a kinematics or trigonometry lesson and runs on any school device.</p>
+<p>Yes. No chat, no logins. It's a great hands-on companion to a kinematics or trigonometry lesson and runs on any school device.</p>
 `,
 
 	'vectorracing': `<h2>Vector Racing: History, Rules &amp; Strategy</h2>
@@ -140,7 +140,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The original pencil-and-paper version is played on graph paper. Some variants allow ±2 acceleration, multi-car racing with collisions, or fuel limits. The game is a fixture of AI courses as a small but rich state-space search problem.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no chat, no signups. Vector Racing teaches velocity, acceleration, and momentum without crashing real cars, and it runs in any browser including on Chromebooks.</p>
+<p>Yes. No chat, no signups. Vector Racing teaches velocity, acceleration, and momentum without crashing real cars, and it runs in any browser including on Chromebooks.</p>
 `,
 
 	'tracksofgalileo': `<h2>Tracks of Galileo: History, Rules &amp; Strategy</h2>
@@ -152,7 +152,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The tautochrone problem (also solved by a cycloid) asks for the curve along which a ball reaches the bottom in the same time from any starting height. Snell's law for refracting light follows the same calculus-of-variations principle.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no logins, no chat. It pairs naturally with calculus or physics lessons on optimization and the calculus of variations.</p>
+<p>Yes. No logins, no chat. It pairs naturally with calculus or physics lessons on optimization and the calculus of variations.</p>
 `,
 
 	'lunarlander': `<h2>Lunar Lander: History, Rules &amp; Strategy</h2>
@@ -164,7 +164,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>Atari's 1979 vector-graphics arcade version is the canonical one. "Lunar Lander 3D", Kerbal Space Program, and SimRocket extend the concept. Real Apollo descent used a guidance computer with just 4 KB of RAM.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no logins, no chat. A classic for teaching Newton's laws, fuel economy, and proportional control — works on phones and Chromebooks.</p>
+<p>Yes. No logins, no chat. A classic for teaching Newton's laws, fuel economy, and proportional control — works on phones and Chromebooks.</p>
 `,
 
 	'epidemicsim': `<h2>Epidemic Simulator: History, Rules &amp; Strategy</h2>
@@ -176,7 +176,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The textbook SIR model has many extensions: SEIR adds an Exposed (incubating) compartment; SIRS allows reinfection; SIRV adds vaccination. Network-based models replace the well-mixed assumption with a contact graph and capture super-spreader dynamics that compartmental models miss.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. No ads, no logins, no chat — it's a sandbox for understanding compartmental models and public-health tradeoffs, suitable for biology, statistics, or social-studies classrooms.</p>
+<p>Yes. No logins, no chat — it's a sandbox for understanding compartmental models and public-health tradeoffs, suitable for biology, statistics, or social-studies classrooms.</p>
 `,
 	'lasermaze': `<h2>Laser Maze: History, Rules &amp; Strategy</h2>
 <p>Laser and mirror puzzles have been a staple of video games since the 1980s, appearing in classics like <em>The Legend of Zelda</em> and dedicated puzzle games like <em>Deflector</em> (1987). These games are based on the Law of Reflection: the angle of incidence equals the angle of reflection. While simple in principle, the complexity grows exponentially as you add obstacles and multiple required bounces.</p>
@@ -187,7 +187,7 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>Advanced laser mazes include beam splitters, color filters that only let certain beams through, and "checkpoints" that must be hit in sequence. Some modern VR titles like <em>The Talos Principle</em> use these mechanics in 3D space to create some of the most challenging puzzles in the genre.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. Like all games in the Math Museum, Laser Maze is ad-free, account-free, and runs entirely in the local browser. It's a perfect visual way to teach the law of reflection and spatial reasoning.</p>
+<p>Yes. Like all games in the Math Museum, Laser Maze is account-free, and runs entirely in the local browser. It's a perfect visual way to teach the law of reflection and spatial reasoning.</p>
 `,
 
 	'blockdude': `<h2>Block Dude: History, Rules &amp; Strategy</h2>
@@ -199,6 +199,6 @@ export const gameGuides: Record<string, string> = {
 <h3>Variations</h3>
 <p>The original calculator version featured 11 levels, while modern clones often include level editors and hundreds of community-made puzzles. The game belongs to the "Sokoban" family of transport puzzles, which are PSPACE-complete in terms of computational complexity.</p>
 <h3>Is this game school-safe?</h3>
-<p>Yes. It's the ultimate school-safe classic. This version has no ads, no chat, and no logins. It runs on Chromebooks and phones, making it a perfect, quiet logic challenge for the classroom.</p>
+<p>Yes. It's the ultimate school-safe classic. This version has no chat and no logins. It runs on Chromebooks and phones, making it a perfect, quiet logic challenge for the classroom.</p>
 `
 };
