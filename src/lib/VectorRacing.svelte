@@ -17,20 +17,43 @@
 	let startCells = $state<number[]>([]);
 	let finishCells = $state<number[]>([]);
 
-	// Player state
-	let posX = $state(0);
-	let posY = $state(0);
-	let velX = $state(0);
-	let velY = $state(0);
-	let turn = $state(0);
-	let trail = $state<{ x: number; y: number }[]>([]);
-	let gameStarted = $state(false);
-	let gameWon = $state(false);
-	let crashed = $state(false);
+	type PlayerState = {
+		posX: number;
+		posY: number;
+		velX: number;
+		velY: number;
+		turn: number;
+		trail: { x: number; y: number }[];
+		crashed: boolean;
+		gameWon: boolean;
+		startCell: number | null;
+		optimalMoves: number | null;
+		optimalPath: { x: number; y: number }[];
+		color: string;
+	};
+
+	let gameMode = $state<"puzzle" | "hotseat" | "cpu">("puzzle");
 	let trackType = $state<"standard" | "random">("standard");
-	let optimalMoves = $state<number | null>(null);
-	let optimalPath = $state<{ x: number; y: number }[]>([]);
+	let players = $state<PlayerState[]>([]);
+	let currentPlayerIdx = $state(0);
+	let gameStarted = $state(false);
+	let setupPhase = $state(true);
 	let showOptimalPath = $state(false);
+
+	function initPlayers() {
+		players = [
+			{ posX: 0, posY: 0, velX: 0, velY: 0, turn: 0, trail: [], crashed: false, gameWon: false, startCell: null, optimalMoves: null, optimalPath: [], color: "#38bdf8" },
+			{ posX: 0, posY: 0, velX: 0, velY: 0, turn: 0, trail: [], crashed: false, gameWon: false, startCell: null, optimalMoves: null, optimalPath: [], color: "#fbbf24" }
+		];
+		currentPlayerIdx = 0;
+		setupPhase = true;
+		gameStarted = false;
+	}
+	initPlayers();
+	
+	let activePlayers = $derived(gameMode === "puzzle" ? [players[0]] : players);
+	let cp = $derived(players[currentPlayerIdx]);
+
 
 
 	// Canvas
@@ -80,7 +103,9 @@
 		track = t;
 		startCells = startCellsList;
 		finishCells = finishCellsList;
-		updateOptimalMoves();
+		for (let p of players) {
+			if (p.startCell !== null) updateOptimalMovesForPlayer(p);
+		}
 	}
 
 	function generateRandomTrack() {
@@ -165,11 +190,14 @@
 		startCells = startCellsList;
 		finishCells = finishCellsList;
 		optimalPath = [];
-		updateOptimalMoves();
+		for (let p of players) {
+			if (p.startCell !== null) updateOptimalMovesForPlayer(p);
+		}
 	}
 
-	function solveOptimalMoves(): { x: number; y: number }[] | null {
+	function solveOptimalMoves(playerStartCell: number | null): { x: number; y: number }[] | null {
 		if (startCells.length === 0 || finishCells.length === 0) return null;
+		const starts = playerStartCell !== null ? [playerStartCell] : startCells;
 
 		const V_OFFSET = 10;
 		const V_RANGE = 21;
@@ -184,7 +212,7 @@
 			parent: number | null;
 		}[] = [];
 
-		for (const sc of startCells) {
+		for (const sc of starts) {
 			const sx = sc % COLS;
 			const sy = Math.floor(sc / COLS);
 			queue.push({ x: sx, y: sy, vx: 0, vy: 0, m: 0, parent: null });
@@ -254,27 +282,59 @@
 		return null;
 	}
 
-	function updateOptimalMoves() {
+	function updateOptimalMovesForPlayer(p: PlayerState) {
 		setTimeout(() => {
-			const path = solveOptimalMoves();
-			optimalPath = path || [];
-			optimalMoves = path ? path.length - 1 : null;
+			const path = solveOptimalMoves(p.startCell);
+			p.optimalPath = path || [];
+			p.optimalMoves = path ? path.length - 1 : null;
 		}, 0);
 	}
 
 	function restartCurrentMap() {
-		gameStarted = false;
-		gameWon = false;
-		crashed = false;
+		initPlayers();
 		showOptimalPath = false;
-		velX = 0;
-		velY = 0;
-		turn = 0;
-		trail = [];
-		posX = 0;
-		posY = 0;
 		requestAnimationFrame(draw);
 	}
+	
+	function advanceTurn() {
+		if (gameMode === "puzzle") return;
+		if (activePlayers.every(p => p.gameWon || p.crashed)) return;
+		do {
+			currentPlayerIdx = (currentPlayerIdx + 1) % 2;
+		} while (players[currentPlayerIdx].gameWon || players[currentPlayerIdx].crashed);
+		
+		if (gameMode === "cpu" && currentPlayerIdx === 1 && gameStarted && !players[1].crashed && !players[1].gameWon) {
+			setTimeout(doCpuTurn, 500);
+		}
+	}
+	
+	function doCpuTurn() {
+		const p = players[1];
+		if (!p.optimalPath || p.optimalPath.length < 2) {
+			// fallback
+			move(0, 0);
+			return;
+		}
+		// Try to follow optimal path step
+		// But optimalPath doesn't perfectly match velocity choices easily in reverse.
+		// A simple way: find the valid target that matches optimalPath[1]
+		let moved = false;
+		const targets = getTargets();
+		for (const t of targets) {
+			if (t.x === p.optimalPath[1].x && t.y === p.optimalPath[1].y && (t.clear || t.won)) {
+				move(t.ax, t.ay);
+				moved = true;
+				break;
+			}
+		}
+		if (!moved) {
+			// Pick any clear
+			const clearT = targets.find(t => t.clear);
+			if (clearT) move(clearT.ax, clearT.ay);
+			else move(0, 0);
+		}
+	}
+
 
 	function reset() {
 		if (trackType === "random") {
@@ -294,14 +354,41 @@
 	}
 
 	function clickStart(cellIdx: number) {
-		if (gameStarted || crashed || gameWon) return;
-		posX = cellIdx % COLS;
-		posY = Math.floor(cellIdx / COLS);
-		velX = 0;
-		velY = 0;
-		turn = 0;
-		trail = [{ x: posX, y: posY }];
-		gameStarted = true;
+		if (gameStarted) return;
+		
+		let p = players[currentPlayerIdx];
+		p.startCell = cellIdx;
+		p.posX = cellIdx % COLS;
+		p.posY = Math.floor(cellIdx / COLS);
+		p.trail = [{ x: p.posX, y: p.posY }];
+		updateOptimalMovesForPlayer(p);
+		
+		if (gameMode === "puzzle") {
+			setupPhase = false;
+			gameStarted = true;
+		} else {
+			if (currentPlayerIdx === 0) {
+				currentPlayerIdx = 1;
+				if (gameMode === "cpu") {
+					// CPU picks start
+					const available = startCells.filter(c => c !== p.startCell);
+					const cpuStart = available.length > 0 ? available[0] : startCells[0];
+					let cpuP = players[1];
+					cpuP.startCell = cpuStart;
+					cpuP.posX = cpuStart % COLS;
+					cpuP.posY = Math.floor(cpuStart / COLS);
+					cpuP.trail = [{ x: cpuP.posX, y: cpuP.posY }];
+					updateOptimalMovesForPlayer(cpuP);
+					setupPhase = false;
+					gameStarted = true;
+					currentPlayerIdx = 0; // P1 goes first
+				}
+			} else {
+				setupPhase = false;
+				gameStarted = true;
+				currentPlayerIdx = 0; // P1 goes first
+			}
+		}
 		requestAnimationFrame(draw);
 	}
 
@@ -373,7 +460,8 @@
 		clear: boolean;
 		won: boolean;
 	}[] {
-		if (!gameStarted || crashed || gameWon) return [];
+		const p = players[currentPlayerIdx];
+		if (!gameStarted || p.crashed || p.gameWon) return [];
 		const targets: {
 			x: number;
 			y: number;
@@ -384,9 +472,9 @@
 		}[] = [];
 		for (const ax of accChoices) {
 			for (const ay of accChoices) {
-				const nx = posX + velX + ax;
-				const ny = posY + velY + ay;
-				const path = checkPath(posX, posY, nx, ny);
+				const nx = p.posX + p.velX + ax;
+				const ny = p.posY + p.velY + ay;
+				const path = checkPath(p.posX, p.posY, nx, ny);
 				
 				let tx = nx;
 				let ty = ny;
@@ -405,46 +493,50 @@
 	}
 
 	function move(ax: number, ay: number) {
-		if (!gameStarted || crashed || gameWon) return;
-		velX += ax;
-		velY += ay;
-		const nx = posX + velX;
-		const ny = posY + velY;
+		const p = players[currentPlayerIdx];
+		if (!gameStarted || p.crashed || p.gameWon) return;
+		p.velX += ax;
+		p.velY += ay;
+		const nx = p.posX + p.velX;
+		const ny = p.posY + p.velY;
 
-		const path = checkPath(posX, posY, nx, ny);
+		const path = checkPath(p.posX, p.posY, nx, ny);
 
 		if (!path.clear) {
-			crashed = true;
-			posX = path.cx;
-			posY = path.cy;
-			trail.push({ x: posX, y: posY });
-			trail = trail;
+			p.crashed = true;
+			p.posX = path.cx;
+			p.posY = path.cy;
+			p.trail.push({ x: p.posX, y: p.posY });
+			updateOptimalMovesForPlayer(p);
+			advanceTurn();
 			requestAnimationFrame(draw);
 			return;
 		}
 
-		posX = path.cx;
-		posY = path.cy;
-		trail.push({ x: posX, y: posY });
-		trail = trail;
-		turn++;
+		p.posX = path.cx;
+		p.posY = path.cy;
+		p.trail.push({ x: p.posX, y: p.posY });
+		p.turn++;
+		updateOptimalMovesForPlayer(p);
 
 		if (path.won) {
-			gameWon = true;
+			p.gameWon = true;
 		}
 
-		if (!gameWon && getTargets().every((t) => !t.clear)) {
-			crashed = true;
+		if (!p.gameWon && getTargets().every((t) => !t.clear)) {
+			p.crashed = true;
 		}
 
+		advanceTurn();
 		requestAnimationFrame(draw);
 	}
 
-	function drawOptimalPath(ctx: CanvasRenderingContext2D, cs: number) {
-		if (optimalPath.length < 2) return;
+	function drawOptimalPath(ctx: CanvasRenderingContext2D, cs: number, p: PlayerState) {
+		if (p.optimalPath.length < 2) return;
 
 		ctx.save();
-		ctx.strokeStyle = "rgba(251, 191, 36, 0.7)"; // amber-400
+		ctx.strokeStyle = p.color;
+		ctx.globalAlpha = 0.5;
 		ctx.lineWidth = cs * 0.25;
 		ctx.setLineDash([cs * 0.4, cs * 0.2]);
 		ctx.lineCap = "round";
@@ -452,25 +544,16 @@
 
 		ctx.beginPath();
 		ctx.moveTo(
-			optimalPath[0].x * cs + cs / 2,
-			optimalPath[0].y * cs + cs / 2,
+			p.optimalPath[0].x * cs + cs / 2,
+			p.optimalPath[0].y * cs + cs / 2,
 		);
-		for (let i = 1; i < optimalPath.length; i++) {
+		for (let i = 1; i < p.optimalPath.length; i++) {
 			ctx.lineTo(
-				optimalPath[i].x * cs + cs / 2,
-				optimalPath[i].y * cs + cs / 2,
+				p.optimalPath[i].x * cs + cs / 2,
+				p.optimalPath[i].y * cs + cs / 2,
 			);
 		}
 		ctx.stroke();
-
-		// Draw path points
-		ctx.setLineDash([]);
-		for (const p of optimalPath) {
-			ctx.fillStyle = "#fbbf24";
-			ctx.beginPath();
-			ctx.arc(p.x * cs + cs / 2, p.y * cs + cs / 2, cs * 0.15, 0, Math.PI * 2);
-			ctx.fill();
-		}
 		ctx.restore();
 	}
 
@@ -598,41 +681,69 @@
 		}
 
 
-		// Draw trail
-		if (trail.length > 1) {
-			ctx.strokeStyle = "#f8fafc";
-			ctx.lineWidth = cs * 0.3;
-			ctx.lineCap = "round";
-			ctx.lineJoin = "round";
-			ctx.beginPath();
-			ctx.moveTo(trail[0].x * cs + cs / 2, trail[0].y * cs + cs / 2);
-			for (let i = 1; i < trail.length; i++) {
-				ctx.lineTo(trail[i].x * cs + cs / 2, trail[i].y * cs + cs / 2);
-			}
-			ctx.stroke();
-
-			for (let i = 0; i < trail.length; i++) {
-				ctx.fillStyle = "#f8fafc";
+		// Draw elements for each player
+		for (let pIdx = 0; pIdx < activePlayers.length; pIdx++) {
+			const p = activePlayers[pIdx];
+			
+			// Draw trail
+			if (p.trail.length > 1) {
+				ctx.strokeStyle = p.color;
+				ctx.lineWidth = cs * 0.3;
+				ctx.lineCap = "round";
+				ctx.lineJoin = "round";
 				ctx.beginPath();
-				ctx.arc(
-					trail[i].x * cs + cs / 2,
-					trail[i].y * cs + cs / 2,
-					cs * 0.25,
-					0,
-					Math.PI * 2,
-				);
-				ctx.fill();
+				ctx.moveTo(p.trail[0].x * cs + cs / 2, p.trail[0].y * cs + cs / 2);
+				for (let i = 1; i < p.trail.length; i++) {
+					ctx.lineTo(p.trail[i].x * cs + cs / 2, p.trail[i].y * cs + cs / 2);
+				}
+				ctx.stroke();
+			}
+
+			// Draw current position
+			if (gameStarted || p.startCell !== null) {
+				const curPx = p.posX * cs + cs / 2;
+				const curPy = p.posY * cs + cs / 2;
+
+				if (p.crashed) {
+					ctx.fillStyle = "#ef4444";
+					ctx.beginPath();
+					ctx.arc(curPx, curPy, cs * 0.5, 0, Math.PI * 2);
+					ctx.fill();
+					ctx.strokeStyle = "#991b1b";
+					ctx.lineWidth = cs * 0.15;
+					ctx.beginPath();
+					ctx.moveTo(curPx - cs * 0.3, curPy - cs * 0.3);
+					ctx.lineTo(curPx + cs * 0.3, curPy + cs * 0.3);
+					ctx.moveTo(curPx + cs * 0.3, curPy - cs * 0.3);
+					ctx.lineTo(curPx - cs * 0.3, curPy + cs * 0.3);
+					ctx.stroke();
+				} else if (p.gameWon) {
+					ctx.fillStyle = p.color;
+					ctx.beginPath();
+					ctx.arc(curPx, curPy, cs * 0.6, 0, Math.PI * 2);
+					ctx.fill();
+				} else {
+					ctx.fillStyle = p.color;
+					ctx.beginPath();
+					ctx.arc(curPx, curPy, cs * 0.4, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			}
+
+			// Draw optimal path
+			if (showOptimalPath) {
+				drawOptimalPath(ctx, cs, p);
 			}
 		}
 
-		// Draw velocity vector from current pos
-		if (gameStarted && !crashed && !gameWon) {
-			const cx2 = posX * cs + cs / 2;
-			const cy2 = posY * cs + cs / 2;
-			const ghostX = (posX + velX) * cs + cs / 2;
-			const ghostY = (posY + velY) * cs + cs / 2;
+		// Draw targets and vector only for current player
+		if (gameStarted && !cp.crashed && !cp.gameWon && (gameMode !== "cpu" || currentPlayerIdx === 0)) {
+			const cx2 = cp.posX * cs + cs / 2;
+			const cy2 = cp.posY * cs + cs / 2;
+			const ghostX = (cp.posX + cp.velX) * cs + cs / 2;
+			const ghostY = (cp.posY + cp.velY) * cs + cs / 2;
 
-			if (velX !== 0 || velY !== 0) {
+			if (cp.velX !== 0 || cp.velY !== 0) {
 				ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
 				ctx.lineWidth = cs * 0.15;
 				ctx.setLineDash([cs * 0.2, cs * 0.15]);
@@ -641,83 +752,37 @@
 				ctx.lineTo(ghostX, ghostY);
 				ctx.stroke();
 				ctx.setLineDash([]);
-
 				ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
 				ctx.beginPath();
 				ctx.arc(ghostX, ghostY, cs * 0.4, 0, Math.PI * 2);
 				ctx.fill();
 			}
 
-			// Draw target positions
 			const targets = getTargets();
 			for (const t of targets) {
 				const tx = t.x * cs + cs / 2;
 				const ty = t.y * cs + cs / 2;
 
 				if (t.clear) {
-					ctx.fillStyle = "rgba(56, 189, 248, 0.4)";
-					ctx.strokeStyle = "#38bdf8";
+					ctx.fillStyle = cp.color;
+					ctx.globalAlpha = 0.4;
+					ctx.strokeStyle = cp.color;
 				} else {
-					ctx.fillStyle = "rgba(239, 68, 68, 0.4)"; // red-500
+					ctx.fillStyle = "rgba(239, 68, 68, 0.4)";
 					ctx.strokeStyle = "#ef4444";
 				}
-
 				ctx.beginPath();
 				ctx.arc(tx, ty, cs * 0.45, 0, Math.PI * 2);
 				ctx.fill();
-
+				ctx.globalAlpha = 1.0;
 				ctx.lineWidth = cs * 0.15;
 				ctx.stroke();
 			}
 		}
 
-		// Draw current position
-		if (gameStarted) {
-			const curPx = posX * cs + cs / 2;
-			const curPy = posY * cs + cs / 2;
-
-			if (crashed) {
-				ctx.fillStyle = "#ef4444";
-				ctx.beginPath();
-				ctx.arc(curPx, curPy, cs * 0.5, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.strokeStyle = "#991b1b";
-				ctx.lineWidth = cs * 0.15;
-				ctx.beginPath();
-				ctx.moveTo(curPx - cs * 0.3, curPy - cs * 0.3);
-				ctx.lineTo(curPx + cs * 0.3, curPy + cs * 0.3);
-				ctx.moveTo(curPx + cs * 0.3, curPy - cs * 0.3);
-				ctx.lineTo(curPx - cs * 0.3, curPy + cs * 0.3);
-				ctx.stroke();
-			} else if (gameWon) {
-				ctx.fillStyle = "#fbbf24";
-				ctx.beginPath();
-				ctx.arc(curPx, curPy, cs * 0.6, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.shadowColor = "rgba(251, 191, 36, 0.5)";
-				ctx.shadowBlur = cs;
-				ctx.fill();
-				ctx.shadowBlur = 0;
-			} else {
-				ctx.fillStyle = "#38bdf8";
-				ctx.beginPath();
-				ctx.arc(curPx, curPy, cs * 0.4, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.shadowColor = "rgba(56, 189, 248, 0.5)";
-				ctx.shadowBlur = cs;
-				ctx.fill();
-				ctx.shadowBlur = 0;
-			}
-		}
-
-		// Draw optimal path last so it's always on top
-		if (showOptimalPath) {
-			drawOptimalPath(ctx, cs);
-		}
-
-		// Pre-start: highlight start cells
-		if (!gameStarted && !crashed && !gameWon) {
-			for (const sc of startCells) {
+		// Pre-start highlights
+		if (setupPhase) {
+			for (const sc of starts) {
 				const sx = (sc % COLS) * cs;
 				const sy = Math.floor(sc / COLS) * cs;
 				ctx.strokeStyle = "rgba(75, 190, 75, 0.8)";
@@ -743,46 +808,24 @@
 		const clickX = Math.floor(mx / cs);
 		const clickY = Math.floor(my / cs);
 
-		if (clickX < 0 || clickX >= COLS || clickY < 0 || clickY >= ROWS)
-			return;
+		if (clickX < 0 || clickX >= COLS || clickY < 0 || clickY >= ROWS) return;
 
 		const cellIdx = clickY * COLS + clickX;
 
-		// If game not started, check if click on start cell
-		if (!gameStarted && !crashed && !gameWon) {
+		if (setupPhase) {
 			if (startCells.includes(cellIdx)) {
+				// Don't allow picking same start cell
+				if (gameMode !== "puzzle" && currentPlayerIdx === 1 && players[0].startCell === cellIdx) return;
 				clickStart(cellIdx);
 			}
 			return;
 		}
 
-		// If game started, check if click on a valid target
-		if (gameStarted && !crashed && !gameWon) {
+		if (gameStarted && !cp.crashed && !cp.gameWon && (gameMode !== "cpu" || currentPlayerIdx === 0)) {
 			const targets = getTargets();
-			
-			// Priority 1: Winning targets
-			for (const t of targets) {
-				if (t.x === clickX && t.y === clickY && t.won) {
-					move(t.ax, t.ay);
-					return;
-				}
-			}
-			
-			// Priority 2: Clear targets
-			for (const t of targets) {
-				if (t.x === clickX && t.y === clickY && t.clear) {
-					move(t.ax, t.ay);
-					return;
-				}
-			}
-			
-			// Priority 3: Crash targets
-			for (const t of targets) {
-				if (t.x === clickX && t.y === clickY) {
-					move(t.ax, t.ay);
-					return;
-				}
-			}
+			for (const t of targets) { if (t.x === clickX && t.y === clickY && t.won) { move(t.ax, t.ay); return; } }
+			for (const t of targets) { if (t.x === clickX && t.y === clickY && t.clear) { move(t.ax, t.ay); return; } }
+			for (const t of targets) { if (t.x === clickX && t.y === clickY) { move(t.ax, t.ay); return; } }
 		}
 	}
 
@@ -821,21 +864,15 @@
 
 	// Reactivity: redraw on state changes
 	$effect(() => {
-		// Touch these reactive values to trigger redraws
-		posX;
-		posY;
-		velX;
-		velY;
-		trail;
+		players;
+		currentPlayerIdx;
 		gameStarted;
-		crashed;
-		gameWon;
+		setupPhase;
 		showOptimalPath;
-		optimalPath;
 		requestAnimationFrame(draw);
 	});
 
-	let speed = $derived(Math.sqrt(velX * velX + velY * velY).toFixed(1));
+	let speed = $derived(Math.sqrt(cp.velX * cp.velX + cp.velY * cp.velY).toFixed(1));
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -863,44 +900,51 @@
 
 	<div class="board-wrapper">
 		<div class="game-stats">
+			{#if gameMode !== "puzzle"}
+				<div class="stat">
+					<span class="label">PLAYER</span>
+					<span class="value" style="color: {cp.color}">P{currentPlayerIdx + 1}</span>
+				</div>
+			{/if}
 			<div class="stat">
 				<span class="label">STATUS</span>
 				<span
 					class="value status-val"
-					class:won={gameWon}
-					class:crashed
+					class:won={cp.gameWon}
+					class:crashed={cp.crashed}
 				>
-					{gameWon ? "FINISH" : crashed ? "CRASHED" : "RACING"}
+					{setupPhase ? "SETUP" : cp.gameWon ? "FINISH" : cp.crashed ? "CRASHED" : "RACING"}
 				</span>
 			</div>
 			<div class="stat">
 				<span class="label">TURN</span>
-				<span class="value">{turn}</span>
+				<span class="value">{cp.turn}</span>
 			</div>
 			<div class="stat">
 				<span class="label">SPEED</span>
 				<span class="value speed-val">{speed}</span>
 			</div>
 			<div class="stat">
-				<span class="label">VELOCITY</span>
-				<span class="value vel-val">({velX}, {velY})</span>
-			</div>
-			<div class="stat">
 				<span class="label">TARGET</span>
-				<span class="value target-val">{optimalMoves ?? "--"}</span>
+				<span class="value target-val">{cp.optimalMoves ?? "--"}</span>
 			</div>
 		</div>
 
 		<div class="canvas-wrapper">
 			<canvas bind:this={canvas} onclick={handleCanvasClick}></canvas>
 
-			{#if crashed || gameWon}
+			{#if activePlayers.some(p => p.gameWon) || (activePlayers.length > 0 && activePlayers.every(p => p.crashed))}
 				<div class="completion-overlay" transition:fade></div>
 			{/if}
 		</div>
 	</div>
 	<div class="bottom-bar">
 		<div class="controls-group">
+			<select class="mode-select" bind:value={gameMode} onchange={() => reset()}>
+				<option value="puzzle">PUZZLE</option>
+				<option value="hotseat">HOTSEAT</option>
+				<option value="cpu">VS CPU</option>
+			</select>
 			<button
 				class="action-btn"
 				onclick={() => {
@@ -910,7 +954,7 @@
 			>
 				{trackType === "random" ? "STANDARD TRACK" : "RANDOM TRACK"}
 			</button>
-			{#if crashed || gameWon}
+			{#if activePlayers.some(p => p.crashed || p.gameWon)}
 				<button
 					class="action-btn toggle-path-btn"
 					class:active={showOptimalPath}
@@ -920,7 +964,7 @@
 				</button>
 			{/if}
 		</div>
-		{#if crashed || gameWon}
+		{#if activePlayers.some(p => p.gameWon) || (activePlayers.length > 0 && activePlayers.every(p => p.crashed))}
 			<GameOverMenu onPlayAgain={reset} onMenu={onBack} delay={0} />
 		{/if}
 	</div>
@@ -1054,7 +1098,18 @@
 		gap: 2vmin;
 	}
 
-	.action-btn {
+		.mode-select {
+		background: rgba(56, 189, 248, 0.1);
+		border: 1px solid rgba(56, 189, 248, 0.3);
+		color: #38bdf8;
+		padding: 1vmin 3vmin;
+		border-radius: 1vmin;
+		font-size: 1.6vmin;
+		font-weight: 800;
+		cursor: pointer;
+		outline: none;
+	}
+.action-btn {
 		background: rgba(56, 189, 248, 0.1);
 		border: 1px solid rgba(56, 189, 248, 0.3);
 		color: #38bdf8;

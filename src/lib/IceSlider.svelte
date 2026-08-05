@@ -592,6 +592,7 @@
 		position: relative;
 		overflow: hidden;
 		box-shadow: 0 20px 50px var(--ice-board-shadow);
+		touch-action: none;
 	}
 
 	.grid {

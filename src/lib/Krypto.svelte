@@ -797,6 +797,9 @@
 		gap: 3vmin;
 		align-items: center;
 		margin-top: 1vmin;
+		flex: 1;
+		justify-content: center;
+		min-height: 0;
 		transition:
 			opacity 0.3s,
 			filter 0.3s;
@@ -812,8 +815,8 @@
 		gap: 2vmin;
 		flex-wrap: wrap;
 		justify-content: center;
-		width: 90vmin;
-		min-height: 20vmin;
+		width: 100%;
+		max-width: 90vmin;
 	}
 
 	.block {
@@ -821,8 +824,9 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		width: 14vmin;
-		height: 17vmin;
+		width: clamp(3.5rem, 14vmin, 16vmin);
+		height: clamp(4.5rem, 17vmin, 20vmin);
+		max-height: 25vh;
 		background: var(--krypto-card-bg);
 		border: 1px solid var(--krypto-card-border);
 		border-radius: 2.5vmin;
@@ -870,11 +874,13 @@
 	.operators {
 		display: flex;
 		gap: 2.5vmin;
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 	.op {
-		width: 8vmin;
-		height: 8vmin;
-		font-size: 4vmin;
+		width: clamp(3rem, 8vmin, 10vmin);
+		height: clamp(3rem, 8vmin, 10vmin);
+		font-size: clamp(1.5rem, 4vmin, 5vmin);
 		font-weight: 900;
 		padding: 0;
 		border-radius: 50%;
@@ -908,11 +914,18 @@
 		}
 
 		.op {
-			width: 13vmin;
-			height: 13vmin;
-			font-size: 6vmin;
+			width: clamp(3.5rem, 13vmin, 16vmin);
+			height: clamp(3.5rem, 13vmin, 16vmin);
+			font-size: clamp(2rem, 6vmin, 8vmin);
 			padding: 0;
 		}
+	}
+
+	@media (max-height: 700px) {
+		.workspace { gap: 1.5vmin; margin-top: 0; }
+		.game-stats { margin-bottom: 1vmin; }
+		.block, .target-card { height: clamp(4rem, 14vmin, 16vmin); }
+		.operators { gap: 2vmin; }
 	}
 
 	.bottom-bar {
@@ -1087,8 +1100,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 14vmin;
-		height: 17vmin;
+		width: clamp(3.5rem, 14vmin, 16vmin);
+		height: clamp(4.5rem, 17vmin, 20vmin);
+		max-height: 25vh;
 		border-radius: 2.5vmin;
 		box-sizing: border-box;
 		position: relative;

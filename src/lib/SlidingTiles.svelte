@@ -10,6 +10,7 @@
 	let instructions: any;
 
 	const SIZE = 4;
+	let mode = $state<'regular' | 'serpentine'>('regular');
 	let tiles = $state<number[]>([]);
 	let initialTiles = $state<number[]>([]);
 	let isWon = $state(false);
@@ -36,13 +37,26 @@
 	let movesPerSecond = $state(5);
 	let playbackInterval: any;
 
+	function getTargetState() {
+		if (mode === 'serpentine') {
+			return [1, 2, 3, 4, 8, 7, 6, 5, 9, 10, 11, 12, 15, 14, 13, 0];
+		}
+		return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+	}
+
 	function getManhattanDistance(board: number[]) {
 		let distance = 0;
+		const target = getTargetState();
+		const targetIndices = new Array(16);
+		for (let i = 0; i < 16; i++) {
+			targetIndices[target[i]] = i;
+		}
+
 		// Manhattan Distance
 		for (let i = 0; i < board.length; i++) {
 			const val = board[i];
 			if (val === 0) continue;
-			const targetIdx = val - 1;
+			const targetIdx = targetIndices[val];
 			const targetRow = Math.floor(targetIdx / SIZE);
 			const targetCol = targetIdx % SIZE;
 			const currentRow = Math.floor(i / SIZE);
@@ -58,8 +72,8 @@
 					const val2 = board[r * SIZE + c2];
 					if (val1 === 0 || val2 === 0) continue;
 					
-					const t1 = val1 - 1;
-					const t2 = val2 - 1;
+					const t1 = targetIndices[val1];
+					const t2 = targetIndices[val2];
 					const tr1 = Math.floor(t1 / SIZE);
 					const tr2 = Math.floor(t2 / SIZE);
 					
@@ -80,8 +94,8 @@
 					const val2 = board[r2 * SIZE + c];
 					if (val1 === 0 || val2 === 0) continue;
 					
-					const t1 = val1 - 1;
-					const t2 = val2 - 1;
+					const t1 = targetIndices[val1];
+					const t2 = targetIndices[val2];
 					const tc1 = t1 % SIZE;
 					const tc2 = t2 % SIZE;
 					
@@ -231,9 +245,8 @@
 		pausePlayback();
 		isSolutionMode = false;
 		if (newShuffle || initialTiles.length === 0) {
-			let newTiles = Array.from({ length: SIZE * SIZE - 1 }, (_, i) => i + 1);
-			newTiles.push(0);
-			let emptyIndex = SIZE * SIZE - 1;
+			let newTiles = [...getTargetState()];
+			let emptyIndex = newTiles.indexOf(0);
 			let lastMove = -1;
 			const sPath: number[] = [];
 			for (let i = 0; i < 100; i++) {
@@ -308,8 +321,9 @@
 	}
 
 	function checkWin() {
-		for (let i = 0; i < tiles.length - 1; i++) {
-			if (tiles[i] !== i + 1) return;
+		const target = getTargetState();
+		for (let i = 0; i < tiles.length; i++) {
+			if (tiles[i] !== target[i]) return;
 		}
 		isWon = true;
 	}
@@ -324,6 +338,13 @@
 
 	<div class="board-wrapper">
 		<div class="game-stats">
+			<div class="stat">
+				<span class="label">MODE</span>
+				<select class="mode-select" bind:value={mode} onchange={() => initGame(true)}>
+					<option value="regular">REGULAR</option>
+					<option value="serpentine">SERPENTINE</option>
+				</select>
+			</div>
 			<div class="stat">
 				<span class="label">MOVES</span>
 				<span class="value">{moves}</span>
@@ -482,6 +503,19 @@
 		font-size: 5vmin;
 		font-weight: 900;
 		color: var(--app-text);
+	}
+
+	.mode-select {
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
+		color: var(--app-text);
+		padding: 0.5vmin 1vmin;
+		border-radius: 1vmin;
+		font-weight: 800;
+		font-size: 1.8vmin;
+		outline: none;
+		cursor: pointer;
+		margin-top: 0.5vmin;
 	}
 
 	.bottom-bar {

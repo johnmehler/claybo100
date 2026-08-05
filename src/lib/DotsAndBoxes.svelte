@@ -7,7 +7,8 @@
 	let instructions: any;
 
 	let SIZE = $state(4);
-	let currentTurn = $state(1); // 1 = Red (You), 2 = Blue (AI)
+	let mode = $state<'vs_ai' | 'hotseat'>('vs_ai');
+	let currentTurn = $state(1); // 1 = Red (P1), 2 = Blue (P2/AI)
 	let scores = $state({ 1: 0, 2: 0 });
 	let hLines = $state<boolean[][]>([]);
 	let vLines = $state<boolean[][]>([]);
@@ -63,7 +64,8 @@
 	}
 
 	function drawLine(type: 'h'|'v', r: number, c: number) {
-		if (gameOver || currentTurn === 2) return;
+		if (gameOver) return;
+		if (mode === 'vs_ai' && currentTurn === 2) return;
 		lastAiMove = null;
 		applyMove(type, r, c);
 	}
@@ -106,7 +108,7 @@
 			currentTurn = currentTurn === 1 ? 2 : 1;
 		}
 
-		if (currentTurn === 2 && !gameOver) {
+		if (mode === 'vs_ai' && currentTurn === 2 && !gameOver) {
 			setTimeout(aiTurn, 500);
 		}
 	}
@@ -144,9 +146,82 @@
 			}
 		});
 
-		let chosen = safeLines.length > 0 ? safeLines[Math.floor(Math.random() * safeLines.length)] : lines[Math.floor(Math.random() * lines.length)];
+		if (safeLines.length > 0) {
+			let chosen = safeLines[Math.floor(Math.random() * safeLines.length)];
+			lastAiMove = { type: chosen.type, r: chosen.r, c: chosen.c };
+			applyMove(chosen.type, chosen.r, chosen.c);
+			return;
+		}
+
+		// Improve AI: When forced to give away a box, find the move that minimizes the length of the chain given away.
+		let minBoxes = Infinity;
+		let bestLines: {type: 'h'|'v', r: number, c: number}[] = [];
+
+		for (let line of lines) {
+			let boxesLost = evaluateLine(line);
+			if (boxesLost < minBoxes) {
+				minBoxes = boxesLost;
+				bestLines = [line];
+			} else if (boxesLost === minBoxes) {
+				bestLines.push(line);
+			}
+		}
+
+		let chosen = bestLines.length > 0 ? bestLines[Math.floor(Math.random() * bestLines.length)] : lines[0];
 		lastAiMove = { type: chosen.type, r: chosen.r, c: chosen.c };
 		applyMove(chosen.type, chosen.r, chosen.c);
+	}
+
+	function evaluateLine(line: {type: 'h'|'v', r: number, c: number}) {
+		let hl = hLines.map(r => [...r]);
+		let vl = vLines.map(r => [...r]);
+		let b = boxes.map(r => [...r]);
+		
+		if (line.type === 'h') hl[line.r][line.c] = true;
+		else vl[line.r][line.c] = true;
+
+		let boxesTaken = 0;
+		let found = true;
+		while (found) {
+			found = false;
+			for (let r = 0; r <= SIZE; r++) {
+				for (let c = 0; c < SIZE; c++) {
+					if (!hl[r][c]) {
+						hl[r][c] = true;
+						let completed = false;
+						if (r > 0) {
+							let count = (hl[r-1][c]?1:0) + (hl[r][c]?1:0) + (vl[r-1][c]?1:0) + (vl[r-1][c+1]?1:0);
+							if (count === 4 && b[r-1][c] === 0) { b[r-1][c] = 1; completed = true; boxesTaken++; }
+						}
+						if (r < SIZE) {
+							let count = (hl[r][c]?1:0) + (hl[r+1][c]?1:0) + (vl[r][c]?1:0) + (vl[r][c+1]?1:0);
+							if (count === 4 && b[r][c] === 0) { b[r][c] = 1; completed = true; boxesTaken++; }
+						}
+						if (completed) found = true;
+						else hl[r][c] = false;
+					}
+				}
+			}
+			for (let r = 0; r < SIZE; r++) {
+				for (let c = 0; c <= SIZE; c++) {
+					if (!vl[r][c]) {
+						vl[r][c] = true;
+						let completed = false;
+						if (c > 0) {
+							let count = (hl[r][c-1]?1:0) + (hl[r+1][c-1]?1:0) + (vl[r][c-1]?1:0) + (vl[r][c]?1:0);
+							if (count === 4 && b[r][c-1] === 0) { b[r][c-1] = 1; completed = true; boxesTaken++; }
+						}
+						if (c < SIZE) {
+							let count = (hl[r][c]?1:0) + (hl[r+1][c]?1:0) + (vl[r][c]?1:0) + (vl[r][c+1]?1:0);
+							if (count === 4 && b[r][c] === 0) { b[r][c] = 1; completed = true; boxesTaken++; }
+						}
+						if (completed) found = true;
+						else vl[r][c] = false;
+					}
+				}
+			}
+		}
+		return boxesTaken;
 	}
 
 	reset();
@@ -162,11 +237,11 @@
 		<div class="game-stats">
 			<div class="stat scoreboard-stat">
 				<div class="score p1">
-					<span class="label">YOU</span>
+					<span class="label">P1 (RED)</span>
 					<span class="val">{scores[1]}</span>
 				</div>
 				<div class="score p2">
-					<span class="label">AI</span>
+					<span class="label">{mode === 'vs_ai' ? 'AI (BLUE)' : 'P2 (BLUE)'}</span>
 					<span class="val">{scores[2]}</span>
 				</div>
 			</div>
@@ -184,7 +259,7 @@
 						</div>
 					{:else}
 						<span style="color: {currentTurn === 1 ? 'var(--color-bittersweet)' : 'var(--color-apple)'}">
-							{currentTurn === 1 ? 'YOUR TURN' : 'AI TURN'}
+							{currentTurn === 1 ? (mode === 'vs_ai' ? 'YOUR TURN' : 'P1 TURN') : (mode === 'vs_ai' ? 'AI TURN' : 'P2 TURN')}
 						</span>
 					{/if}
 				</div>
@@ -251,10 +326,19 @@
 
 	<div class="bottom-bar">
 		<div class="controls">
-			<span class="label">GRID SIZE</span>
-			<div class="diff-select">
-				<button class="diff-btn" class:active={SIZE === 4} onclick={() => { SIZE=4; reset(); }}>5x5</button>
-				<button class="diff-btn" class:active={SIZE === 7} onclick={() => { SIZE=7; reset(); }}>8x8</button>
+			<div class="control-group">
+				<span class="label">MODE</span>
+				<div class="diff-select">
+					<button class="diff-btn" class:active={mode === 'vs_ai'} onclick={() => { mode='vs_ai'; reset(); }}>VS AI</button>
+					<button class="diff-btn" class:active={mode === 'hotseat'} onclick={() => { mode='hotseat'; reset(); }}>HOTSEAT</button>
+				</div>
+			</div>
+			<div class="control-group">
+				<span class="label">GRID SIZE</span>
+				<div class="diff-select">
+					<button class="diff-btn" class:active={SIZE === 4} onclick={() => { SIZE=4; reset(); }}>5x5</button>
+					<button class="diff-btn" class:active={SIZE === 7} onclick={() => { SIZE=7; reset(); }}>8x8</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -304,7 +388,8 @@
 	.play-again-btn:active { transform: scale(0.95); }
 
 	.bottom-bar { height: 10vmin; display: flex; justify-content: center; align-items: center; width: 100%; }
-	.controls { display: flex; align-items: center; gap: 3vmin; }
+	.controls { display: flex; align-items: center; gap: 4vmin; }
+	.control-group { display: flex; flex-direction: column; align-items: center; gap: 0.5vmin; }
 	.diff-select { display: flex; gap: 1vmin; }
 	.diff-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--game-text-muted); padding: 1vmin 3vmin; border-radius: 1vmin; cursor: pointer; font-weight: 900; font-size: 1.6vmin; transition: all 0.3s; }
 	.diff-btn:hover { color: var(--game-text-primary); border-color: rgba(255,255,255,0.3); }
