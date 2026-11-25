@@ -38,6 +38,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="instructions-title"
+		tabindex="-1"
 		in:fade={{ duration: 200 }}
 		onclick={(e) => {
 			if (e.target === e.currentTarget) close();
