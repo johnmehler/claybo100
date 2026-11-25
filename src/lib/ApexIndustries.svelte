@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { fade, scale } from "svelte/transition";
+	import Instructions from "./Instructions.svelte";
 
 	let { registerActions = (actions: any) => {}, onBack = () => {} } =
 		$props();
+
+	let instructions: ReturnType<typeof Instructions> | null = $state(null);
 
 	// Game Constants
 	const TOTAL_TURNS = 6;
@@ -276,24 +279,37 @@
 		);
 	}
 
+	function clamp(val: number, min: number, max: number, fallback: number): number {
+		const n = Number(val);
+		if (!Number.isFinite(n)) return fallback;
+		return Math.max(min, Math.min(max, n));
+	}
+
+	const safePrice = $derived(clamp(price, 5, 25, 18));
+	const safeQualitySpending = $derived(clamp(qualitySpending, 0, 16000, 5000));
+	const safeMarketing = $derived(clamp(marketing, 0, 5000, 300));
+	const safeEmployeePay = $derived(clamp(employeePay, 50, 200, 80));
+
+	function getTeamColor(teamName: string): string {
+		const idx = allTeams.indexOf(teamName);
+		return idx >= 0 ? teamColors[idx % teamColors.length] : "#3b82f6";
+	}
+
 	function simulateCompetitors(): void {
-		// AI strategy: use base values +/- one option in each direction
+		// AI strategy: adjust each lever within realistic bounds
 		aiCompetitors.forEach(ai => {
-			// Get current index in options arrays
 			const priceIndex = priceOptions.indexOf(ai.price);
 			const spendingIndex = qualitySpendingOptions.indexOf(ai.qualitySpending);
 			const marketingIndex = marketingOptions.indexOf(ai.marketing);
 			const productionIndex = productionOptions.indexOf(ai.production);
 			const payIndex = payOptions.indexOf(ai.employeePay);
 
-			// Move to adjacent option (+/- 1) or stay at current
-			const priceMove = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-			const spendingMove = Math.floor(Math.random() * 3) - 1;
-			const marketingMove = Math.floor(Math.random() * 3) - 1;
+			const priceMove = Math.floor(Math.random() * 3) - 1; // -1, 0, +1 ($1)
+			const spendingMove = (Math.floor(Math.random() * 5) - 2) * 5; // -10..+10 ($500 steps)
+			const marketingMove = (Math.floor(Math.random() * 5) - 2) * 3; // -6..+6 ($300 steps)
 			const productionMove = Math.floor(Math.random() * 3) - 1;
-			const payMove = Math.floor(Math.random() * 3) - 1;
+			const payMove = Math.floor(Math.random() * 3) - 1; // -1, 0, +1 ($10)
 
-			// Apply moves within bounds
 			const newPriceIndex = Math.max(0, Math.min(priceOptions.length - 1, priceIndex + priceMove));
 			const newSpendingIndex = Math.max(0, Math.min(qualitySpendingOptions.length - 1, spendingIndex + spendingMove));
 			const newMarketingIndex = Math.max(0, Math.min(marketingOptions.length - 1, marketingIndex + marketingMove));
@@ -308,23 +324,17 @@
 		});
 	}
 
-	function executeAITurn(ai: AICompetitor, demandShareFraction: number): number {
-		const aiActualQuality = calculateQualityFromSpending(ai.qualitySpending, ai.previousQuality);
-		ai.quality = aiActualQuality;
+	function executeAITurn(ai: AICompetitor, demandShareFraction: number, aiActualProduction: number): number {
 		const aiUnitCost = calculateUnitCost(ai.quality, ai.employeePay);
-
-		// Production — efficiency reduces cost, not output
-		let aiActualProduction = ai.production;
-		if (ai.employeePay < 100 && Math.random() < (100 - ai.employeePay) / 160) {
-			aiActualProduction = Math.floor(aiActualProduction * (0.6 + Math.random() * 0.25));
-		}
 
 		if (ai.inventory === 0) {
 			ai.inventory = aiActualProduction;
 			ai.inventoryQuality = ai.quality;
 		} else {
 			const totalUnits = ai.inventory + aiActualProduction;
-			ai.inventoryQuality = (ai.inventory * ai.inventoryQuality + aiActualProduction * ai.quality) / totalUnits;
+			ai.inventoryQuality = totalUnits > 0
+				? (ai.inventory * ai.inventoryQuality + aiActualProduction * ai.quality) / totalUnits
+				: ai.quality;
 			ai.inventory = totalUnits;
 		}
 
@@ -365,8 +375,11 @@
 	}
 
 	function executeTurn(): void {
-		// Clamp employee pay input
-		employeePay = Math.max(50, Math.min(200, Math.round(employeePay)));
+		// Clamp all player inputs
+		price = Math.round(clamp(price, 5, 25, 18));
+		qualitySpending = Math.round(clamp(qualitySpending, 0, 16000, 5000) / 100) * 100;
+		marketing = Math.round(clamp(marketing, 0, 5000, 300) / 100) * 100;
+		employeePay = Math.round(clamp(employeePay, 50, 200, 80) / 10) * 10;
 
 		// Save previous input values
 		previousPrice = price;
@@ -379,23 +392,52 @@
 		quality = actualQuality;
 		updateMarketPreference();
 
+		// Compute AI quality and production for this turn BEFORE demand scoring so all teams are evaluated on the same quarter
+		aiCompetitors.forEach(ai => {
+			ai.quality = calculateQualityFromSpending(ai.qualitySpending, ai.previousQuality);
+		});
+		const aiActualProductions = aiCompetitors.map(ai => {
+			let prod = ai.production;
+			if (ai.employeePay < 100 && Math.random() < (100 - ai.employeePay) / 160) {
+				prod = Math.floor(prod * (0.6 + Math.random() * 0.25));
+			}
+			return prod;
+		});
+
+		// Player production and blended inventory quality
+		let actualProduction = productionQuantity;
+		productionDisrupted = false;
+		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
+			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
+			productionDisrupted = true;
+		}
+
+		const playerTotalAvailable = inventory + actualProduction;
+		const playerBlendedQuality = playerTotalAvailable > 0
+			? (inventory * inventoryQuality + actualProduction * quality) / playerTotalAvailable
+			: quality;
+
 		// Calculate demand scores to allocate potential demand from the market
 		const playerDemandScore = calculateDemandScore(
-			{ price, quality, marketing, reputation, employeePay },
+			{ price, quality: playerBlendedQuality, marketing, reputation, employeePay },
 			0.96 + Math.random() * 0.08
 		);
-		const aiDemandScores = aiCompetitors.map(ai =>
-			calculateDemandScore(
+		const aiDemandScores = aiCompetitors.map((ai, idx) => {
+			const aiTotalAvailable = ai.inventory + aiActualProductions[idx];
+			const aiBlendedQuality = aiTotalAvailable > 0
+				? (ai.inventory * ai.inventoryQuality + aiActualProductions[idx] * ai.quality) / aiTotalAvailable
+				: ai.quality;
+			return calculateDemandScore(
 				{
 					price: ai.price,
-					quality: ai.quality,
+					quality: aiBlendedQuality,
 					marketing: ai.marketing,
 					reputation: ai.reputation,
 					employeePay: ai.employeePay
 				},
 				0.96 + Math.random() * 0.08
-			)
-		);
+			);
+		});
 		const totalDemandScore = playerDemandScore + aiDemandScores.reduce((sum, score) => sum + score, 0);
 
 		demandScore = playerDemandScore;
@@ -407,23 +449,17 @@
 		lastPotentialDemand = playerPotentialDemand;
 
 		// Execute AI competitors for this quarter and capture their actual units sold
-		const aiUnitsSoldArr = aiCompetitors.map((ai, index) => executeAITurn(ai, aiDemandFractions[index]));
+		const aiUnitsSoldArr = aiCompetitors.map((ai, index) =>
+			executeAITurn(ai, aiDemandFractions[index], aiActualProductions[index])
+		);
 
-		// Production and inventory — efficiency reduces cost per unit, not output
-		let actualProduction = productionQuantity;
-		productionDisrupted = false;
-		if (employeePay < 100 && Math.random() < (100 - employeePay) / 160) {
-			actualProduction = Math.floor(actualProduction * (0.6 + Math.random() * 0.25));
-			productionDisrupted = true;
-		}
-
+		// Update player inventory
 		if (inventory === 0) {
 			inventory = actualProduction;
 			inventoryQuality = quality;
 		} else {
-			const totalUnits = inventory + actualProduction;
-			inventoryQuality = (inventory * inventoryQuality + actualProduction * quality) / totalUnits;
-			inventory = totalUnits;
+			inventoryQuality = playerBlendedQuality;
+			inventory = playerTotalAvailable;
 		}
 
 		// Sales
@@ -526,22 +562,46 @@
 		if (profit < 0) messages.push("Losses this turn");
 		else if (profit > 5000) messages.push("Strong profitability");
 
-		feedback = messages.slice(0, 2).join(". ");
+		feedback = messages.length > 0
+			? messages.slice(0, 2).join(". ")
+			: "Steady quarter — monitor competitor moves and segment shifts.";
 	}
 
 	const plannedEmployeeCount = $derived(calculateEmployeeCount(productionQuantity));
-	const projectedLaborCost = $derived(calculateLaborCost(productionQuantity, employeePay));
-	const projectedQuality = $derived(calculateQualityFromSpending(qualitySpending, previousQuality));
+	const projectedLaborCost = $derived(calculateLaborCost(productionQuantity, safeEmployeePay));
+	const projectedQuality = $derived(calculateQualityFromSpending(safeQualitySpending, previousQuality));
 
 	const averagePayHistory = $derived(payHistory.reduce((sum, pay) => sum + pay, 0) / payHistory.length);
-	const projectedEfficiency = $derived(Math.max(0.7, Math.min(1.6, 0.7 * productionEfficiency + 0.3 * computeEfficiencyTarget(employeePay, payHistory))));
+	const projectedEfficiency = $derived(Math.max(0.7, Math.min(1.6, 0.7 * productionEfficiency + 0.3 * computeEfficiencyTarget(safeEmployeePay, payHistory))));
 
-	const projectedUnitCost = $derived(calculateUnitCost(projectedQuality, employeePay));
-	const projectedProductionCost = $derived(productionQuantity * projectedUnitCost);
-	const projectedTotalCost = $derived(projectedProductionCost + marketing + projectedLaborCost);
-	const projectedBreakeven = $derived(Math.ceil(projectedTotalCost / price));
+	const projectedUnitCost = $derived(calculateUnitCost(projectedQuality, safeEmployeePay));
+	const projectedProductionCost = $derived(Math.floor(productionQuantity / productionEfficiency) * projectedUnitCost);
+	const projectedTotalCost = $derived(projectedProductionCost + safeMarketing + projectedLaborCost);
+	const projectedBreakeven = $derived(safePrice > 0 ? Math.ceil(projectedTotalCost / safePrice) : 0);
 
 	const allTeamsSorted = $derived([playerTeam, ...aiCompetitors.map(ai => ai.name)].sort());
+	const rankedTeams = $derived(
+		[
+			{ name: playerTeam, cash, isPlayer: true },
+			...aiCompetitors.map(ai => ({ name: ai.name, cash: ai.cash, isPlayer: false }))
+		].sort((a, b) => b.cash - a.cash)
+	);
+	const playerRank = $derived(rankedTeams.findIndex(t => t.isPlayer) + 1);
+	const maxAbsProfit = $derived(
+		Math.max(
+			1000,
+			Math.abs(cash - INITIAL_CASH),
+			...aiCompetitors.map(ai => Math.abs(ai.cash - INITIAL_CASH))
+		)
+	);
+	const hasNegativeProfit = $derived(
+		cash - INITIAL_CASH < 0 || aiCompetitors.some(ai => ai.cash - INITIAL_CASH < 0)
+	);
+	const profitZeroY = $derived(hasNegativeProfit ? 115 : 175);
+	const profitMaxBarSpan = $derived(hasNegativeProfit ? 75 : 145);
+	const maxCashChart = $derived(
+		Math.max(10000, cash, ...aiCompetitors.map(ai => ai.cash))
+	);
 
 	function dumpInventory(): void {
 		inventory = 0;
@@ -605,15 +665,29 @@
 
 	onMount(() => {
 		registerActions({
+			restart: resetGame,
 			newShuffle: resetGame,
+			help: () => instructions?.open(),
 		});
 	});
 </script>
 
 <div class="apex-container">
+	<Instructions bind:this={instructions} gameId="apexindustries" title="Apex Industries">
+		<p>Compete against three AI corporations across <strong>6 quarters</strong> to build the most cash and market share.</p>
+		<ul>
+			<li><strong>Price ($5–$25):</strong> Balance profit margin against customer willingness-to-pay across market segments.</li>
+			<li><strong>Quality Spending ($0–$16,000):</strong> Raises product quality and builds long-term brand reputation.</li>
+			<li><strong>Marketing ($0–$5,000):</strong> Drives immediate quarter demand and strengthens brand awareness.</li>
+			<li><strong>Production &amp; Inventory:</strong> Match output to projected demand. Dumping old inventory clears lower-quality stock.</li>
+			<li><strong>Employee Pay ($50–$200):</strong> Higher, steady wages boost factory efficiency and prevent labor slowdowns.</li>
+		</ul>
+		<p>Check the <strong>Projections</strong> and <strong>Competitors</strong> tabs before locking in each quarter!</p>
+	</Instructions>
+
 	<div class="header">
 		<div class="turn-badge">Quarter {currentTurn}/{TOTAL_TURNS}</div>
-		<h1>Team: {playerTeam}</h1>
+		<h1><span class="team-dot" style="background: {getTeamColor(playerTeam)}"></span>Team {playerTeam}</h1>
 	</div>
 
 	<!-- Tab Navigation -->
@@ -655,15 +729,23 @@
 			<h3>Your Strategy</h3>
 			<div class="input-grid">
 				<div class="input-group">
-					<label for="price">Price</label>
+					<div class="input-label-row">
+						<label for="price">Price</label>
+						<span class="input-current">${safePrice.toFixed(2)}</span>
+					</div>
+					<input type="range" class="slider" min="5" max="25" step="1" bind:value={price} aria-label="Price slider" />
 					<input type="number" id="price" bind:value={price} min="5" max="25" step="1" />
 					<div class="input-preview">
 						<span class="preview-label">Change:</span>
-						<span class="preview-value">${previousPrice.toFixed(2)} → ${price.toFixed(2)}</span>
+						<span class="preview-value">${previousPrice.toFixed(2)} → ${safePrice.toFixed(2)}</span>
 					</div>
 				</div>
 				<div class="input-group">
-					<label for="quality">Quality Spending</label>
+					<div class="input-label-row">
+						<label for="quality">Quality Spending</label>
+						<span class="input-current">${safeQualitySpending.toLocaleString()}</span>
+					</div>
+					<input type="range" class="slider" min="0" max="16000" step="100" bind:value={qualitySpending} aria-label="Quality spending slider" />
 					<input type="number" id="quality" bind:value={qualitySpending} min="0" max="16000" step="100" />
 					<div class="quality-preview">
 						<span class="quality-label">Resulting Quality:</span>
@@ -671,11 +753,15 @@
 					</div>
 				</div>
 				<div class="input-group">
-					<label for="marketing">Marketing</label>
+					<div class="input-label-row">
+						<label for="marketing">Marketing</label>
+						<span class="input-current">${safeMarketing.toLocaleString()}</span>
+					</div>
+					<input type="range" class="slider" min="0" max="5000" step="100" bind:value={marketing} aria-label="Marketing slider" />
 					<input type="number" id="marketing" bind:value={marketing} min="0" max="5000" step="100" />
 					<div class="input-preview">
 						<span class="preview-label">Change:</span>
-						<span class="preview-value">${previousMarketing} → ${marketing}</span>
+						<span class="preview-value">${previousMarketing} → ${safeMarketing}</span>
 					</div>
 				</div>
 				<div class="input-group">
@@ -693,8 +779,12 @@
 						<button class="dump-btn" onclick={dumpInventory}>Dump Inventory</button>
 					{/if}
 				</div>
-				<div class="input-group">
-					<label for="pay">Employee Pay</label>
+				<div class="input-group input-group-wide">
+					<div class="input-label-row">
+						<label for="pay">Employee Pay</label>
+						<span class="input-current">${safeEmployeePay}/worker ({plannedEmployeeCount} workers)</span>
+					</div>
+					<input type="range" class="slider" min="50" max="200" step="10" bind:value={employeePay} aria-label="Employee pay slider" />
 					<input type="number" id="pay" bind:value={employeePay} min="50" max="200" step="10" />
 					<div class="efficiency-preview">
 						<span class="efficiency-label">Efficiency (avg pay: ${averagePayHistory.toFixed(0)}):</span>
@@ -717,7 +807,7 @@
 				</div>
 				<div class="projection-item">
 					<span class="projection-label">Marketing Cost</span>
-					<span class="projection-value">${formatMoney(marketing)}</span>
+					<span class="projection-value">${formatMoney(safeMarketing)}</span>
 				</div>
 				<div class="projection-item">
 					<span class="projection-label">Labor Cost</span>
@@ -738,33 +828,18 @@
 			<h3>Competitors (Average)</h3>
 			<table class="competitor-table">
 				<tbody>
-					{#if currentTurn === 1}
-						<tr>
-							<td>Price</td>
-							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / Math.max(1, aiCompetitors.length)).toFixed(2)}</td>
-						</tr>
-						<tr>
-							<td>Quality</td>
-							<td>{(aiCompetitors.reduce((sum, ai) => sum + ai.quality, 0) / Math.max(1, aiCompetitors.length)).toFixed(1)}</td>
-						</tr>
-						<tr>
-							<td>Marketing</td>
-							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.marketing, 0) / Math.max(1, aiCompetitors.length)).toFixed(0)}</td>
-						</tr>
-					{:else}
-						<tr>
-							<td>Price</td>
-							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / aiCompetitors.length).toFixed(2)}</td>
-						</tr>
-						<tr>
-							<td>Quality</td>
-							<td>{(aiCompetitors.reduce((sum, ai) => sum + ai.quality, 0) / aiCompetitors.length).toFixed(1)}</td>
-						</tr>
-						<tr>
-							<td>Marketing</td>
-							<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.marketing, 0) / aiCompetitors.length).toFixed(0)}</td>
-						</tr>
-					{/if}
+					<tr>
+						<td>Price</td>
+						<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.price, 0) / Math.max(1, aiCompetitors.length)).toFixed(2)}</td>
+					</tr>
+					<tr>
+						<td>Quality</td>
+						<td>{(aiCompetitors.reduce((sum, ai) => sum + ai.quality, 0) / Math.max(1, aiCompetitors.length)).toFixed(1)}</td>
+					</tr>
+					<tr>
+						<td>Marketing</td>
+						<td>${(aiCompetitors.reduce((sum, ai) => sum + ai.marketing, 0) / Math.max(1, aiCompetitors.length)).toFixed(0)}</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>
@@ -823,7 +898,7 @@
 	</div>
 {:else if activeTab === "game" && gameOver}
 	<div class="game-over-panel">
-		<h2>🎉 Game Over!</h2>
+		<h2>{playerRank === 1 ? "🏆 1st Place — Market Leader!" : `Quarter ${TOTAL_TURNS} Complete — #${playerRank} Finish`}</h2>
 		<div class="final-stats">
 			<div class="final-stat">
 				<span class="label">Final Cash</span>
@@ -865,79 +940,78 @@
 				<div class="chart-card">
 					<h4>Total Profit</h4>
 					<svg viewBox="0 0 400 200" class="bar-chart">
+						<line x1="40" y1={profitZeroY} x2="380" y2={profitZeroY} stroke="var(--chart-baseline)" stroke-width="1" />
 						{#each allTeamsSorted as teamName, teamIndex}
 							{@const isPlayer = teamName === playerTeam}
 							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
 							{@const teamCash = isPlayer ? cash : aiCompetitors[aiIndex].cash}
 							{@const teamProfit = teamCash - INITIAL_CASH}
-							{@const barHeight = Math.min(160, Math.abs(teamProfit) / 10000)}
+							{@const barHeight = Math.max(2, (Math.abs(teamProfit) / maxAbsProfit) * profitMaxBarSpan)}
 							{@const barX = 60 + teamIndex * 70}
-							{@const barY = teamProfit >= 0 ? 180 - barHeight : 180}
-							{@const teamColorIndex = allTeams.indexOf(teamName)}
-							<rect x={barX} y={barY} width="50" height={barHeight} fill={teamProfit >= 0 ? (isPlayer ? '#3b82f6' : '#10b981') : (isPlayer ? '#3b82f6' : '#ef4444')} rx="4" />
+							{@const barY = teamProfit >= 0 ? profitZeroY - barHeight : profitZeroY}
+							<rect x={barX} y={barY} width="50" height={barHeight} fill={teamProfit >= 0 ? getTeamColor(teamName) : '#ef4444'} rx="4" />
 							{#if isPlayer}
 								<rect x={barX - 2} y={barY - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={teamProfit >= 0 ? barY - 8 : barY + barHeight + 12} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{formatMoney(teamProfit)}</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={teamProfit >= 0 ? barY - 6 : barY + barHeight + 12} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>${(teamProfit / 1000).toFixed(1)}k</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}{isPlayer ? " ★" : ""}</text>
 						{/each}
-						<line x1="40" y1="180" x2="380" y2="180" stroke="var(--chart-baseline)" stroke-width="1" />
 					</svg>
 				</div>
 				<div class="chart-card">
 					<h4>Final Cash</h4>
 					<svg viewBox="0 0 400 200" class="bar-chart">
+						<line x1="40" y1="175" x2="380" y2="175" stroke="var(--chart-baseline)" stroke-width="1" />
 						{#each allTeamsSorted as teamName, teamIndex}
 							{@const isPlayer = teamName === playerTeam}
 							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
 							{@const teamCash = isPlayer ? cash : aiCompetitors[aiIndex].cash}
-							{@const barHeight = (teamCash / 100000) * 160}
+							{@const barHeight = Math.max(2, (Math.max(0, teamCash) / maxCashChart) * 145)}
 							{@const barX = 60 + teamIndex * 70}
-							{@const teamColorIndex = allTeams.indexOf(teamName)}
-							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
+							<rect x={barX} y={175 - barHeight} width="50" height={barHeight} fill={getTeamColor(teamName)} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={175 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>${(teamCash / 1000).toFixed(0)}k</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={175 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>${(teamCash / 1000).toFixed(1)}k</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}{isPlayer ? " ★" : ""}</text>
 						{/each}
 					</svg>
 				</div>
 				<div class="chart-card">
 					<h4>Final Market Share</h4>
 					<svg viewBox="0 0 400 200" class="bar-chart">
+						<line x1="40" y1="175" x2="380" y2="175" stroke="var(--chart-baseline)" stroke-width="1" />
 						{#each allTeamsSorted as teamName, teamIndex}
 							{@const isPlayer = teamName === playerTeam}
 							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
 							{@const teamMarketShare = isPlayer ? marketShare : (history.length > 0 ? history[history.length - 1].teams[aiIndex + 1].marketShare : 0.25)}
-							{@const barHeight = teamMarketShare * 160}
+							{@const barHeight = Math.max(2, teamMarketShare * 145)}
 							{@const barX = 60 + teamIndex * 70}
-							{@const teamColorIndex = allTeams.indexOf(teamName)}
-							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
+							<rect x={barX} y={175 - barHeight} width="50" height={barHeight} fill={getTeamColor(teamName)} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={175 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{(teamMarketShare * 100).toFixed(0)}%</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={175 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{(teamMarketShare * 100).toFixed(0)}%</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}{isPlayer ? " ★" : ""}</text>
 						{/each}
 					</svg>
 				</div>
 				<div class="chart-card">
 					<h4>Final Reputation</h4>
 					<svg viewBox="0 0 400 200" class="bar-chart">
+						<line x1="40" y1="175" x2="380" y2="175" stroke="var(--chart-baseline)" stroke-width="1" />
 						{#each allTeamsSorted as teamName, teamIndex}
 							{@const isPlayer = teamName === playerTeam}
 							{@const aiIndex = aiCompetitors.findIndex(ai => ai.name === teamName)}
 							{@const teamReputation = isPlayer ? reputation : aiCompetitors[aiIndex].reputation}
-							{@const barHeight = (teamReputation / 10) * 160}
+							{@const barHeight = Math.max(2, (teamReputation / 10) * 145)}
 							{@const barX = 60 + teamIndex * 70}
-							{@const teamColorIndex = allTeams.indexOf(teamName)}
-							<rect x={barX} y={180 - barHeight} width="50" height={barHeight} fill={isPlayer ? '#3b82f6' : teamColors[teamColorIndex % teamColors.length]} rx="4" />
+							<rect x={barX} y={175 - barHeight} width="50" height={barHeight} fill={getTeamColor(teamName)} rx="4" />
 							{#if isPlayer}
-								<rect x={barX - 2} y={180 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
+								<rect x={barX - 2} y={175 - barHeight - 2} width="54" height={barHeight + 4} fill="none" stroke="var(--chart-stroke-player)" stroke-width="2" rx="6" />
 							{/if}
-							<text x={barX + 25} y={180 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamReputation.toFixed(1)}</text>
-							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}</text>
+							<text x={barX + 25} y={175 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamReputation.toFixed(1)}</text>
+							<text x={barX + 25} y="195" text-anchor="middle" fill="var(--chart-text-muted)" font-size="10" font-weight={isPlayer ? "bold" : "normal"}>{teamName}{isPlayer ? " ★" : ""}</text>
 						{/each}
 					</svg>
 				</div>
@@ -1010,10 +1084,10 @@
 										<text x="30" y={200 - (y / 9) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">{y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
-										{@const barHeight = (team.quality / 9) * 160}
+										{@const barHeight = Math.max(2, (team.quality / 9) * 155)}
 										{@const barX = 60 + teamIndex * 70}
-										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">{team.quality.toFixed(1)}</text>
+										<rect x={barX} y={178 - barHeight} width="50" height={barHeight} fill={getTeamColor(team.name)} rx="4" />
+										<text x={barX + 25} y={178 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">{team.quality.toFixed(1)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
@@ -1029,14 +1103,14 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [5, 10, 15, 20, 25, 30] as y}
-										<line x1="40" y1={200 - ((y - 5) / 25) * 160} x2="380" y2={200 - ((y - 5) / 25) * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
-										<text x="30" y={200 - ((y - 5) / 25) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
+										<line x1="40" y1={178 - ((y - 5) / 25) * 155} x2="380" y2={178 - ((y - 5) / 25) * 155} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={178 - ((y - 5) / 25) * 155 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
-										{@const barHeight = ((team.price - 5) / 25) * 160}
+										{@const barHeight = Math.max(2, ((team.price - 5) / 25) * 155)}
 										{@const barX = 60 + teamIndex * 70}
-										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${team.price.toFixed(0)}</text>
+										<rect x={barX} y={178 - barHeight} width="50" height={barHeight} fill={getTeamColor(team.name)} rx="4" />
+										<text x={barX + 25} y={178 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${team.price.toFixed(0)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
@@ -1052,14 +1126,14 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [0, 0.2, 0.4, 0.6, 0.8, 1.0] as y}
-										<line x1="40" y1={200 - y * 160} x2="380" y2={200 - y * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
-										<text x="30" y={200 - y * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">{(y * 100).toFixed(0)}%</text>
+										<line x1="40" y1={178 - y * 155} x2="380" y2={178 - y * 155} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={178 - y * 155 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">{(y * 100).toFixed(0)}%</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
-										{@const barHeight = team.marketShare * 160}
+										{@const barHeight = Math.max(2, team.marketShare * 155)}
 										{@const barX = 60 + teamIndex * 70}
-										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">{(team.marketShare * 100).toFixed(0)}%</text>
+										<rect x={barX} y={178 - barHeight} width="50" height={barHeight} fill={getTeamColor(team.name)} rx="4" />
+										<text x={barX + 25} y={178 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">{(team.marketShare * 100).toFixed(0)}%</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
@@ -1075,15 +1149,15 @@
 								<svg viewBox="0 0 400 200" class="line-chart">
 									<!-- Grid lines -->
 									{#each [50, 80, 110, 140, 170, 200] as y}
-										<line x1="40" y1={200 - ((y - 50) / 150) * 160} x2="380" y2={200 - ((y - 50) / 150) * 160} stroke="var(--chart-grid-line)" stroke-width="1" />
-										<text x="30" y={200 - ((y - 50) / 150) * 160 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
+										<line x1="40" y1={178 - ((y - 50) / 150) * 155} x2="380" y2={178 - ((y - 50) / 150) * 155} stroke="var(--chart-grid-line)" stroke-width="1" />
+										<text x="30" y={178 - ((y - 50) / 150) * 155 + 4} text-anchor="end" fill="var(--chart-text-muted)" font-size="10">${y}</text>
 									{/each}
 									{#each history[history.length - 1].teams as team, teamIndex}
 										{@const teamPay = team.employeePay}
-										{@const barHeight = ((teamPay - 50) / 150) * 160}
+										{@const barHeight = Math.max(2, ((teamPay - 50) / 150) * 155)}
 										{@const barX = 60 + teamIndex * 70}
-										<rect x={barX} y={200 - barHeight} width="50" height={barHeight} fill={teamColors[teamIndex % teamColors.length]} rx="4" />
-										<text x={barX + 25} y={200 - barHeight - 8} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${teamPay.toFixed(0)}</text>
+										<rect x={barX} y={178 - barHeight} width="50" height={barHeight} fill={getTeamColor(team.name)} rx="4" />
+										<text x={barX + 25} y={178 - barHeight - 6} text-anchor="middle" fill="var(--chart-text)" font-size="11" font-weight="bold">${teamPay.toFixed(0)}</text>
 									{/each}
 									<!-- X-axis labels -->
 									{#each history[history.length - 1].teams as team, teamIndex}
@@ -1294,6 +1368,17 @@
 		font-weight: 900;
 		margin: 0;
 		letter-spacing: -2px;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.team-dot {
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		display: inline-block;
+		flex-shrink: 0;
 	}
 
 	.tab-nav {
@@ -1647,7 +1732,7 @@
 		padding: 0.5rem;
 		color: var(--game-text-muted);
 		font-weight: 600;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid var(--apex-card-border);
 	}
 
 	.insight-table tr:last-child td {
@@ -1825,6 +1910,29 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+	}
+
+	.input-group-wide {
+		grid-column: span 2;
+	}
+
+	.input-label-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.input-current {
+		font-size: 0.8rem;
+		font-weight: 700;
+		color: var(--game-text-primary);
+	}
+
+	.slider {
+		width: 100%;
+		accent-color: #3b82f6;
+		cursor: pointer;
 	}
 
 	.input-group label {
@@ -2094,7 +2202,8 @@
 
 		.game-viewport,
 		.results-panel,
-		.game-over-panel {
+		.game-over-panel,
+		.tab-panel {
 			min-width: 0;
 			max-width: 100%;
 			width: 100%;
@@ -2123,6 +2232,17 @@
 
 		.final-stat .value {
 			font-size: 1.4rem;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.input-grid,
+		.chart-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.input-group-wide {
+			grid-column: span 1;
 		}
 	}
 </style>
