@@ -1,16 +1,23 @@
 <script lang="ts">
-	import { games } from './games';
+	import { games, allHubs, getPlayAnchorText } from './games';
 </script>
 
 <footer class="seo-footer">
 	<div class="footer-content">
-		<h2>onlinemath.games</h2>
+		<h2>More Math Games</h2>
 		<p>A free collection of interactive logic puzzles, abstract strategy games, and physics simulations designed for students, educators, and curious minds of all ages.</p>
-		<nav>
+		<nav aria-label="Game Categories">
+			<ul class="hub-list">
+				<li><a href="/">All Math Games</a></li>
+				{#each allHubs as hub}
+					<li><a href="/{hub.slug}">{hub.name}</a></li>
+				{/each}
+			</ul>
+		</nav>
+		<nav aria-label="All Games">
 			<ul>
-				<li><a href="/">Home</a></li>
 				{#each games as game}
-					<li><a href="/games/{game.id}">{game.label}</a></li>
+					<li><a href="/games/{game.id}">{getPlayAnchorText(game)}</a></li>
 				{/each}
 			</ul>
 		</nav>
@@ -27,31 +34,38 @@
 	}
 
 	.footer-content {
-		padding: 4vmin;
-		max-width: 800px;
+		padding: clamp(1.5rem, 4vw, 2.5rem) 1rem;
+		max-width: 900px;
 		margin: 0 auto;
 		text-align: center;
 	}
 
 	.footer-content h2 {
-		font-size: 2vmin;
+		font-size: clamp(0.95rem, 1.5vw, 1.15rem);
 		font-weight: 800;
 		color: var(--game-text-primary);
-		margin: 0 0 1vmin;
+		margin: 0 0 0.5rem;
 	}
 
 	.footer-content p {
-		margin: 0 0 2vmin;
+		margin: 0 auto 1rem;
+		max-width: 640px;
 		line-height: 1.6;
 	}
 
 	ul {
 		list-style: none;
 		padding: 0;
+		margin: 0;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
-		gap: 1.5vmin;
+		gap: 0.5rem 1rem;
+	}
+
+	ul.hub-list {
+		margin-bottom: 0.85rem;
+		font-weight: 700;
 	}
 
 	li {

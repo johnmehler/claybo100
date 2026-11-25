@@ -5,6 +5,7 @@ export type HowToStep = { name: string; text: string };
 
 export type GameSEO = {
 	title: string;            // <title> tag
+	h1?: string;              // optional H1 override for exact search intent
 	description: string;      // <meta name="description">
 	keywords: string[];       // long-tail terms (used for og + schema)
 	genre: string;            // schema.org Game/VideoGame genre
@@ -244,8 +245,9 @@ export const gameSEO: Record<string, GameSEO> = {
 		about: 'English peg solitaire (also called Solo Noble) is a single-player jumping game played on a 33-hole cross board. Your goal: clear every peg except one, ideally in the center.'
 	},
 	'hanoi': {
-		title: 'Tower of Hanoi Online — Play the Classic Disc Puzzle Free',
-		description: 'Play Tower of Hanoi online with 3 to 8 discs. The classic recursion puzzle in your browser — free, no downloads, mobile friendly, school safe.',
+		title: 'Tower of Hanoi Online – Play Free Logic Puzzle | OnlineMathGames',
+		h1: 'Tower of Hanoi Online',
+		description: 'Play Tower of Hanoi online free with 3 to 8 discs. Master the classic 2ⁿ−1 recursion puzzle in your browser — no downloads, mobile & Chromebook friendly.',
 		keywords: ['tower of hanoi online', 'hanoi puzzle game', 'tower of hanoi 8 discs', 'disc stacking puzzle', 'recursion puzzle', 'hanoi unblocked'],
 		genre: 'Puzzle',
 		about: 'The Tower of Hanoi is the textbook example of recursion. Move every disc to the rightmost peg without ever placing a larger disc on a smaller one. Optimal play takes 2ⁿ−1 moves.'
@@ -293,7 +295,8 @@ export const gameSEO: Record<string, GameSEO> = {
 		about: 'Hex is a connection game invented independently by Piet Hein (1942) and John Nash (1948). Place stones to build an unbroken chain between your two sides of the board.'
 	},
 	'krypto': {
-		title: 'Krypto Math Game Online — Play the Classroom Arithmetic Game Free',
+		title: 'Krypto Math Game Online – Play Free Classroom Arithmetic',
+		h1: 'Krypto Math Game Online',
 		description: 'Play Krypto online: combine five number cards with +, −, x, ÷ to hit a target. Free math game used in schools and competitions. Mobile and school friendly.',
 		keywords: ['krypto math game', 'krypto game online', 'math card game', 'arithmetic puzzle game', 'mental math game', 'classroom math game'],
 		genre: 'Educational',
@@ -321,7 +324,8 @@ export const gameSEO: Record<string, GameSEO> = {
 		about: 'The brachistochrone problem — find the curve of fastest descent — was posed by Johann Bernoulli in 1696 and solved by Newton, Leibniz, and the Bernoullis. The answer is a cycloid. Can you find it by feel?'
 	},
 	'lunarlander': {
-		title: 'Lunar Lander Game Online — Play the Classic Moon Landing Free',
+		title: 'Lunar Lander Game Online – Play Classic Moon Landing Free',
+		h1: 'Lunar Lander Online',
 		description: 'Play Lunar Lander online free. Fire thrusters, manage fuel, and touch down softly on the moon. The 1979 arcade classic, in your browser. Mobile and school friendly.',
 		keywords: ['lunar lander game', 'play lunar lander online', 'atari lunar lander', 'moon landing game', 'rocket landing simulator', 'lunar lander unblocked'],
 		genre: 'Simulation',
@@ -335,23 +339,26 @@ export const gameSEO: Record<string, GameSEO> = {
 		about: 'This epidemic simulator is built on the SIR (Susceptible–Infected–Recovered) model developed by Kermack and McKendrick in 1927 — the same math behind every "flatten the curve" chart you saw in 2020.'
 	},
 	'lasermaze': {
-		title: 'Laser Maze Online — Physics Mirror Puzzle Game Free',
+		title: 'Laser Maze Online – Play Free Physics Mirror Puzzle',
+		h1: 'Laser Maze Online',
 		description: 'Play Laser Maze online free. Rotate mirrors and dodge blocks to guide a laser beam to its target. A classic physics puzzle in your browser.',
 		keywords: ['laser maze online', 'laser mirror puzzle', 'physics laser game', 'mirror reflection game', 'light bounce puzzle', 'laser maze unblocked'],
 		genre: 'Puzzle',
 		about: 'Laser Maze is a logic puzzle based on the physics of reflection. Use 90-degree mirrors to guide a light beam through an obstacle course to a target.'
 	},
 	'blockdude': {
-		title: 'Block Dude Online — Play the Classic TI-84 Calculator Game Free',
-		description: 'Play Block Dude online free. The classic graphing calculator puzzle game. Stack blocks to reach the exit. No downloads, mobile friendly, school safe.',
-		keywords: ['block dude online', 'play block dude', 'ti-84 block dude', 'calculator games online', 'block dude unblocked', 'stacking block puzzle'],
+		title: 'Block Dude Online – Play Classic TI-83/TI-84 Puzzle Free',
+		h1: 'Block Dude Online – TI-83/TI-84 Puzzle',
+		description: 'Play Block Dude online free! The classic TI-83 and TI-84 graphing calculator puzzle game. Stack blocks to reach the exit — no downloads, school safe.',
+		keywords: ['block dude online', 'play block dude', 'block dude calculator', 'ti-83 block dude', 'ti-84 block dude', 'calculator games online', 'block dude unblocked', 'stacking block puzzle'],
 		genre: 'Puzzle',
-		about: 'Block Dude is a legendary puzzle game from the TI-83/84 calculator era. Move blocks, build staircases, and find your way to the exit in this grid-based logic classic.'
+		about: 'Block Dude is the legendary TI-83/TI-84 graphing calculator puzzle game. Move blocks, build staircases, and reach the exit door in this classic logic puzzle.'
 	},
 	'lemonadestand': {
-		title: 'Lemonade Stand Game Online — Play the Classic Business Sim Free',
-		description: 'Play the classic Lemonade Stand business simulator game free online. Manage inventory, set prices, adjust recipes for the weather, and maximize profits.',
-		keywords: ['lemonade stand game', 'play lemonade stand online', 'classic lemonade stand', 'business simulator game', 'lemonade game free', 'lemonade stand unblocked'],
+		title: 'Lemonade Stand Game – Play Free Math & Business Sim',
+		h1: 'Lemonade Stand Game',
+		description: 'Play Lemonade Stand game online free! Manage inventory, weather, recipes, and pricing in this classic unblocked math & business simulation.',
+		keywords: ['lemonade stand game', 'lemonade stand game online free', 'lemonade stand game unblocked', 'play lemonade stand online', 'classic lemonade stand', 'business simulator game'],
 		genre: 'Simulation',
 		about: 'Lemonade Stand is a modern adaptation of the classic 1973 MECC business simulation. Manage your budget, buy supplies, craft the perfect recipe, and set prices to optimize your daily profit over a 7-day run.'
 	},

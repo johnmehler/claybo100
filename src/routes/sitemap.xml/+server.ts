@@ -1,4 +1,4 @@
-import { games } from '$lib/games';
+import { games, allHubs } from '$lib/games';
 
 export const prerender = true;
 
@@ -14,6 +14,12 @@ export function GET() {
 
 	const urls = [
 		{ loc: `${SITE}/`, lastmod: homeLastmod, priority: '1.0', changefreq: 'weekly' },
+		...allHubs.map((hub) => ({
+			loc: `${SITE}/${hub.slug}`,
+			lastmod: homeLastmod,
+			priority: '0.9',
+			changefreq: 'weekly'
+		})),
 		...games.map((g) => ({
 			loc: `${SITE}/games/${g.id}`,
 			lastmod: g.updated ?? today,

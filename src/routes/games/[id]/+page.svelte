@@ -2,38 +2,32 @@
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
 	import { goto } from "$app/navigation";
-	import { getGameById, getCategoryByGameId } from "$lib/games";
+	import { getGameById, getCategoryByGameId, getPlayAnchorText } from "$lib/games";
 	import { gameGuides } from "$lib/guides";
 	import { gameSEO, gameHowTo, type HowToStep } from "$lib/seo";
 	import Sidebar from "$lib/Sidebar.svelte";
 	import { fade } from "svelte/transition";
-
-	// Component imports
-	import VectorRacing from "$lib/VectorRacing.svelte";
-	import SlidingTiles from "$lib/SlidingTiles.svelte";
-	import Pegboard from "$lib/Pegboard.svelte";
-	import Hanoi from "$lib/Hanoi.svelte";
-	import ShotSim from "$lib/ShotSim.svelte";
-	import Nim from "$lib/Nim.svelte";
-	import KnightsTour from "$lib/KnightsTour.svelte";
-	import Hex from "$lib/Hex.svelte";
-	import Krypto from "$lib/Krypto.svelte";
-	import SetGame from "$lib/SetGame.svelte";
-	import DotsAndBoxes from "$lib/DotsAndBoxes.svelte";
-	import TracksOfGalileo from "$lib/TracksOfGalileo.svelte";
-	import LunarLander from "$lib/LunarLander.svelte";
-	import IceSlider from "$lib/IceSlider.svelte";
-	import EpidemicSim from "$lib/EpidemicSim.svelte";
-	import LaserMaze from "$lib/LaserMaze.svelte";
-	import BlockDude from "$lib/BlockDude.svelte";
-	import LemonadeStand from "$lib/LemonadeStand.svelte";
-	import ApexIndustries from "$lib/ApexIndustries.svelte";
+	import type { Component } from "svelte";
 
 	const id = $derived($page.params.id ?? "");
 	const game = $derived(getGameById(id));
 	const category = $derived(getCategoryByGameId(id));
 	const relatedGames = $derived(
 		category ? category.games.filter((g) => g.id !== id) : [],
+	);
+	const featuredGameIds = [
+		"blockdude",
+		"hanoi",
+		"lemonadestand",
+		"krypto",
+		"lunarlander",
+		"lasermaze",
+	];
+	const popularGames = $derived(
+		featuredGameIds
+			.filter((fid) => fid !== id && !relatedGames.some((r) => r.id === fid))
+			.map((fid) => getGameById(fid))
+			.filter((g): g is NonNullable<ReturnType<typeof getGameById>> => Boolean(g)),
 	);
 
 	let activeGameActions = $state({
@@ -56,29 +50,48 @@
 		goto("/");
 	}
 
-	const gameComponents: Record<string, any> = {
-		"sliding-tiles": SlidingTiles,
-		pegboard: Pegboard,
-		hanoi: Hanoi,
-		shotsim: ShotSim,
-		nim: Nim,
-		"knights-tour": KnightsTour,
-		hex: Hex,
-		krypto: Krypto,
-		set: SetGame,
-		dotsandboxes: DotsAndBoxes,
-		vectorracing: VectorRacing,
-		tracksofgalileo: TracksOfGalileo,
-		lunarlander: LunarLander,
-		iceslider: IceSlider,
-		epidemicsim: EpidemicSim,
-		lasermaze: LaserMaze,
-		blockdude: BlockDude,
-		lemonadestand: LemonadeStand,
-		apexindustries: ApexIndustries,
+	const gameLoaders: Record<string, () => Promise<{ default: Component<any> }>> = {
+		"sliding-tiles": () => import("$lib/SlidingTiles.svelte"),
+		pegboard: () => import("$lib/Pegboard.svelte"),
+		hanoi: () => import("$lib/Hanoi.svelte"),
+		shotsim: () => import("$lib/ShotSim.svelte"),
+		nim: () => import("$lib/Nim.svelte"),
+		"knights-tour": () => import("$lib/KnightsTour.svelte"),
+		hex: () => import("$lib/Hex.svelte"),
+		krypto: () => import("$lib/Krypto.svelte"),
+		set: () => import("$lib/SetGame.svelte"),
+		dotsandboxes: () => import("$lib/DotsAndBoxes.svelte"),
+		vectorracing: () => import("$lib/VectorRacing.svelte"),
+		tracksofgalileo: () => import("$lib/TracksOfGalileo.svelte"),
+		lunarlander: () => import("$lib/LunarLander.svelte"),
+		iceslider: () => import("$lib/IceSlider.svelte"),
+		epidemicsim: () => import("$lib/EpidemicSim.svelte"),
+		lasermaze: () => import("$lib/LaserMaze.svelte"),
+		blockdude: () => import("$lib/BlockDude.svelte"),
+		lemonadestand: () => import("$lib/LemonadeStand.svelte"),
+		apexindustries: () => import("$lib/ApexIndustries.svelte"),
 	};
 
-	const GameComponent = $derived(gameComponents[id]);
+	const hasGame = $derived(Boolean(gameLoaders[id]));
+	let LoadedGameComponent = $state<Component<any> | null>(null);
+
+	$effect(() => {
+		const loader = gameLoaders[id];
+		if (!browser || !loader) {
+			LoadedGameComponent = null;
+			return;
+		}
+		let cancelled = false;
+		LoadedGameComponent = null;
+		loader().then((mod) => {
+			if (!cancelled) {
+				LoadedGameComponent = mod.default;
+			}
+		});
+		return () => {
+			cancelled = true;
+		};
+	});
 	const guide = $derived(gameGuides[id] || "");
 	const seo = $derived(gameSEO[id]);
 	const canonical = $derived(`https://onlinemath.games/games/${id}`);
@@ -99,7 +112,7 @@
 		game && seo
 			? JSON.stringify({
 					"@context": "https://schema.org",
-					"@type": "VideoGame",
+					"@type": ["VideoGame", "WebApplication"],
 					name: game.label,
 					url: canonical,
 					description: seo.description,
@@ -144,7 +157,7 @@
 										"@type": "ListItem",
 										position: 2,
 										name: category.name,
-										item: "https://onlinemath.games/",
+										item: `https://onlinemath.games/${category.slug}`,
 									},
 									{
 										"@type": "ListItem",
@@ -225,15 +238,15 @@
 	<Sidebar {activeGameActions} />
 
 	<div class="view-content">
-		{#if GameComponent}
+		{#if hasGame}
 			<div
 				id="game-viewport"
 				class="game-mat"
 				in:fade={{ duration: 300 }}
 			>
 				<div class="game-frame-adaptive">
-					{#if browser}
-						<GameComponent {registerActions} {onBack} />
+					{#if browser && LoadedGameComponent}
+						<LoadedGameComponent {registerActions} {onBack} />
 					{/if}
 				</div>
 			</div>
@@ -242,12 +255,12 @@
 					<a href="/">All Games</a>
 					{#if category}
 						<span aria-hidden="true">/</span>
-						<span>{category.name}</span>
+						<a href="/{category.slug}">{category.name}</a>
 					{/if}
 					<span aria-hidden="true">/</span>
 					<span aria-current="page">{game?.label}</span>
 				</nav>
-				<h1 class="game-title">{game?.label}</h1>
+				<h1 class="game-title">{seo?.h1 ?? game?.label}</h1>
 			</header>
 			{#if seo?.about}
 				<p class="game-about">{seo.about}</p>
@@ -263,8 +276,21 @@
 					<div class="related-grid">
 						{#each relatedGames as rel}
 							<a href="/games/{rel.id}" class="related-card">
-								<span class="related-name">{rel.label}</span>
+								<span class="related-name">{getPlayAnchorText(rel)}</span>
 								<span class="related-desc">{rel.description}</span>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
+			{#if popularGames.length > 0}
+				<section class="related-games" aria-label="More Math Games">
+					<h2>More Math Games</h2>
+					<div class="related-grid">
+						{#each popularGames as pop}
+							<a href="/games/{pop.id}" class="related-card">
+								<span class="related-name">{getPlayAnchorText(pop)}</span>
+								<span class="related-desc">{pop.description}</span>
 							</a>
 						{/each}
 					</div>
@@ -292,7 +318,7 @@
 
 <style>
 	.main-container {
-		width: 100vw;
+		width: 100%;
 		min-height: 100vh;
 		background: var(--app-bg);
 		display: flex;
@@ -304,6 +330,7 @@
 
 	.view-content {
 		flex: 1;
+		min-width: 0;
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -499,7 +526,6 @@
 		.main-container.in-game,
 		.view-content {
 			min-height: 100dvh;
-			height: 100dvh;
 		}
 
 		.game-mat {
@@ -514,9 +540,9 @@
 		}
 
 		.game-frame-adaptive {
-			width: 100vw;
+			width: 100%;
 			height: 100%;
-			max-width: 100vw;
+			max-width: 100%;
 			max-height: 100%;
 			border-radius: 0;
 			border: none;
@@ -528,14 +554,6 @@
 
 		.game-frame-adaptive :global(*) {
 			max-height: 100%;
-		}
-
-		.game-info-header,
-		.game-about,
-		.game-guide,
-		.related-games,
-		.updated-line {
-			display: none;
 		}
 	}
 

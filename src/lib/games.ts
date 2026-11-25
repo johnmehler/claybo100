@@ -156,25 +156,88 @@ export const games = [
 export const gameCategories = [
 	{
 		name: 'Puzzles',
+		slug: 'puzzles',
+		hubTitle: 'Online Math Puzzles – Free Logic & Brain Games',
+		hubDescription: 'Play free online math puzzles including Tower of Hanoi, Sliding Tiles (15-Puzzle), Peg Solitaire, Knight’s Tour, Ice Slider, and Krypto.',
+		hubIntro: 'Sharpen your logical reasoning, recursion, and mental arithmetic with classic single-player math puzzles. Every puzzle runs free in your browser with no downloads.',
 		delay: 200,
 		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'iceslider', 'krypto']
 	},
 	{
 		name: 'Abstract Games',
+		slug: 'strategy',
+		hubTitle: 'Abstract Strategy Games Online – Free Math & Logic Games',
+		hubDescription: 'Play free abstract strategy games online including Block Dude, Dots & Boxes, Nim, Hex, SET, and Vector Racing.',
+		hubIntro: 'Explore combinatorial game theory, spatial planning, and pattern recognition with classic strategy games and calculator favorites.',
 		delay: 400,
 		gameIds: ['dotsandboxes', 'nim', 'hex', 'set', 'vectorracing', 'blockdude']
 	},
 	{
 		name: 'Physics',
+		slug: 'physics',
+		hubTitle: 'Interactive Physics Games Online – Free Simulations & Puzzles',
+		hubDescription: 'Play free physics games and simulations online: Lunar Lander, Laser Maze, ShotSim projectile physics, Tracks of Galileo, and Epidemic Sim.',
+		hubIntro: 'Experiment with gravity, optics, parabolic trajectories, brachistochrone curves, and SIR epidemic models in interactive browser simulations.',
 		delay: 600,
 		gameIds: ['shotsim', 'tracksofgalileo', 'lunarlander', 'epidemicsim', 'lasermaze']
 	},
 	{
 		name: 'Business Sims',
+		slug: 'business',
+		hubTitle: 'Business & Math Simulation Games – Free Online Sims',
+		hubDescription: 'Play free business and economics simulation games online including Lemonade Stand and Apex Industries.',
+		hubIntro: 'Practice microeconomics, supply and demand, pricing strategy, and profit margin math in interactive browser business simulations.',
 		delay: 800,
 		gameIds: ['lemonadestand', 'apexindustries']
 	}
 ];
+
+export const specialHubs = [
+	{
+		name: 'Classic Calculator & Retro Games',
+		slug: 'classic-calculator-games',
+		hubTitle: 'Classic Calculator & Retro Math Games Online Free',
+		hubDescription: 'Play classic TI-83/TI-84 calculator games and retro math classics online free, including Block Dude, Lemonade Stand, Lunar Lander, and Tower of Hanoi.',
+		hubIntro: 'Relive the golden age of graphing-calculator and classroom computer games. Play Block Dude, Lemonade Stand, Lunar Lander, and more directly in your browser—no emulator or downloads required.',
+		gameIds: ['blockdude', 'lemonadestand', 'lunarlander', 'hanoi', 'krypto', 'sliding-tiles', 'dotsandboxes']
+	}
+];
+
+export const allHubs = [
+	...gameCategories.map(({ name, slug, hubTitle, hubDescription, hubIntro, gameIds }) => ({
+		name,
+		slug,
+		hubTitle,
+		hubDescription,
+		hubIntro,
+		gameIds
+	})),
+	...specialHubs
+];
+
+export function getHubBySlug(slug: string) {
+	const hub = allHubs.find(h => h.slug === slug);
+	if (!hub) return null;
+	return {
+		...hub,
+		games: hub.gameIds
+			.map(id => getGameById(id))
+			.filter((game): game is NonNullable<ReturnType<typeof getGameById>> => Boolean(game))
+	};
+}
+
+const playAnchorOverrides: Record<string, string> = {
+	hanoi: 'Play Tower of Hanoi',
+	blockdude: 'Play Block Dude Online',
+	lemonadestand: 'Play Lemonade Stand',
+	lunarlander: 'Play Lunar Lander',
+	krypto: 'Play Krypto Math Game',
+	lasermaze: 'Play Laser Maze'
+};
+
+export function getPlayAnchorText(game: { id: string; label: string }) {
+	return playAnchorOverrides[game.id] ?? `Play ${game.label}`;
+}
 
 export function getGameById(id: string) {
 	return games.find(g => g.id === id);

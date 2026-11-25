@@ -23,16 +23,14 @@ export const gameGuides: Record<string, string> = {
 <p>Yes — no chat, no account required. It loads instantly in any browser and works on Chromebooks, tablets, and phones, making it a quiet, screen-friendly classroom activity.</p>
 `,
 
-	'hanoi': `<h2>Tower of Hanoi: History, Rules &amp; Strategy</h2>
+	'hanoi': `<h2>Tower of Hanoi: History, Rules &amp; Math Concepts</h2>
 <p>The Tower of Hanoi was invented by French mathematician Édouard Lucas in 1883. He marketed it with a legend about monks moving 64 golden discs between diamond needles — a task that would take 2⁶⁴−1 moves, or roughly 585 billion years. The puzzle is fundamental in computer science as a textbook example of recursion and has applications in backup rotation schemes and neurological testing.</p>
-<h3>How to Play</h3>
-<p>Move a stack of discs from the leftmost peg to the rightmost peg. Only one disc may be moved at a time, and a larger disc may never be placed on top of a smaller disc.</p>
-<h3>Strategy Tips</h3>
-<p>The optimal strategy is recursive: to move <em>n</em> discs from A to C, first move <em>n−1</em> discs from A to B, move the largest disc from A to C, then move the <em>n−1</em> stack from B to C. There's also a one-line iterative rule: on odd moves, move the smallest disc one peg clockwise; on even moves, make the only other legal move.</p>
-<h3>Variations</h3>
-<p>The Frame–Stewart algorithm handles 4+ pegs ("Reve's Puzzle"). "Bicolor Hanoi" alternates disc colors on each peg. "Cyclic Hanoi" allows moves only in one rotational direction. The minimum move count for <em>n</em> discs on 3 pegs is always 2ⁿ−1.</p>
-<h3>Is this game school-safe?</h3>
-<p>Yes — login-free and runs in any browser. It's commonly used in CS classrooms to introduce recursion, and on this site it works on phones and Chromebooks with no installation.</p>
+<h3>How to Play &amp; Controls</h3>
+<p>Click or tap a peg to pick up its top disc, then click or tap another peg to place it. Only one disc may be moved at a time, and a larger disc may never be placed on top of a smaller disc. Your goal is to move the entire stack of 3 to 8 discs from the leftmost peg to the rightmost peg.</p>
+<h3>Math &amp; Logic Concepts: The 2ⁿ − 1 Formula</h3>
+<p>The Tower of Hanoi teaches <strong>recursion</strong> and <strong>exponential growth</strong>. For <em>n</em> discs on 3 pegs, the minimum number of moves is always <strong>2ⁿ − 1</strong>: 3 discs take 7 moves, 4 discs take 15 moves, and 8 discs take 255 moves. To solve <em>n</em> discs from peg A to peg C, recursively move <em>n − 1</em> discs from A to B, move the largest disc from A to C, then move <em>n − 1</em> discs from B to C. There is also a one-line iterative rule: on odd moves, move the smallest disc one peg clockwise; on even moves, make the only other legal move.</p>
+<h3>FAQ: Is Tower of Hanoi school-safe?</h3>
+<p>Yes — it is login-free, ad-free, and runs directly in any browser on Chromebooks, tablets, and phones. Teachers frequently use it in math and computer science classes to introduce recursion and proof by induction.</p>
 `,
 
 	'knights-tour': `<h2>The Knight's Tour: History, Rules &amp; Strategy</h2>
@@ -190,28 +188,24 @@ export const gameGuides: Record<string, string> = {
 <p>Yes. Like all games in the Math Museum, Laser Maze is account-free, and runs entirely in the local browser. It's a perfect visual way to teach the law of reflection and spatial reasoning.</p>
 `,
 
-	'blockdude': `<h2>Block Dude: History, Rules &amp; Strategy</h2>
-<p>Block Dude is a legendary puzzle game that gained cult status as a staple of the TI-83 and TI-84 graphing calculators in the late 1990s and early 2000s. Originally created by Brandon Sterner as part of the "Block" series, it became the quintessential "bored in math class" game. Its simple mechanics — move, pick up, drop — mask a deep combinatorial complexity that requires careful planning and spatial reasoning.</p>
-<h3>How to Play</h3>
-<p>You control Block Dude on a 2D grid. Your goal is to reach the exit door. You can move left and right, and you will automatically climb up if there is a single block in your way. You can pick up a block in front of you and carry it on your head, then drop it to build staircases or fill gaps. You can only carry one block at a time.</p>
-<h3>Strategy Tips</h3>
-<p>Think about your <strong>block economy</strong>. Every block you move is a resource you might need later. Before you drop a block into a pit, ask yourself: "Can I ever get this back?" Often, you'll need to build "steps" to reach high ledges. If you're stuck, try working backwards from the exit — what's the last block you need to place to reach the door?</p>
-<h3>Variations</h3>
-<p>The original calculator version featured 11 levels, while modern clones often include level editors and hundreds of community-made puzzles. The game belongs to the "Sokoban" family of transport puzzles, which are PSPACE-complete in terms of computational complexity.</p>
-<h3>Is this game school-safe?</h3>
-<p>Yes. It's the ultimate school-safe classic. This version has no chat and no logins. It runs on Chromebooks and phones, making it a perfect, quiet logic challenge for the classroom.</p>
+	'blockdude': `<h2>Block Dude Online: TI-83/TI-84 History, Controls &amp; Strategy</h2>
+<p>Block Dude is a legendary puzzle game that gained cult status as a staple of the TI-83 and TI-84 graphing calculators in the late 1990s and early 2000s. Originally created by Brandon Sterner as part of the "Block" series for TI-83 Plus calculators, it became the quintessential math-class logic game. Its simple mechanics — move, pick up, drop — mask deep combinatorial complexity.</p>
+<h3>How to Play &amp; Controls</h3>
+<p>Use the <strong>Left / Right Arrow keys</strong> (or on-screen buttons) to walk. Block Dude automatically climbs up a single block in his path. Stand next to a movable block and press <strong>Space</strong> or <strong>Down Arrow</strong> (or the Lift/Drop button) to pick it up onto your head, then press it again to drop the block in front of you. You can only carry one block at a time. Reach the green exit door to clear each level.</p>
+<h3>Math &amp; Logic Concepts: Block Economy &amp; Complexity</h3>
+<p>Block Dude belongs to the <strong>Sokoban</strong> family of grid-based transport puzzles, which computer scientists have proven are <strong>PSPACE-complete</strong>. Winning requires thinking about your <em>block economy</em>: every block you drop into a pit is a resource you may need later to build a staircase. Working backwards from the exit door helps you determine the exact height of the final staircase before committing blocks.</p>
+<h3>FAQ: Is this the same Block Dude from the TI-83/TI-84 calculator?</h3>
+<p>Yes! This browser version faithfully recreates the classic TI-83/TI-84 Block Dude levels and physics without needing a graphing calculator or ROM emulator. It is 100% free, unblocked, and works on Chromebooks, laptops, and phones with no logins or downloads.</p>
 `,
 
-	'lemonadestand': `<h2>Lemonade Stand: History, Rules &amp; Strategy</h2>
-<p>Lemonade Stand is one of the earliest educational computer games ever created, originally developed by Bob Jamison in 1973 for the Minnesota Educational Computing Consortium (MECC) and later ported to the Apple II. For decades, it has introduced students to microeconomics: supply and demand, marginal cost, inventory spoilage, and price elasticity.</p>
-<h3>How to Play</h3>
-<p>Starting with \$20.00 over a 7-day run, you check the daily weather forecast, buy cups, lemons, sugar, and ice in bulk packs, set your recipe per cup, and choose your selling price. At the end of each day, any leftover ice melts, so overbuying ice cuts directly into your profit.</p>
-<h3>Strategy Tips</h3>
-<p>Match your price and ice to the weather: on hot or sunny days, foot traffic surges and customers tolerate higher prices; on rainy or cold days, drop your price to clear inventory. Buying larger supply packs lowers your unit cost per cup, but watch your cash flow early on. Aim for a balanced recipe (1 lemon, 1 sugar, 2 ice per cup) for high customer satisfaction and repeat word-of-mouth.</p>
-<h3>Variations</h3>
-<p>Classic MECC Lemonade Stand used text prompts and random events like street construction or thunderstorms. Modern business-sim descendants expand into multi-product stands, advertising budgets, and multi-competitor markets.</p>
-<h3>Is this game school-safe?</h3>
-<p>Yes. It runs completely in your browser with no logins, no chat, and no ads — ideal for math, economics, and personal finance lessons on Chromebooks or tablets.</p>
+	'lemonadestand': `<h2>Lemonade Stand Game: History, Controls &amp; Profit Math</h2>
+<p>Lemonade Stand is one of the earliest educational computer games ever created, originally developed by Bob Jamison in 1973 for the Minnesota Educational Computing Consortium (MECC) and later popularized on the Apple II. For over 50 years, it has introduced students to microeconomics, supply and demand, and real-world arithmetic.</p>
+<h3>How to Play &amp; Controls</h3>
+<p>Starting with \$20.00 over a 7-day run, check the daily weather forecast, buy cups, lemons, sugar, and ice in bulk packs, set your recipe per cup, and choose your selling price using the sliders and buttons. At the end of each day, any leftover ice melts, so overbuying ice cuts directly into your net profit.</p>
+<h3>Math &amp; Economics Concepts: Unit Cost &amp; Profit Margins</h3>
+<p>Lemonade Stand turns <strong>unit cost</strong>, <strong>gross margin</strong>, and <strong>price elasticity</strong> into hands-on decisions. If a pack of 24 lemons costs \$4.00, your lemon cost per cup is \$4.00 ÷ 24 ≈ \$0.17. Adding sugar, ice, and cup costs gives your break-even price per cup. On hot, sunny days, foot traffic surges and customers accept higher prices; on rainy or cold days, lowering your price helps clear perishable inventory before it spoils.</p>
+<h3>FAQ: Is Lemonade Stand free and school-safe?</h3>
+<p>Yes. Lemonade Stand runs completely in your browser with no logins, no chat, and no ads — making it ideal for classroom math, economics, and personal finance lessons on Chromebooks, tablets, and phones.</p>
 `,
 
 	'apexindustries': `<h2>Apex Industries: History, Rules &amp; Strategy</h2>

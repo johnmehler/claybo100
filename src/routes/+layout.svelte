@@ -1,9 +1,21 @@
 <script lang="ts">
 	import Footer from '$lib/Footer.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
+	import { afterNavigate } from '$app/navigation';
 
 	let { children } = $props();
 	const THEME_STORAGE_KEY = 'mathmuseum-theme';
+
+	afterNavigate(async () => {
+		await tick();
+		if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+			window.gtag('event', 'page_view', {
+				page_title: document.title,
+				page_location: window.location.href,
+				page_path: window.location.pathname + window.location.search
+			});
+		}
+	});
 
 	onMount(() => {
 		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);

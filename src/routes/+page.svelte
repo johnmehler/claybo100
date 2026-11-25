@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { games, getGamesByCategory } from '$lib/games';
+	import { games, getGamesByCategory, allHubs, getPlayAnchorText } from '$lib/games';
 	import { fade } from 'svelte/transition';
 
 	const gameCategories = getGamesByCategory();
@@ -62,12 +62,19 @@
 		<header id="app-header" class="header" in:fade={{ duration: 800 }}>
 			<h1 id="app-title">ONLINEMATH<span class="highlight">.GAMES</span></h1>
 			<p id="app-subtitle" class="app-subtitle">EXPLORE THE COLLECTION</p>
+			<nav class="hub-nav" aria-label="Game Categories">
+				{#each allHubs as hub}
+					<a href="/{hub.slug}" class="hub-link">{hub.name}</a>
+				{/each}
+			</nav>
 		</header>
 
 		<div id="game-list" class="game-catalog">
 			{#each gameCategories as category}
 				<div class="category" in:fade={{ duration: 800, delay: category.delay }}>
-					<h2 class="category-title">{category.name}</h2>
+					<h2 class="category-title">
+						<a href="/{category.slug}" class="category-link">{category.name}</a>
+					</h2>
 					<div class="game-grid">
 						{#each category.games as game}
 							<a href="/games/{game.id}" class="game-card {game.cardClass}">
@@ -75,6 +82,7 @@
 								<div class="card-content">
 									<h3>{game.label}</h3>
 									<p>{game.description}</p>
+									<span class="card-cta">{getPlayAnchorText(game)} &rarr;</span>
 								</div>
 							</a>
 						{/each}
@@ -87,7 +95,7 @@
 
 <style>
 	.main-container {
-		width: 100vw;
+		width: 100%;
 		min-height: 100vh;
 		background: var(--app-bg);
 		display: flex;
@@ -135,6 +143,48 @@
 		color: var(--app-muted-text);
 		letter-spacing: 0.24em;
 		margin-top: 0.3rem;
+	}
+
+	.hub-nav {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-top: 0.85rem;
+	}
+
+	.hub-link {
+		font-size: 0.78rem;
+		font-weight: 700;
+		color: var(--app-muted-text);
+		text-decoration: none;
+		padding: 0.32rem 0.75rem;
+		border-radius: 999px;
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
+		transition: color 0.2s ease, border-color 0.2s ease;
+	}
+
+	.hub-link:hover {
+		color: var(--color-bittersweet);
+		border-color: var(--color-bittersweet);
+	}
+
+	.category-link {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.category-link:hover {
+		text-decoration: underline;
+	}
+
+	.card-cta {
+		display: inline-block;
+		margin-top: 0.3rem;
+		font-size: 0.74rem;
+		font-weight: 700;
+		color: var(--color-bittersweet);
 	}
 
 	.game-catalog {
