@@ -11,12 +11,13 @@
 	let instructions: any;
 
 	const POPULATION_SIZE = 400;
+	const BASE_SPEED = 1.8;
 	const RADIUS = 5;
 	const TOUCH_DIST_SQ = (RADIUS * 2.5) ** 2;
 	const WIDTH = 800;
 	const HEIGHT = 600;
-	const HOSPITAL_CAPACITY = 20;
-	const INITIAL_BUDGET = 100000;
+	const HOSPITAL_CAPACITY = 50;
+	const INITIAL_BUDGET = 140000;
 
 	type State = "S" | "I" | "R" | "D";
 	interface Person {
@@ -28,12 +29,20 @@
 		infectionDay: number;
 	}
 
+	const SPEED_OPTIONS = [
+		{ value: 0.25, label: "1x" },
+		{ value: 0.5, label: "2x" },
+		{ value: 1, label: "4x" },
+		{ value: 2, label: "8x" },
+	] as const;
+	type SimSpeed = (typeof SPEED_OPTIONS)[number]["value"];
+
 	let people: Person[] = [];
 	let stats = $state({ s: 0, i: 0, r: 0, d: 0 });
 	let days = $state(0);
 	let isGameOver = $state(false);
 	let isPaused = $state(true);
-	let simSpeed = $state<1 | 2>(1);
+	let simSpeed = $state<SimSpeed>(1);
 	let canvasEl: HTMLCanvasElement | undefined = $state();
 
 	// Simulation Parameters (Controllable)
@@ -44,13 +53,13 @@
 	// Biological Parameters (Difficulty-locked)
 	let difficulty = $state<"EASY" | "MED" | "HARD">("MED");
 	let transmissionBase = $derived(
-		difficulty === "EASY" ? 0.75 : difficulty === "MED" ? 0.9 : 1.0,
+		difficulty === "EASY" ? 0.7 : difficulty === "MED" ? 0.85 : 1.0,
 	);
 	let immuneRate = $derived(
 		difficulty === "EASY" ? 0.25 : difficulty === "MED" ? 0.15 : 0.05,
 	);
 	let durationBase = $derived(
-		difficulty === "EASY" ? 180 : difficulty === "MED" ? 250 : 350,
+		difficulty === "EASY" ? 160 : difficulty === "MED" ? 210 : 250,
 	);
 	let fatalityRate = $derived(
 		difficulty === "EASY" ? 0.01 : difficulty === "MED" ? 0.02 : 0.05,
@@ -58,25 +67,25 @@
 
 	// Derived System Stats
 	let transmissionChance = $derived(
-		transmissionBase * (1 - 0.5 * sanitaryProtocols),
+		transmissionBase * (1 - 0.3 * sanitaryProtocols),
 	);
 	let recoveryDuration = $derived(
-		durationBase * (1 - 0.5 * testingIsolation),
+		durationBase * (1 - 0.3 * testingIsolation),
 	);
 
 	// Economic Variables
 	let budget = $state(INITIAL_BUDGET);
 	// Mobility is free at 1.0 (100%), costs increase quadratically as mobility drops
 	let costMobility = $derived(
-		Math.floor(8000 * Math.pow(1 - mobilityFactor, 2)),
+		Math.floor(12000 * Math.pow(1 - mobilityFactor, 2)),
 	);
 	let costHealthDrain = $derived.by(() => {
 		if (stats.i <= HOSPITAL_CAPACITY) return 0;
-		// Quadratic scaling: 1.5 * (I - 20)^2
+		// Quadratic scaling: 1.5 * (I - 50)^2
 		return Math.floor(1.5 * Math.pow(stats.i - HOSPITAL_CAPACITY, 2));
 	});
-	let costTesting = $derived(Math.floor(3000 * testingIsolation));
-	let costSanitary = $derived(Math.floor(1000 * sanitaryProtocols));
+	let costTesting = $derived(Math.floor(1500 * testingIsolation));
+	let costSanitary = $derived(Math.floor(500 * sanitaryProtocols));
 
 	let totalDailyDrain = $derived(
 		costMobility + costHealthDrain + costTesting + costSanitary,
@@ -102,18 +111,36 @@
 	function initSim() {
 		const newPeople: Person[] = [];
 		budget = INITIAL_BUDGET;
+		const initialInfected =
+			difficulty === "HARD" ? 4 : difficulty === "MED" ? 2 : 1;
 
 		for (let i = 0; i < POPULATION_SIZE; i++) {
 			let isImmune = Math.random() < immuneRate;
-			const isInfected = i === 0; // Force the first person to be patient zero
+			const isInfected = i < initialInfected;
+			const angle = Math.random() * Math.PI * 2;
 
-			if (isInfected) isImmune = false; // Patient zero cannot be immune
+			if (isInfected) isImmune = false; // Initial infected cannot be immune
+
+			let x = Math.random() * WIDTH;
+			let y = Math.random() * HEIGHT;
+			if (isInfected) {
+				if (difficulty === "HARD") {
+					// Place each of the 4 infected agents in a distinct quadrant
+					const col = i % 2;
+					const row = Math.floor(i / 2);
+					x = (col * 0.5 + Math.random() * 0.5) * WIDTH;
+					y = (row * 0.5 + Math.random() * 0.5) * HEIGHT;
+				} else if (difficulty === "MED") {
+					// Place each of the 2 infected agents in a distinct half
+					x = (i * 0.5 + Math.random() * 0.5) * WIDTH;
+				}
+			}
 
 			newPeople.push({
-				x: Math.random() * WIDTH,
-				y: Math.random() * HEIGHT,
-				baseVx: (Math.random() - 0.5) * 4,
-				baseVy: (Math.random() - 0.5) * 4,
+				x,
+				y,
+				baseVx: Math.cos(angle) * BASE_SPEED,
+				baseVy: Math.sin(angle) * BASE_SPEED,
 				state: isImmune ? "R" : isInfected ? "I" : "S",
 				infectionDay: isInfected ? 0 : -1,
 			});
@@ -141,7 +168,7 @@
 			return;
 		}
 
-		const physSpeed = 0.4 + 0.6 * mobilityFactor;
+		const physSpeed = 0.32 + 0.68 * mobilityFactor;
 		const len = people.length;
 
 		for (let i = 0; i < len; i++) {
@@ -330,13 +357,19 @@
 
 	<InGameMenu {onBack} onHelp={() => instructions.open()} onRestart={initSim}>
 		{#snippet rightControls()}
-			<button
-				class="nav-extra-btn speed-btn"
-				onclick={() => (simSpeed = simSpeed === 1 ? 2 : 1)}
-				title="Toggle simulation speed"
-			>
-				{simSpeed}x
-			</button>
+			<div class="speed-group" role="group" aria-label="Simulation speed">
+				{#each SPEED_OPTIONS as opt}
+					<button
+						class="nav-extra-btn speed-btn {simSpeed === opt.value
+							? 'active'
+							: ''}"
+						onclick={() => (simSpeed = opt.value)}
+						title="Set simulation speed to {opt.label}"
+					>
+						{opt.label}
+					</button>
+				{/each}
+			</div>
 			<button
 				class="nav-extra-btn {isPaused ? 'is-paused' : 'is-running'}"
 				onclick={() => (isPaused = !isPaused)}
@@ -370,8 +403,9 @@
 		<div class="stat-sub">
 			<span class="label">HOSPITAL LOAD</span>
 			<span
-				class="value {stats.i > HOSPITAL_CAPACITY ? 'cost-val' : 'ok-val'}"
-				>{stats.i} / {HOSPITAL_CAPACITY}</span
+				class="value {stats.i > HOSPITAL_CAPACITY
+					? 'cost-val'
+					: 'ok-val'}">{stats.i} / {HOSPITAL_CAPACITY}</span
 			>
 			<div class="drain-breakdown">
 				<span>Day {Math.floor(days / 60)}</span>
@@ -555,7 +589,7 @@
 					bind:value={testingIsolation}
 				/>
 				<div class="hint">
-					Reduces Duration | ${testingIsolation * 3000}/day
+					Reduces Duration | ${testingIsolation * 1500}/day
 				</div>
 			</div>
 
@@ -576,7 +610,7 @@
 					bind:value={sanitaryProtocols}
 				/>
 				<div class="hint">
-					Reduces Transmission | ${sanitaryProtocols * 1000}/day
+					Reduces Transmission | ${sanitaryProtocols * 500}/day
 				</div>
 			</div>
 
@@ -621,7 +655,9 @@
 						/>
 					{/if}
 				</svg>
-				<div class="chart-label">PANDEMIC CURVE (DASHED = 20 CAP)</div>
+				<div class="chart-label">
+					PANDEMIC CURVE (DASHED = {HOSPITAL_CAPACITY} CAP)
+				</div>
 			</div>
 		</div>
 	</div>
@@ -677,9 +713,21 @@
 		color: var(--game-text-on-accent);
 	}
 
+	.speed-group {
+		display: inline-flex;
+		gap: 0.4vmin;
+	}
+
 	.nav-extra-btn.speed-btn {
-		min-width: 3.2rem;
+		padding: 1vmin 1.2vmin;
+		min-width: auto;
 		text-align: center;
+	}
+
+	.nav-extra-btn.speed-btn.active {
+		background: var(--color-bittersweet);
+		border-color: var(--color-bittersweet);
+		color: var(--game-text-on-accent);
 	}
 
 	.main-layout {
@@ -1016,7 +1064,9 @@
 		font-size: clamp(0.85rem, 1.6vmin, 1.05rem);
 		font-weight: 900;
 		cursor: pointer;
-		transition: transform 0.15s, filter 0.15s;
+		transition:
+			transform 0.15s,
+			filter 0.15s;
 	}
 
 	.action-btn:hover {
