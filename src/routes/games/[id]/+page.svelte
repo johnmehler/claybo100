@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
 	import { goto } from "$app/navigation";
-	import { getGameById } from "$lib/games";
+	import { getGameById, getCategoryByGameId } from "$lib/games";
 	import { gameGuides } from "$lib/guides";
 	import { gameSEO, gameHowTo, type HowToStep } from "$lib/seo";
 	import Sidebar from "$lib/Sidebar.svelte";
@@ -28,8 +29,12 @@
 	import LemonadeStand from "$lib/LemonadeStand.svelte";
 	import ApexIndustries from "$lib/ApexIndustries.svelte";
 
-	const id = $derived($page.params.id);
+	const id = $derived($page.params.id ?? "");
 	const game = $derived(getGameById(id));
+	const category = $derived(getCategoryByGameId(id));
+	const relatedGames = $derived(
+		category ? category.games.filter((g) => g.id !== id) : [],
+	);
 
 	let activeGameActions = $state({
 		restart: null as (() => void) | null,
@@ -101,6 +106,7 @@
 					genre: seo.genre,
 					applicationCategory: "Game",
 					operatingSystem: "Any (web browser)",
+					browserRequirements: "Requires JavaScript. Requires HTML5.",
 					gamePlatform: ["Web browser", "Mobile", "Desktop"],
 					inLanguage: "en",
 					isAccessibleForFree: true,
@@ -117,6 +123,45 @@
 						priceCurrency: "USD",
 					},
 					...(game.updated ? { dateModified: game.updated } : {}),
+				})
+			: "",
+	);
+	const breadcrumbSchema = $derived(
+		game
+			? JSON.stringify({
+					"@context": "https://schema.org",
+					"@type": "BreadcrumbList",
+					itemListElement: [
+						{
+							"@type": "ListItem",
+							position: 1,
+							name: "Online Math Games",
+							item: "https://onlinemath.games/",
+						},
+						...(category
+							? [
+									{
+										"@type": "ListItem",
+										position: 2,
+										name: category.name,
+										item: "https://onlinemath.games/",
+									},
+									{
+										"@type": "ListItem",
+										position: 3,
+										name: game.label,
+										item: canonical,
+									},
+								]
+							: [
+									{
+										"@type": "ListItem",
+										position: 2,
+										name: game.label,
+										item: canonical,
+									},
+								]),
+					],
 				})
 			: "",
 	);
@@ -167,6 +212,9 @@
 		{#if schema}
 			{@html `<script type="application/ld+json">${schema}<\/script>`}
 		{/if}
+		{#if breadcrumbSchema}
+			{@html `<script type="application/ld+json">${breadcrumbSchema}<\/script>`}
+		{/if}
 		{#if howToSchema}
 			{@html `<script type="application/ld+json">${howToSchema}<\/script>`}
 		{/if}
@@ -184,9 +232,23 @@
 				in:fade={{ duration: 300 }}
 			>
 				<div class="game-frame-adaptive">
-					<GameComponent {registerActions} {onBack} />
+					{#if browser}
+						<GameComponent {registerActions} {onBack} />
+					{/if}
 				</div>
 			</div>
+			<header class="game-info-header">
+				<nav class="breadcrumbs" aria-label="Breadcrumb">
+					<a href="/">All Games</a>
+					{#if category}
+						<span aria-hidden="true">/</span>
+						<span>{category.name}</span>
+					{/if}
+					<span aria-hidden="true">/</span>
+					<span aria-current="page">{game?.label}</span>
+				</nav>
+				<h1 class="game-title">{game?.label}</h1>
+			</header>
 			{#if seo?.about}
 				<p class="game-about">{seo.about}</p>
 			{/if}
@@ -194,6 +256,19 @@
 				<article class="game-guide" aria-label="{game?.label} Guide">
 					{@html guide}
 				</article>
+			{/if}
+			{#if relatedGames.length > 0 && category}
+				<section class="related-games" aria-label="More {category.name}">
+					<h2>More {category.name}</h2>
+					<div class="related-grid">
+						{#each relatedGames as rel}
+							<a href="/games/{rel.id}" class="related-card">
+								<span class="related-name">{rel.label}</span>
+								<span class="related-desc">{rel.description}</span>
+							</a>
+						{/each}
+					</div>
+				</section>
 			{/if}
 			{#if game?.updated}
 				<p class="updated-line">
@@ -279,9 +354,45 @@
 		margin-top: 1rem;
 	}
 
+	.game-info-header {
+		max-width: 720px;
+		width: 100%;
+		margin: 4vmin auto 0;
+		padding: 0 3vmin;
+		box-sizing: border-box;
+	}
+
+	.breadcrumbs {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		font-size: 12px;
+		color: color-mix(in srgb, var(--app-text) 52%, transparent);
+		margin-bottom: 0.5rem;
+	}
+
+	.breadcrumbs a {
+		color: var(--color-bittersweet);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.breadcrumbs a:hover {
+		text-decoration: underline;
+	}
+
+	.game-title {
+		font-size: 1.9rem;
+		font-weight: 800;
+		color: var(--app-text);
+		margin: 0;
+		letter-spacing: -0.03em;
+		line-height: 1.15;
+	}
+
 	.game-about {
 		max-width: 720px;
-		margin: 4vmin auto 0;
+		margin: 1rem auto 0;
 		padding: 0 3vmin;
 		color: color-mix(in srgb, var(--app-text) 86%, transparent);
 		font-size: 15px;
@@ -316,6 +427,57 @@
 
 	.game-guide :global(p) {
 		margin-bottom: 1rem;
+	}
+
+	.related-games {
+		max-width: 720px;
+		width: 100%;
+		margin: 0 auto 3vmin;
+		padding: 0 3vmin;
+		box-sizing: border-box;
+	}
+
+	.related-games h2 {
+		font-size: 1.15rem;
+		font-weight: 800;
+		color: color-mix(in srgb, var(--app-text) 88%, transparent);
+		margin: 0 0 0.85rem;
+		letter-spacing: -0.01em;
+	}
+
+	.related-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.related-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.75rem 0.9rem;
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
+		border-radius: 10px;
+		text-decoration: none;
+		color: var(--app-text);
+		transition: border-color 0.2s ease, transform 0.2s ease;
+	}
+
+	.related-card:hover {
+		border-color: var(--color-illusion);
+		transform: translateY(-1px);
+	}
+
+	.related-name {
+		font-size: 14px;
+		font-weight: 700;
+	}
+
+	.related-desc {
+		font-size: 12px;
+		color: var(--app-muted-text);
+		line-height: 1.35;
 	}
 
 	.updated-line {
@@ -368,8 +530,10 @@
 			max-height: 100%;
 		}
 
+		.game-info-header,
 		.game-about,
 		.game-guide,
+		.related-games,
 		.updated-line {
 			display: none;
 		}

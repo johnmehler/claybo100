@@ -200,5 +200,29 @@ export const gameGuides: Record<string, string> = {
 <p>The original calculator version featured 11 levels, while modern clones often include level editors and hundreds of community-made puzzles. The game belongs to the "Sokoban" family of transport puzzles, which are PSPACE-complete in terms of computational complexity.</p>
 <h3>Is this game school-safe?</h3>
 <p>Yes. It's the ultimate school-safe classic. This version has no chat and no logins. It runs on Chromebooks and phones, making it a perfect, quiet logic challenge for the classroom.</p>
+`,
+
+	'lemonadestand': `<h2>Lemonade Stand: History, Rules &amp; Strategy</h2>
+<p>Lemonade Stand is one of the earliest educational computer games ever created, originally developed by Bob Jamison in 1973 for the Minnesota Educational Computing Consortium (MECC) and later ported to the Apple II. For decades, it has introduced students to microeconomics: supply and demand, marginal cost, inventory spoilage, and price elasticity.</p>
+<h3>How to Play</h3>
+<p>Starting with \$20.00 over a 7-day run, you check the daily weather forecast, buy cups, lemons, sugar, and ice in bulk packs, set your recipe per cup, and choose your selling price. At the end of each day, any leftover ice melts, so overbuying ice cuts directly into your profit.</p>
+<h3>Strategy Tips</h3>
+<p>Match your price and ice to the weather: on hot or sunny days, foot traffic surges and customers tolerate higher prices; on rainy or cold days, drop your price to clear inventory. Buying larger supply packs lowers your unit cost per cup, but watch your cash flow early on. Aim for a balanced recipe (1 lemon, 1 sugar, 2 ice per cup) for high customer satisfaction and repeat word-of-mouth.</p>
+<h3>Variations</h3>
+<p>Classic MECC Lemonade Stand used text prompts and random events like street construction or thunderstorms. Modern business-sim descendants expand into multi-product stands, advertising budgets, and multi-competitor markets.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes. It runs completely in your browser with no logins, no chat, and no ads — ideal for math, economics, and personal finance lessons on Chromebooks or tablets.</p>
+`,
+
+	'apexindustries': `<h2>Apex Industries: History, Rules &amp; Strategy</h2>
+<p>Apex Industries is a multi-firm corporate strategy simulation modeled after classic university business-school "management games" (such as the Carnegie Tech Management Game of the 1950s). You compete against three AI-controlled corporations (from teams Alpha, Beta, Gamma, and Delta) across a 6-quarter run to maximize cumulative cash and market share.</p>
+<h3>How to Play</h3>
+<p>Each quarter, you start with your current cash reserve (initially \$50,000) and set five strategic levers: product price, quality spending, marketing budget, production volume, and employee pay. After locking in your decisions, the simulation resolves market demand, competitor pricing, production efficiency, and quarterly profit or loss.</p>
+<h3>Strategy Tips</h3>
+<p>Do not neglect employee pay: underpaying workers lowers production efficiency and risks labor disruptions that slash output. Quality spending builds long-term brand reputation over multiple quarters, while marketing drives immediate demand. Watch competitor prices and your inventory — overproducing ties up cash, while underproducing leaves profitable sales on the table.</p>
+<h3>Variations</h3>
+<p>Classroom business simulations vary from single-market oligopolies like Apex Industries to multi-region supply-chain and R&amp;D simulations used in MBA capstone courses.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes. No accounts, no chat, and no downloads. It works in any modern browser and pairs well with high school or college economics, entrepreneurship, and quantitative decision-making classes.</p>
 `
 };

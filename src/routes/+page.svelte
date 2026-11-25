@@ -1,14 +1,60 @@
 <script lang="ts">
-	import { getGamesByCategory } from '$lib/games';
+	import { games, getGamesByCategory } from '$lib/games';
 	import { fade } from 'svelte/transition';
 
 	const gameCategories = getGamesByCategory();
+
+	const siteUrl = 'https://onlinemath.games';
+	const pageTitle = 'Online Math Games - Free Online Math and Puzzle Games';
+	const pageDescription =
+		'onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity.';
+
+	const homeSchema = JSON.stringify({
+		'@context': 'https://schema.org',
+		'@graph': [
+			{
+				'@type': 'WebSite',
+				name: 'onlinemath.games',
+				url: `${siteUrl}/`,
+				description: pageDescription,
+				inLanguage: 'en'
+			},
+			{
+				'@type': 'CollectionPage',
+				name: pageTitle,
+				url: `${siteUrl}/`,
+				description: pageDescription,
+				mainEntity: {
+					'@type': 'ItemList',
+					numberOfItems: games.length,
+					itemListElement: games.map((g, index) => ({
+						'@type': 'ListItem',
+						position: index + 1,
+						name: g.label,
+						url: `${siteUrl}/games/${g.id}`
+					}))
+				}
+			}
+		]
+	});
 </script>
 
 <svelte:head>
-	<title>Online Math Games - Free Online Math and Puzzle Games</title>
-	<meta name="description" content="onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity." />
+	<title>{pageTitle}</title>
+	<meta name="description" content={pageDescription} />
 	<meta name="keywords" content="free math games, online logic puzzles, interactive physics simulations, browser strategy games, classroom math games unblocked, math museum games, onlinemath.games" />
+	<link rel="canonical" href={`${siteUrl}/`} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={pageTitle} />
+	<meta property="og:description" content={pageDescription} />
+	<meta property="og:url" content={`${siteUrl}/`} />
+	<meta property="og:site_name" content="onlinemath.games" />
+	<meta property="og:image" content={`${siteUrl}/favicon-512.png`} />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content={pageTitle} />
+	<meta name="twitter:description" content={pageDescription} />
+	<meta name="twitter:image" content={`${siteUrl}/favicon-512.png`} />
+	{@html `<script type="application/ld+json">${homeSchema}<\/script>`}
 </svelte:head>
 
 <main id="main-view" class="main-container centered">
@@ -27,7 +73,7 @@
 							<a href="/games/{game.id}" class="game-card {game.cardClass}">
 								<div class="card-icon">{@html game.icon}</div>
 								<div class="card-content">
-									<h2>{game.label}</h2>
+									<h3>{game.label}</h3>
 									<p>{game.description}</p>
 								</div>
 							</a>
@@ -167,7 +213,7 @@
 		height: 50%;
 	}
 
-	.card-content h2 {
+	.card-content h3 {
 		margin: 0 0 0.2rem;
 		font-size: clamp(0.94rem, 1.6vmin, 1.1rem);
 		font-weight: 800;

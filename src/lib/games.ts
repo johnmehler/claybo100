@@ -188,3 +188,14 @@ export function getGamesByCategory() {
 			.filter((game): game is NonNullable<ReturnType<typeof getGameById>> => Boolean(game))
 	}));
 }
+
+export function getCategoryByGameId(id: string) {
+	const cat = gameCategories.find(c => c.gameIds.includes(id));
+	if (!cat) return null;
+	return {
+		...cat,
+		games: cat.gameIds
+			.map(gId => getGameById(gId))
+			.filter((game): game is NonNullable<ReturnType<typeof getGameById>> => Boolean(game))
+	};
+}
