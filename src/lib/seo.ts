@@ -368,5 +368,26 @@ export const gameSEO: Record<string, GameSEO> = {
 		keywords: ['apex industries game', 'business strategy simulator', 'play apex industries online', 'management game free', 'corporate simulator unblocked'],
 		genre: 'Simulation',
 		about: 'Apex Industries is an advanced multi-competitor business simulation. Formulate your strategy across price, quality spending, marketing, production volume, and employee wages to capture market share and maximize cumulative profits.'
+	},
+	'arithmetic': {
+		title: 'Arithmetic Speed Drills – Free +, −, ×, ÷ Mental Math Online',
+		description: 'Practice timed addition, subtraction, multiplication, division, and mixed arithmetic drills free online. 60-second sprints and 20-question worksheets.',
+		keywords: ['arithmetic drills', 'mental math practice', 'times tables practice', 'timed math facts', 'elementary math sprint'],
+		genre: 'Educational',
+		about: 'Build quick number sense across addition, subtraction, multiplication, and division in 60-second sprints or 20-question speed worksheets.'
+	},
+	'calculus': {
+		title: 'Calculus Drills – Derivatives, Integrals & Limits Practice Free',
+		description: 'Practice derivatives, integrals, and limits online free with timed 60-second sprints and 15-question calculus drills.',
+		keywords: ['calculus practice game', 'derivatives drill', 'integrals quiz', 'limits practice online'],
+		genre: 'Educational',
+		about: 'Sharpen your calculus reflexes across derivatives, definite and indefinite integrals, and limits in fast-paced browser drills.'
+	},
+	'trig': {
+		title: 'Trigonometry & Unit Circle Game – Free Online Trig Practice',
+		description: 'Master unit circle values, radian conversions, and trig identities with an interactive unit circle diagram. Free, school-safe, and mobile friendly.',
+		keywords: ['unit circle game', 'trigonometry practice', 'radians quiz', 'trig identities drill'],
+		genre: 'Educational',
+		about: 'Learn and drill exact sin, cos, and tan values, degree-radian conversions, and trigonometric identities with a live unit circle.'
 	}
 };

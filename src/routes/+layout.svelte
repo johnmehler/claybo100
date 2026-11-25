@@ -5,6 +5,13 @@
 
 	let { children } = $props();
 	const THEME_STORAGE_KEY = 'mathmuseum-theme';
+	let theme = $state<'light' | 'dark'>('dark');
+
+	function applyTheme(nextTheme: 'light' | 'dark') {
+		theme = nextTheme;
+		document.documentElement.dataset.theme = nextTheme;
+		localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+	}
 
 	afterNavigate(async () => {
 		await tick();
@@ -19,8 +26,7 @@
 
 	onMount(() => {
 		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-		const theme = savedTheme === 'light' ? 'light' : 'dark';
-		document.documentElement.dataset.theme = theme;
+		applyTheme(savedTheme === 'light' ? 'light' : 'dark');
 
 		// Load Google Fonts asynchronously to avoid render-blocking
 		const fontLink = document.createElement('link');
@@ -102,7 +108,90 @@
 	:global(*) {
 		box-sizing: border-box;
 	}
+
+	.theme-switcher {
+		position: fixed;
+		top: clamp(0.65rem, 1.5vmin, 1.1rem);
+		right: clamp(0.75rem, 1.8vmin, 1.4rem);
+		z-index: 900;
+		display: inline-flex;
+		gap: 0.25rem;
+		padding: 0.25rem;
+		background: var(--panel-bg);
+		border: 1px solid var(--panel-border);
+		border-radius: 999px;
+		backdrop-filter: blur(10px);
+	}
+
+	.theme-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.35rem 0.65rem;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--app-muted-text);
+		font-family: inherit;
+		font-size: 0.75rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: background 0.2s ease, color 0.2s ease;
+	}
+
+	.theme-btn:hover {
+		color: var(--app-text);
+	}
+
+	.theme-btn.active {
+		background: var(--app-text);
+		color: var(--app-bg);
+	}
+
+	.theme-btn svg {
+		width: 0.9rem;
+		height: 0.9rem;
+		flex-shrink: 0;
+	}
+
+	@media (max-width: 700px) {
+		.theme-btn span {
+			display: none;
+		}
+
+		.theme-btn {
+			padding: 0.4rem;
+		}
+	}
 </style>
+
+<div class="theme-switcher" role="group" aria-label="Color theme">
+	<button
+		type="button"
+		class="theme-btn"
+		class:active={theme === 'light'}
+		onclick={() => applyTheme('light')}
+		aria-label="Light mode"
+	>
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<circle cx="12" cy="12" r="4" />
+			<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+		</svg>
+		<span>Light</span>
+	</button>
+	<button
+		type="button"
+		class="theme-btn"
+		class:active={theme === 'dark'}
+		onclick={() => applyTheme('dark')}
+		aria-label="Dark mode"
+	>
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+		</svg>
+		<span>Dark</span>
+	</button>
+</div>
 
 {@render children()}
 <Footer />

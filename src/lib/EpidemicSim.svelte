@@ -12,9 +12,12 @@
 
 	const POPULATION_SIZE = 400;
 	const RADIUS = 5;
+	const TOUCH_DIST_SQ = (RADIUS * 2.5) ** 2;
 	const WIDTH = 800;
 	const HEIGHT = 600;
 	const VAX_COST_PER_UNIT = 1000;
+	const VAX_BATCH_SIZE = 10;
+	const HOSPITAL_CAPACITY = 20;
 	const INITIAL_BUDGET = 100000;
 
 	type State = "S" | "I" | "R" | "D";
@@ -25,12 +28,16 @@
 		baseVy: number;
 		state: State;
 		infectionDay: number;
+		vaxFlash: number;
 	}
 
-	let people = $state<Person[]>([]);
+	let people: Person[] = [];
+	let stats = $state({ s: 0, i: 0, r: 0, d: 0 });
 	let days = $state(0);
 	let isGameOver = $state(false);
 	let isPaused = $state(true);
+	let simSpeed = $state<1 | 2>(1);
+	let canvasEl: HTMLCanvasElement | undefined = $state();
 
 	// Simulation Parameters (Controllable)
 	let mobilityFactor = $state(0.8);
@@ -60,7 +67,33 @@
 		durationBase * (1 - 0.5 * testingIsolation),
 	);
 
-	let stats = $derived.by(() => {
+	// Economic Variables
+	let budget = $state(INITIAL_BUDGET);
+	// Mobility is free at 1.0 (100%), costs increase quadratically as mobility drops
+	let costMobility = $derived(
+		Math.floor(8000 * Math.pow(1 - mobilityFactor, 2)),
+	);
+	let costHealthDrain = $derived.by(() => {
+		if (stats.i <= HOSPITAL_CAPACITY) return 0;
+		// Quadratic scaling: 1.5 * (I - 20)^2
+		return Math.floor(1.5 * Math.pow(stats.i - HOSPITAL_CAPACITY, 2));
+	});
+	let costTesting = $derived(Math.floor(3000 * testingIsolation));
+	let costSanitary = $derived(Math.floor(1000 * sanitaryProtocols));
+
+	let totalDailyDrain = $derived(
+		costMobility + costHealthDrain + costTesting + costSanitary,
+	);
+
+	const vaxBatchCost = VAX_BATCH_SIZE * VAX_COST_PER_UNIT;
+	let canVaccinate = $derived(
+		!isGameOver && budget >= vaxBatchCost && stats.s > 0,
+	);
+
+	let history = $state<{ s: number; i: number; r: number; d: number }[]>([]);
+	let activeEncounters = new Set<number>(); // Numeric pair keys: i * POPULATION_SIZE + j
+
+	function syncStats() {
 		let s = 0,
 			i = 0,
 			r = 0,
@@ -71,29 +104,8 @@
 			else if (p.state === "R") r++;
 			else if (p.state === "D") d++;
 		}
-		return { s, i, r, d };
-	});
-
-	// Economic Variables
-	let budget = $state(INITIAL_BUDGET);
-	// Mobility is free at 1.0 (100%), costs increase quadratically as mobility drops
-	let costMobility = $derived(
-		Math.floor(8000 * Math.pow(1 - mobilityFactor, 2)),
-	);
-	let costHealthDrain = $derived.by(() => {
-		if (stats.i <= 20) return 0;
-		// Quadratic scaling: 1.5 * (I - 20)^2
-		return Math.floor(1.5 * Math.pow(stats.i - 20, 2));
-	});
-	let costTesting = $derived(Math.floor(3000 * testingIsolation));
-	let costSanitary = $derived(Math.floor(1000 * sanitaryProtocols));
-
-	let totalDailyDrain = $derived(
-		costMobility + costHealthDrain + costTesting + costSanitary,
-	);
-
-	let history = $state<{ s: number; i: number; r: number; d: number }[]>([]);
-	let activeEncounters = new Set<string>(); // Tracks "i-j" pairs currently touching
+		stats = { s, i, r, d };
+	}
 
 	function initSim() {
 		const newPeople: Person[] = [];
@@ -101,7 +113,7 @@
 
 		for (let i = 0; i < POPULATION_SIZE; i++) {
 			let isImmune = Math.random() < immuneRate;
-			let isInfected = i === 0; // Force the first person to be the patient zero
+			const isInfected = i === 0; // Force the first person to be patient zero
 
 			if (isInfected) isImmune = false; // Patient zero cannot be immune
 
@@ -112,14 +124,48 @@
 				baseVy: (Math.random() - 0.5) * 4,
 				state: isImmune ? "R" : isInfected ? "I" : "S",
 				infectionDay: isInfected ? 0 : -1,
+				vaxFlash: 0,
 			});
 		}
 		people = newPeople;
+		syncStats();
 		days = 0;
 		history = [];
 		activeEncounters.clear();
 		isGameOver = false;
 		isPaused = true;
+		drawCanvas();
+	}
+
+	function vaccinateBatch() {
+		if (!canVaccinate) return;
+		const susceptibleIndices: number[] = [];
+		for (let i = 0; i < people.length; i++) {
+			if (people[i].state === "S") susceptibleIndices.push(i);
+		}
+		if (susceptibleIndices.length === 0) return;
+
+		const count = Math.min(VAX_BATCH_SIZE, susceptibleIndices.length);
+		const actualCost = count * VAX_COST_PER_UNIT;
+		if (budget < actualCost) return;
+
+		// Fisher-Yates partial shuffle to pick random susceptible agents
+		for (let k = 0; k < count; k++) {
+			const randIdx =
+				k + Math.floor(Math.random() * (susceptibleIndices.length - k));
+			const chosen = susceptibleIndices[randIdx];
+			susceptibleIndices[randIdx] = susceptibleIndices[k];
+			people[chosen].state = "R";
+			people[chosen].vaxFlash = 24;
+		}
+
+		budget -= actualCost;
+		if (budget <= 0) {
+			budget = 0;
+			isGameOver = true;
+		}
+		syncStats();
+		drawCanvas();
 	}
 
 	function step() {
@@ -127,59 +173,69 @@
 
 		days++;
 
-		// Total Daily Budget Deduct (every 60 frames = 1 day)
-		if (days % 60 === 0) {
-			budget -= totalDailyDrain;
-		}
-
+		// Linear budget drawdown: deduct 1/60th of daily drain per 60Hz frame
+		budget -= totalDailyDrain / 60;
 		if (budget <= 0) {
 			budget = 0;
 			isGameOver = true;
+			return;
 		}
 
-		const nextPeople = [...people];
-		for (let i = 0; i < nextPeople.length; i++) {
-			const p = nextPeople[i];
+		const physSpeed = 0.4 + 0.6 * mobilityFactor;
+		const len = people.length;
+
+		for (let i = 0; i < len; i++) {
+			const p = people[i];
+			if (p.vaxFlash > 0) p.vaxFlash--;
 			if (p.state === "D") continue;
 
-			// Physics speed: Even at 20% mobility, dots move at ~50% base speed
-			const physSpeed = 0.4 + 0.6 * mobilityFactor;
 			p.x += p.baseVx * physSpeed;
 			p.y += p.baseVy * physSpeed;
 
-			if (p.x < 0 || p.x > WIDTH) p.baseVx *= -1;
-			if (p.y < 0 || p.y > HEIGHT) p.baseVy *= -1;
+			if (p.x < RADIUS) {
+				p.x = RADIUS;
+				p.baseVx = Math.abs(p.baseVx);
+			} else if (p.x > WIDTH - RADIUS) {
+				p.x = WIDTH - RADIUS;
+				p.baseVx = -Math.abs(p.baseVx);
+			}
+			if (p.y < RADIUS) {
+				p.y = RADIUS;
+				p.baseVy = Math.abs(p.baseVy);
+			} else if (p.y > HEIGHT - RADIUS) {
+				p.y = HEIGHT - RADIUS;
+				p.baseVy = -Math.abs(p.baseVy);
+			}
 
 			if (p.state === "I") {
 				p.infectionDay++;
 				if (p.infectionDay > recoveryDuration) {
 					p.state = Math.random() < fatalityRate ? "D" : "R";
+					continue;
 				}
 
-				for (let j = 0; j < nextPeople.length; j++) {
+				for (let j = 0; j < len; j++) {
 					if (i === j) continue;
-					const other = nextPeople[j];
-					const encounterKey = i < j ? `${i}-${j}` : `${j}-${i}`;
-					const dist = Math.sqrt(
-						(p.x - other.x) ** 2 + (p.y - other.y) ** 2,
-					);
-					const isTouching = dist < RADIUS * 2.5;
+					const other = people[j];
+					if (other.state === "D") continue;
 
-					if (isTouching) {
+					const dx = p.x - other.x;
+					const dy = p.y - other.y;
+					const distSq = dx * dx + dy * dy;
+					const encounterKey =
+						i < j
+							? i * POPULATION_SIZE + j
+							: j * POPULATION_SIZE + i;
+
+					if (distSq < TOUCH_DIST_SQ) {
 						if (!activeEncounters.has(encounterKey)) {
-							// NEW ENCOUNTER - Roll the dice exactly once
 							activeEncounters.add(encounterKey);
-							if (other.state === "S" && p.state === "I") {
-								if (Math.random() < transmissionChance) {
-									other.state = "I";
-									other.infectionDay = 0;
-								}
-							} else if (other.state === "I" && p.state === "S") {
-								// Also check reverse if we are iterating people
-								if (Math.random() < transmissionChance) {
-									p.state = "I";
-									p.infectionDay = 0;
-								}
+							if (
+								other.state === "S" &&
+								Math.random() < transmissionChance
+							) {
+								other.state = "I";
+								other.infectionDay = 0;
 							}
 						}
 					} else {
@@ -189,16 +245,104 @@
 			}
 		}
 
-		people = nextPeople;
-		if (days % 10 === 0) history.push({ ...stats });
+		syncStats();
+		if (days % 10 === 0) {
+			history.push({ ...stats });
+			// Downsample if history grows very large to keep SVG curve crisp
+			if (history.length > 240) {
+				history = history.filter((_, idx) => idx % 2 === 0);
+			}
+		}
 		if (stats.i === 0) isGameOver = true;
 	}
 
-	let interval: any;
+	function drawCanvas() {
+		if (!canvasEl) return;
+		const ctx = canvasEl.getContext("2d");
+		if (!ctx) return;
+
+		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+		// Draw deceased first so living agents render on top
+		for (const p of people) {
+			if (p.state !== "D") continue;
+			ctx.globalAlpha = 0.45;
+			ctx.fillStyle = "#555";
+			ctx.beginPath();
+			ctx.arc(p.x, p.y, RADIUS, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.globalAlpha = 1;
+
+		for (const p of people) {
+			if (p.state === "D") continue;
+
+			if (p.state === "S") {
+				ctx.fillStyle = "#6fb1fc";
+			} else if (p.state === "R") {
+				ctx.fillStyle = "#69af4b";
+			} else {
+				ctx.fillStyle = "#ff6e61";
+			}
+
+			// Infection spark ring for newly infected agents
+			if (p.state === "I" && p.infectionDay < 24) {
+				const t = p.infectionDay / 24;
+				ctx.save();
+				ctx.strokeStyle = `rgba(255, 255, 255, ${1 - t})`;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.arc(p.x, p.y, RADIUS + t * 8, 0, Math.PI * 2);
+				ctx.stroke();
+				ctx.restore();
+			}
+
+			// Vaccination ring flash
+			if (p.vaxFlash > 0) {
+				const t = 1 - p.vaxFlash / 24;
+				ctx.save();
+				ctx.strokeStyle = `rgba(105, 175, 75, ${1 - t})`;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.arc(p.x, p.y, RADIUS + t * 9, 0, Math.PI * 2);
+				ctx.stroke();
+				ctx.restore();
+			}
+
+			ctx.beginPath();
+			ctx.arc(p.x, p.y, RADIUS, 0, Math.PI * 2);
+			ctx.fill();
+		}
+	}
+
+	let rafId: number;
 	onMount(() => {
 		initSim();
-		interval = setInterval(step, 1000 / 60);
-		return () => clearInterval(interval);
+		let lastTime = performance.now();
+		let accumulator = 0;
+		const STEP_MS = 1000 / 60;
+
+		const loop = (now: number) => {
+			const dt = Math.min(now - lastTime, 100);
+			lastTime = now;
+
+			if (!isPaused && !isGameOver) {
+				accumulator += dt * simSpeed;
+				while (accumulator >= STEP_MS) {
+					step();
+					accumulator -= STEP_MS;
+					if (isGameOver) break;
+				}
+				drawCanvas();
+			} else {
+				accumulator = 0;
+			}
+
+			rafId = requestAnimationFrame(loop);
+		};
+
+		rafId = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(rafId);
 	});
 
 	$effect(() => {
@@ -240,7 +384,14 @@
 	<InGameMenu {onBack} onHelp={() => instructions.open()} onRestart={initSim}>
 		{#snippet rightControls()}
 			<button
-				class="nav-extra-btn"
+				class="nav-extra-btn speed-btn"
+				onclick={() => (simSpeed = simSpeed === 1 ? 2 : 1)}
+				title="Toggle simulation speed"
+			>
+				{simSpeed}x
+			</button>
+			<button
+				class="nav-extra-btn {isPaused ? 'is-paused' : 'is-running'}"
 				onclick={() => (isPaused = !isPaused)}
 			>
 				{isPaused ? "START" : "STOP"}
@@ -252,7 +403,7 @@
 		<div class="stat-main">
 			<span class="label">BUDGET</span>
 			<span class="value budget-val {budget < 30000 ? 'low' : ''}"
-				>${budget.toLocaleString()}</span
+				>${Math.max(0, Math.floor(budget)).toLocaleString()}</span
 			>
 		</div>
 		<div class="stat-sub">
@@ -262,9 +413,21 @@
 			>
 			<div class="drain-breakdown">
 				<span>Mob: {costMobility}</span>
-				<span>Hlth: {costHealthDrain}</span>
+				<span class={stats.i > HOSPITAL_CAPACITY ? "over-cap" : ""}
+					>Hlth: {costHealthDrain}</span
+				>
 				<span>Test: {costTesting}</span>
 				<span>Protocols: {costSanitary}</span>
+			</div>
+		</div>
+		<div class="stat-sub">
+			<span class="label">HOSPITAL LOAD</span>
+			<span
+				class="value {stats.i > HOSPITAL_CAPACITY ? 'cost-val' : 'ok-val'}"
+				>{stats.i} / {HOSPITAL_CAPACITY}</span
+			>
+			<div class="drain-breakdown">
+				<span>Day {Math.floor(days / 60)}</span>
 			</div>
 		</div>
 	</div>
@@ -272,16 +435,18 @@
 	<div class="main-layout">
 		<div class="sim-wrapper">
 			<div class="sim-container">
-				<svg viewBox="0 0 {WIDTH} {HEIGHT}" class="sim-canvas">
-					{#each people as p}
-						<circle
-							cx={p.x}
-							cy={p.y}
-							r={RADIUS}
-							class="person {p.state.toLowerCase()}"
-						/>
-					{/each}
-				</svg>
+				<canvas
+					bind:this={canvasEl}
+					width={WIDTH}
+					height={HEIGHT}
+					class="sim-canvas"
+				></canvas>
+
+				{#if isPaused && !isGameOver && days === 0}
+					<div class="start-hint" in:fade>
+						Choose difficulty &amp; press <strong>START</strong> to begin
+					</div>
+				{/if}
 
 				{#if isGameOver}
 					<div class="overlay" in:fade>
@@ -343,6 +508,7 @@
 				<div class="difficulty-group">
 					<button
 						class="diff-btn {difficulty === 'EASY' ? 'active' : ''}"
+						disabled={days > 0}
 						onclick={() => {
 							difficulty = "EASY";
 							if (days === 0) initSim();
@@ -352,6 +518,7 @@
 					</button>
 					<button
 						class="diff-btn {difficulty === 'MED' ? 'active' : ''}"
+						disabled={days > 0}
 						onclick={() => {
 							difficulty = "MED";
 							if (days === 0) initSim();
@@ -361,6 +528,7 @@
 					</button>
 					<button
 						class="diff-btn {difficulty === 'HARD' ? 'active' : ''}"
+						disabled={days > 0}
 						onclick={() => {
 							difficulty = "HARD";
 							if (days === 0) initSim();
@@ -465,29 +633,62 @@
 				</div>
 			</div>
 
+			<div class="control-group controllable">
+				<span class="control-label">Emergency Vaccination</span>
+				<button
+					class="vax-btn"
+					disabled={!canVaccinate}
+					onclick={vaccinateBatch}
+				>
+					VACCINATE {VAX_BATCH_SIZE} (-${vaxBatchCost.toLocaleString()})
+				</button>
+				<div class="hint">
+					Immunizes {VAX_BATCH_SIZE} susceptible people instantly
+				</div>
+			</div>
+
 			<div class="history-chart">
 				<svg viewBox="0 0 100 50" preserveAspectRatio="none">
-					{#each history as h, i}
-						{@const x = (i / history.length) * 100}
-						{@const iH = (h.i / POPULATION_SIZE) * 50}
-						{@const dH = (h.d / POPULATION_SIZE) * 50}
-						<rect
-							{x}
-							y={50 - dH}
-							width="1"
-							height={dH}
-							fill="#444"
+					<line
+						x1="0"
+						y1={50 - (HOSPITAL_CAPACITY / POPULATION_SIZE) * 50}
+						x2="100"
+						y2={50 - (HOSPITAL_CAPACITY / POPULATION_SIZE) * 50}
+						stroke="rgba(255, 255, 255, 0.25)"
+						stroke-width="0.6"
+						stroke-dasharray="2,2"
+					/>
+					{#if history.length > 1}
+						{@const maxIdx = history.length - 1}
+						{@const dPoints = history
+							.map(
+								(h, idx) =>
+									`${(idx / maxIdx) * 100},${50 - (h.d / POPULATION_SIZE) * 50}`,
+							)
+							.join(" ")}
+						{@const idPoints = history
+							.map(
+								(h, idx) =>
+									`${(idx / maxIdx) * 100},${50 - ((h.i + h.d) / POPULATION_SIZE) * 50}`,
+							)
+							.join(" ")}
+						<polygon
+							points="0,50 {idPoints} 100,50"
+							fill="rgba(255, 110, 97, 0.45)"
 						/>
-						<rect
-							{x}
-							y={50 - iH - dH}
-							width="1"
-							height={iH}
-							fill="#ff6e61"
+						<polyline
+							points={idPoints}
+							fill="none"
+							stroke="#ff6e61"
+							stroke-width="1.2"
 						/>
-					{/each}
+						<polygon
+							points="0,50 {dPoints} 100,50"
+							fill="rgba(100, 100, 100, 0.7)"
+						/>
+					{/if}
 				</svg>
-				<div class="chart-label">EPIDEMIC CURVE</div>
+				<div class="chart-label">EPIDEMIC CURVE (DASHED = 20 CAP)</div>
 			</div>
 		</div>
 	</div>
@@ -503,14 +704,49 @@
 	}
 
 	.nav-extra-btn {
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		color: var(--game-text-primary);
-		padding: 0.8vmin 2vmin;
-		border-radius: 0.8vmin;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		color: var(--game-text-muted);
+		padding: 1vmin 2vmin;
+		border-radius: 1vmin;
 		font-weight: 800;
-		font-size: 1.4vmin;
+		font-size: clamp(0.75rem, 1.8vmin, 1rem);
 		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.nav-extra-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: var(--app-text);
+		color: var(--game-text-primary);
+	}
+
+	.nav-extra-btn.is-paused {
+		background: rgba(105, 175, 75, 0.2);
+		border-color: #69af4b;
+		color: #a8e08e;
+	}
+
+	.nav-extra-btn.is-paused:hover {
+		background: #69af4b;
+		color: #0b1409;
+	}
+
+	.nav-extra-btn.is-running {
+		background: rgba(255, 110, 97, 0.2);
+		border-color: var(--color-bittersweet);
+		color: #ff9a90;
+	}
+
+	.nav-extra-btn.is-running:hover {
+		background: var(--color-bittersweet);
+		color: var(--game-text-on-accent);
+	}
+
+	.nav-extra-btn.speed-btn {
+		min-width: 3.2rem;
+		text-align: center;
 	}
 
 	.main-layout {
@@ -652,42 +888,36 @@
 		}
 	}
 
+	.ok-val {
+		font-size: 2vmin;
+		font-weight: 800;
+		color: #69af4b;
+	}
+
+	.over-cap {
+		color: #ff6e61;
+		opacity: 1;
+	}
+
 	.sim-canvas {
 		width: 100%;
 		height: 100%;
+		display: block;
 	}
 
-	.person {
-		transition: fill 0.3s;
-	}
-
-	.person.s {
-		fill: #6fb1fc;
-	}
-	.person.i {
-		fill: #ff6e61;
-		filter: drop-shadow(0 0 5px rgba(255, 110, 97, 0.5));
-		animation: infect-spark 0.5s ease-out;
-	}
-
-	@keyframes infect-spark {
-		0% {
-			r: 10;
-			fill: white;
-			opacity: 1;
-		}
-		100% {
-			r: 5;
-			fill: #ff6e61;
-			opacity: 1;
-		}
-	}
-	.person.r {
-		fill: #69af4b;
-	}
-	.person.d {
-		fill: #444;
-		opacity: 0.5;
+	.start-hint {
+		position: absolute;
+		bottom: 1.5vmin;
+		left: 50%;
+		transform: translateX(-50%);
+		background: rgba(0, 0, 0, 0.65);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		padding: 0.8vmin 1.8vmin;
+		border-radius: 999px;
+		font-size: clamp(0.75rem, 1.4vmin, 0.95rem);
+		color: var(--game-text-primary);
+		pointer-events: none;
+		white-space: nowrap;
 	}
 
 	.controls-panel {
@@ -696,7 +926,7 @@
 		padding: 2vmin;
 		display: flex;
 		flex-direction: column;
-		gap: 2.5vmin;
+		gap: 2vmin;
 	}
 
 	.control-group {
@@ -707,7 +937,7 @@
 
 	.control-group label,
 	.control-group .control-label {
-		font-size: 1.2vmin;
+		font-size: clamp(0.75rem, 1.2vmin, 0.9rem);
 		font-weight: 800;
 		color: var(--game-text-muted);
 	}
@@ -720,24 +950,25 @@
 	.difficulty-group {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: 1vmin;
+		gap: 0.8vmin;
 		margin-top: 0.5vmin;
 	}
 
 	.diff-btn {
 		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.12);
 		color: var(--game-text-muted);
-		padding: 1vmin 0.5vmin;
+		padding: 0.9vmin 0.5vmin;
 		border-radius: 0.8vmin;
-		font-size: 1vmin;
+		font-size: clamp(0.7rem, 1.2vmin, 0.85rem);
 		font-weight: 800;
 		cursor: pointer;
 		transition: all 0.2s;
 	}
 
-	.diff-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
+	.diff-btn:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.12);
+		border-color: rgba(255, 255, 255, 0.25);
 		color: var(--game-text-primary);
 	}
 
@@ -746,6 +977,36 @@
 		border-color: var(--color-bittersweet);
 		color: var(--game-text-on-accent);
 		box-shadow: 0 0 15px rgba(255, 110, 97, 0.3);
+	}
+
+	.diff-btn:disabled {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
+
+	.vax-btn {
+		background: rgba(105, 175, 75, 0.18);
+		border: 1px solid #69af4b;
+		color: #a8e08e;
+		padding: 1vmin 1.2vmin;
+		border-radius: 0.8vmin;
+		font-size: clamp(0.7rem, 1.25vmin, 0.88rem);
+		font-weight: 800;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.vax-btn:hover:not(:disabled) {
+		background: #69af4b;
+		color: #0b1409;
+	}
+
+	.vax-btn:disabled {
+		opacity: 0.4;
+		border-color: rgba(255, 255, 255, 0.15);
+		color: var(--game-text-muted);
+		background: rgba(255, 255, 255, 0.04);
+		cursor: not-allowed;
 	}
 
 	.bio-stats {
@@ -761,7 +1022,7 @@
 	.bio-row {
 		display: flex;
 		justify-content: space-between;
-		font-size: 1.1vmin;
+		font-size: clamp(0.7rem, 1.1vmin, 0.85rem);
 		font-weight: 700;
 	}
 
@@ -781,18 +1042,11 @@
 	}
 
 	.controllable .hint {
-		font-size: 1vmin;
+		font-size: clamp(0.65rem, 1vmin, 0.8rem);
 		color: var(--color-bittersweet);
-		opacity: 0.6;
+		opacity: 0.7;
 		font-style: italic;
 		margin-top: 0.5vmin;
-	}
-
-	.toggle-label {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		cursor: pointer;
 	}
 
 	.history-chart {
@@ -811,7 +1065,7 @@
 	}
 
 	.chart-label {
-		font-size: 1vmin;
+		font-size: clamp(0.65rem, 1vmin, 0.8rem);
 		text-align: center;
 		margin-top: 0.5vmin;
 		color: var(--game-text-soft);
@@ -834,6 +1088,7 @@
 
 	.overlay-content {
 		text-align: center;
+		padding: 2vmin;
 	}
 
 	.overlay-content h2 {
@@ -847,9 +1102,20 @@
 		background: var(--color-bittersweet);
 		color: var(--game-text-on-accent);
 		border: none;
-		padding: 1.5vmin 4vmin;
+		padding: 1.4vmin 3.5vmin;
 		border-radius: 1vmin;
+		font-size: clamp(0.85rem, 1.6vmin, 1.05rem);
 		font-weight: 900;
 		cursor: pointer;
+		transition: transform 0.15s, filter 0.15s;
+	}
+
+	.action-btn:hover {
+		filter: brightness(1.1);
+		transform: translateY(-1px);
+	}
+
+	.action-btn:active {
+		transform: translateY(0);
 	}
 </style>

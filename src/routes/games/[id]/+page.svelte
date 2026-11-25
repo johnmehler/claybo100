@@ -70,6 +70,13 @@
 		blockdude: () => import("$lib/BlockDude.svelte"),
 		lemonadestand: () => import("$lib/LemonadeStand.svelte"),
 		apexindustries: () => import("$lib/ApexIndustries.svelte"),
+		arithmetic: () => import("$lib/MathDrill.svelte"),
+		calculus: () => import("$lib/CalculusGame.svelte"),
+		trig: () => import("$lib/TrigGame.svelte"),
+		"addition-subtraction": () => import("$lib/MathDrill.svelte"),
+		"multiplication-drills": () => import("$lib/MathDrill.svelte"),
+		"division-drills": () => import("$lib/MathDrill.svelte"),
+		"mixed-math-drills": () => import("$lib/MathDrill.svelte"),
 	};
 
 	const hasGame = $derived(Boolean(gameLoaders[id]));
@@ -246,7 +253,7 @@
 			>
 				<div class="game-frame-adaptive">
 					{#if browser && LoadedGameComponent}
-						<LoadedGameComponent {registerActions} {onBack} />
+						<LoadedGameComponent {registerActions} {onBack} gameId={id} />
 					{/if}
 				</div>
 			</div>

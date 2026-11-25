@@ -4,15 +4,12 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 
-	const THEME_STORAGE_KEY = 'mathmuseum-theme';
-
 	let { 
 		activeGameActions = { restart: null, help: null }
 	} = $props();
 
 	let isSidebarCollapsed = $state(true);
 	let isMobile = $state(false);
-	let theme = $state<'light' | 'dark'>('dark');
 	const gameCategories = getGamesByCategory();
 	let openCategories = $state(Object.fromEntries(gameCategories.map(c => [c.name, true])));
 
@@ -24,24 +21,7 @@
 		}
 	};
 
-	function applyTheme(nextTheme: 'light' | 'dark') {
-		theme = nextTheme;
-		document.documentElement.dataset.theme = nextTheme;
-		localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
-	}
-
-	function toggleTheme() {
-		applyTheme(theme === 'dark' ? 'light' : 'dark');
-	}
-
 	onMount(() => {
-		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-		if (savedTheme === 'light' || savedTheme === 'dark') {
-			applyTheme(savedTheme);
-		} else {
-			applyTheme('dark');
-		}
-
 		const syncViewportState = () => {
 			isMobile = window.innerWidth <= 1024;
 		};
@@ -139,22 +119,6 @@
 	</nav>
 
 	<div class="sidebar-footer">
-		<div class="theme-buttons">
-			<button class="theme-btn" class:active={theme === 'light'} onclick={() => applyTheme('light')} aria-label="Light mode">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="4" />
-					<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-				</svg>
-				<span>Light</span>
-			</button>
-			<button class="theme-btn" class:active={theme === 'dark'} onclick={() => applyTheme('dark')} aria-label="Dark mode">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M21 12.79A9 9 0 1 1 11.21 3c0 0 0 0 0 0a7 7 0 0 0 9.79 9.79z" />
-				</svg>
-				<span>Dark</span>
-			</button>
-		</div>
-
 		<a href="/" class="menu-back-btn">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Exit Icon"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg>
 			<span>EXIT TO MENU</span>
@@ -411,46 +375,6 @@
 		gap: 1vmin;
 	}
 
-	.theme-buttons {
-		display: flex;
-		gap: 0.8vmin;
-	}
-
-	.theme-btn {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 0.6vmin;
-		padding: 1.2vmin 1vmin;
-		background: var(--panel-bg);
-		border: 1px solid var(--panel-border);
-		border-radius: 1.2vmin;
-		color: var(--app-muted-text);
-		font-weight: 700;
-		font-size: 1.2vmin;
-		cursor: pointer;
-		transition: all 0.25s ease;
-	}
-
-	.theme-btn:hover {
-		background: color-mix(in srgb, var(--panel-bg) 85%, var(--app-text) 8%);
-		color: var(--app-text);
-	}
-
-	.theme-btn.active {
-		background: var(--app-text);
-		border-color: var(--app-text);
-		color: var(--app-bg);
-		box-shadow: 0 0.2vmin 0.5vmin rgba(0, 0, 0, 0.2);
-	}
-
-	.theme-btn svg {
-		width: 1.6vmin;
-		height: 1.6vmin;
-	}
-
 	.menu-back-btn {
 		width: 100%;
 		display: flex;
@@ -554,21 +478,6 @@
 			padding: 0.9rem;
 			font-size: 0.82rem;
 			gap: 0.6rem;
-		}
-
-		.theme-buttons {
-			gap: 0.5rem;
-		}
-
-		.theme-btn {
-			padding: 0.75rem 0.6rem;
-			font-size: 0.75rem;
-			gap: 0.4rem;
-		}
-
-		.theme-btn svg {
-			width: 1rem;
-			height: 1rem;
 		}
 
 		.menu-back-btn svg {

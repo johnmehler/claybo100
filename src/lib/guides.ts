@@ -218,5 +218,29 @@ export const gameGuides: Record<string, string> = {
 <p>Classroom business simulations vary from single-market oligopolies like Apex Industries to multi-region supply-chain and R&amp;D simulations used in MBA capstone courses.</p>
 <h3>Is this game school-safe?</h3>
 <p>Yes. No accounts, no chat, and no downloads. It works in any modern browser and pairs well with high school or college economics, entrepreneurship, and quantitative decision-making classes.</p>
+`,
+
+	'arithmetic': `<h2>Arithmetic Speed Drills (+, −, ×, ÷)</h2>
+<p>Build automatic mental-math fluency across addition, subtraction, multiplication tables, clean whole-number division, or a randomized mix of all four operations.</p>
+<h3>How to Play</h3>
+<p>Pick an operation (<strong>Mixed</strong>, <strong>+ / −</strong>, <strong>×</strong>, or <strong>÷</strong>), choose <strong>60s Sprint</strong> or <strong>20 Questions</strong>, and type your answer. Correct answers advance automatically.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes — no logins, no ads, and works on Chromebooks, tablets, and phones.</p>
+`,
+
+	'calculus': `<h2>Calculus Drills: Derivatives, Integrals &amp; Limits</h2>
+<p>Practice core calculus skills—power rule, trig and exponential derivatives, definite and indefinite integrals, and classic limits—in a fast multiple-choice sprint.</p>
+<h3>How to Play</h3>
+<p>Select <strong>Derivatives</strong>, <strong>Integrals</strong>, <strong>Limits</strong>, or <strong>Mixed</strong>, pick a difficulty, and click an answer or press keys <strong>1–4</strong>.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes — completely free, ad-free, and runs locally in your browser.</p>
+`,
+
+	'trig': `<h2>Trigonometry &amp; Unit Circle Drills</h2>
+<p>Master exact unit-circle values (sin, cos, tan), degree-to-radian conversions, and fundamental trigonometric identities.</p>
+<h3>How to Play</h3>
+<p>Choose <strong>Unit Circle</strong>, <strong>Radians</strong>, <strong>Identities</strong>, or <strong>Mixed</strong>. Toggle the live unit circle diagram on for visual intuition or off to test pure recall.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes — login-free, ad-free, and works on any classroom device.</p>
 `
 };

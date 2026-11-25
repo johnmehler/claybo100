@@ -150,6 +150,30 @@ export const games = [
 		cardClass: 'apex-card',
 		updated: '2026-05-16',
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Apex Industries Icon"><path d="M3 20h18"/><rect x="5" y="10" width="4" height="10"/><rect x="10" y="6" width="4" height="14"/><rect x="15" y="12" width="4" height="8"/></svg>`
+	},
+	{
+		id: 'arithmetic',
+		label: 'Arithmetic',
+		description: 'Timed speed drills for +, −, ×, ÷, and mixed mental math.',
+		cardClass: 'arithmetic-card',
+		updated: '2026-11-25',
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Arithmetic Icon"><line x1="7" y1="4" x2="7" y2="10"/><line x1="4" y1="7" x2="10" y2="7"/><line x1="14" y1="7" x2="20" y2="7"/><line x1="5" y1="15" x2="9" y2="19"/><line x1="9" y1="15" x2="5" y2="19"/><line x1="14" y1="17" x2="20" y2="17"/><circle cx="17" cy="14" r="0.8" fill="currentColor"/><circle cx="17" cy="20" r="0.8" fill="currentColor"/></svg>`
+	},
+	{
+		id: 'calculus',
+		label: 'Calculus',
+		description: 'Derivatives, integrals, and limits in fast-paced drills.',
+		cardClass: 'calculus-card',
+		updated: '2026-11-25',
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Calculus Icon"><path d="M16 4c-2 0-3 1.5-3 4v8c0 2.5-1 4-3 4"/><path d="M9 12h6"/></svg>`
+	},
+	{
+		id: 'trig',
+		label: 'Trigonometry',
+		description: 'Unit circle values, radians, and trig identities.',
+		cardClass: 'trig-card',
+		updated: '2026-11-25',
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Trigonometry Icon"><circle cx="12" cy="12" r="9"/><path d="M12 12l6.5-4.5"/><path d="M12 12h9"/></svg>`
 	}
 ];
 
@@ -158,37 +182,46 @@ export const gameCategories = [
 		name: 'Puzzles',
 		slug: 'puzzles',
 		hubTitle: 'Online Math Puzzles – Free Logic & Brain Games',
-		hubDescription: 'Play free online math puzzles including Tower of Hanoi, Sliding Tiles (15-Puzzle), Peg Solitaire, Knight’s Tour, Ice Slider, and Krypto.',
-		hubIntro: 'Sharpen your logical reasoning, recursion, and mental arithmetic with classic single-player math puzzles. Every puzzle runs free in your browser with no downloads.',
+		hubDescription: 'Play free online math puzzles including Tower of Hanoi, Sliding Tiles (15-Puzzle), Peg Solitaire, Knight’s Tour, and Ice Slider.',
+		hubIntro: 'Sharpen your logical reasoning, recursion, and spatial planning with classic single-player logic puzzles. Every puzzle runs free in your browser with no downloads.',
 		delay: 200,
-		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'iceslider', 'krypto']
+		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'iceslider']
 	},
 	{
 		name: 'Abstract Games',
 		slug: 'strategy',
 		hubTitle: 'Abstract Strategy Games Online – Free Math & Logic Games',
-		hubDescription: 'Play free abstract strategy games online including Block Dude, Dots & Boxes, Nim, Hex, SET, and Vector Racing.',
+		hubDescription: 'Play free abstract strategy games online including Block Dude, Dots & Boxes, Nim, Hex, and SET.',
 		hubIntro: 'Explore combinatorial game theory, spatial planning, and pattern recognition with classic strategy games and calculator favorites.',
 		delay: 400,
-		gameIds: ['dotsandboxes', 'nim', 'hex', 'set', 'vectorracing', 'blockdude']
+		gameIds: ['dotsandboxes', 'nim', 'hex', 'set', 'blockdude']
 	},
 	{
 		name: 'Physics',
 		slug: 'physics',
 		hubTitle: 'Interactive Physics Games Online – Free Simulations & Puzzles',
-		hubDescription: 'Play free physics games and simulations online: Lunar Lander, Laser Maze, ShotSim projectile physics, Tracks of Galileo, and Epidemic Sim.',
-		hubIntro: 'Experiment with gravity, optics, parabolic trajectories, brachistochrone curves, and SIR epidemic models in interactive browser simulations.',
+		hubDescription: 'Play free physics games and simulations online: Lunar Lander, Laser Maze, ShotSim projectile physics, Tracks of Galileo, and Vector Racing.',
+		hubIntro: 'Experiment with gravity, optics, parabolic trajectories, momentum, and brachistochrone curves in interactive browser simulations.',
 		delay: 600,
-		gameIds: ['shotsim', 'tracksofgalileo', 'lunarlander', 'epidemicsim', 'lasermaze']
+		gameIds: ['shotsim', 'tracksofgalileo', 'lunarlander', 'vectorracing', 'lasermaze']
 	},
 	{
-		name: 'Business Sims',
+		name: 'Simulations',
 		slug: 'business',
-		hubTitle: 'Business & Math Simulation Games – Free Online Sims',
-		hubDescription: 'Play free business and economics simulation games online including Lemonade Stand and Apex Industries.',
-		hubIntro: 'Practice microeconomics, supply and demand, pricing strategy, and profit margin math in interactive browser business simulations.',
+		hubTitle: 'Online Simulation Games – Free Business, Economics & Science Sims',
+		hubDescription: 'Play free simulation games online including Lemonade Stand, Apex Industries, and Epidemic Sim.',
+		hubIntro: 'Practice microeconomics, supply and demand, pricing strategy, profit margin math, and SIR epidemic modeling in interactive browser simulations.',
 		delay: 800,
-		gameIds: ['lemonadestand', 'apexindustries']
+		gameIds: ['lemonadestand', 'apexindustries', 'epidemicsim']
+	},
+	{
+		name: 'Math',
+		slug: 'math',
+		hubTitle: 'Math Games Online – Arithmetic, Krypto, Calculus & Trigonometry',
+		hubDescription: 'Practice math online free: Arithmetic speed drills (+, −, ×, ÷), Krypto, Calculus (derivatives, integrals, limits), and Trigonometry.',
+		hubIntro: 'Sharpen your math skills from foundational arithmetic and Krypto to unit-circle trigonometry and calculus drills.',
+		delay: 1000,
+		gameIds: ['arithmetic', 'krypto', 'calculus', 'trig']
 	}
 ];
 
