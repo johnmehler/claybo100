@@ -217,6 +217,7 @@
 								class:red={p === 1}
 								class:blue={p === 2}
 								class:winner={winningPath.includes(r * SIZE + c)}
+								aria-label={`Hex row ${r + 1} column ${c + 1}${p === 1 ? ', red' : p === 2 ? ', blue' : ''}`}
 								onclick={() => clickHex(r, c)}
 								disabled={isThinking && opponentMode === 'ai'}
 							></button>

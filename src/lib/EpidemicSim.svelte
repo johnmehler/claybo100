@@ -40,7 +40,7 @@
 	// Biological Parameters (Difficulty-locked)
 	let difficulty = $state<"EASY" | "MED" | "HARD">("MED");
 	let transmissionBase = $derived(
-		difficulty === "EASY" ? 0.75 : difficulty === "MED" ? 0.90 : 1.0,
+		difficulty === "EASY" ? 0.75 : difficulty === "MED" ? 0.9 : 1.0,
 	);
 	let immuneRate = $derived(
 		difficulty === "EASY" ? 0.25 : difficulty === "MED" ? 0.15 : 0.05,
@@ -339,7 +339,7 @@
 
 		<div class="controls-panel">
 			<div class="control-group">
-				<label>Outbreak Difficulty</label>
+				<span class="control-label">Outbreak Difficulty</span>
 				<div class="difficulty-group">
 					<button
 						class="diff-btn {difficulty === 'EASY' ? 'active' : ''}"
@@ -408,12 +408,13 @@
 			</div>
 
 			<div class="control-group controllable">
-				<label
+				<label for="mobility-slider"
 					>Population Mobility: {(mobilityFactor * 100).toFixed(
 						0,
 					)}%</label
 				>
 				<input
+					id="mobility-slider"
 					type="range"
 					min="0.2"
 					max="1"
@@ -423,7 +424,7 @@
 			</div>
 
 			<div class="control-group controllable">
-				<label
+				<label for="quarantine-slider"
 					>Quarantine & Testing: {testingIsolation === 0
 						? "OFF"
 						: testingIsolation === 0.5
@@ -431,6 +432,7 @@
 							: "INTENSIVE"}</label
 				>
 				<input
+					id="quarantine-slider"
 					type="range"
 					min="0"
 					max="1"
@@ -443,7 +445,7 @@
 			</div>
 
 			<div class="control-group controllable">
-				<label
+				<label for="sanitary-slider"
 					>Sanitary Protocols: {sanitaryProtocols === 0
 						? "OFF"
 						: sanitaryProtocols === 0.5
@@ -451,6 +453,7 @@
 							: "INTENSIVE"}</label
 				>
 				<input
+					id="sanitary-slider"
 					type="range"
 					min="0"
 					max="1"
@@ -702,7 +705,8 @@
 		gap: 0.8vmin;
 	}
 
-	.control-group label {
+	.control-group label,
+	.control-group .control-label {
 		font-size: 1.2vmin;
 		font-weight: 800;
 		color: var(--game-text-muted);
@@ -789,13 +793,6 @@
 		justify-content: space-between;
 		align-items: center;
 		cursor: pointer;
-	}
-
-	.toggle-label input[type="checkbox"] {
-		width: 2vmin;
-		height: 2vmin;
-		cursor: pointer;
-		accent-color: var(--color-bittersweet);
 	}
 
 	.history-chart {

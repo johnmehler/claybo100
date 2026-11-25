@@ -138,6 +138,7 @@
 								class="dot"
 								class:selected={selectedHeap === h && i < selectedCount}
 								class:hover-preview={hoveredHeap === h && i < hoveredCount}
+								aria-label={`Heap ${h + 1}, object ${i + 1}`}
 								disabled={isAiTurn || winner !== null}
 								onclick={() => select(h, i)}
 								onmouseenter={() => { hoveredHeap = h; hoveredCount = i + 1; }}

@@ -70,7 +70,7 @@
 		lasermaze: LaserMaze,
 		blockdude: BlockDude,
 		lemonadestand: LemonadeStand,
-		"apexindustries": ApexIndustries,
+		apexindustries: ApexIndustries,
 	};
 
 	const GameComponent = $derived(gameComponents[id]);
@@ -184,11 +184,7 @@
 				in:fade={{ duration: 300 }}
 			>
 				<div class="game-frame-adaptive">
-					<svelte:component
-						this={GameComponent}
-						{registerActions}
-						{onBack}
-					/>
+					<GameComponent {registerActions} {onBack} />
 				</div>
 			</div>
 			{#if seo?.about}

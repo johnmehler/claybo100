@@ -307,7 +307,11 @@
 					{#each Array(SIZE) as _, c}
 						{#if !hLines[r][c]}
 							<rect x={10 + c*16 + 2} y={10 + r*16 - 4} width={12} height={8} fill="transparent" class="click-zone"
-								onclick={() => drawLine('h', r, c)} />
+								role="button"
+								tabindex="0"
+								aria-label={`Horizontal line row ${r + 1} column ${c + 1}`}
+								onclick={() => drawLine('h', r, c)}
+								onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drawLine('h', r, c); } }} />
 						{/if}
 					{/each}
 				{/each}
@@ -316,7 +320,11 @@
 					{#each Array(SIZE + 1) as _, c}
 						{#if !vLines[r][c]}
 							<rect x={10 + c*16 - 4} y={10 + r*16 + 2} width={8} height={12} fill="transparent" class="click-zone"
-								onclick={() => drawLine('v', r, c)} />
+								role="button"
+								tabindex="0"
+								aria-label={`Vertical line row ${r + 1} column ${c + 1}`}
+								onclick={() => drawLine('v', r, c)}
+								onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drawLine('v', r, c); } }} />
 						{/if}
 					{/each}
 				{/each}
