@@ -33,9 +33,9 @@
 			{ qty: 48, cost: 3.36 },
 		],
 		ice: [
-			{ qty: 100, cost: 0.9 },
-			{ qty: 250, cost: 2.0 },
-			{ qty: 500, cost: 3.5 },
+			{ qty: 30, cost: 0.36 },
+			{ qty: 75, cost: 0.75 },
+			{ qty: 150, cost: 1.2 },
 		],
 	};
 
@@ -43,25 +43,52 @@
 		cups: 0.034,
 		lemons: 0.1,
 		sugar: 0.09,
-		ice: 0.009,
+		ice: 0.012,
 	};
 
 	// Weather types
 	type Weather = "sunny" | "cloudy" | "rainy" | "hot" | "cold";
 
+	type SpriteName =
+		| "lemon"
+		| "cup"
+		| "sugar"
+		| "ice"
+		| "sunny"
+		| "hot"
+		| "cloudy"
+		| "rainy"
+		| "cold"
+		| "cart"
+		| "clock"
+		| "star"
+		| "skip"
+		| "trophy"
+		| "sparkle"
+		| "thumbsup"
+		| "chart"
+		| "ban"
+		| "coin"
+		| "warn";
+
 	interface WeatherInfo {
 		type: Weather;
 		temperature: number;
-		icon: string;
+		icon: SpriteName;
 		description: string;
 	}
 
 	const weatherTypes: WeatherInfo[] = [
-		{ type: "sunny", temperature: 76, icon: "☀️", description: "Sunny" },
-		{ type: "cloudy", temperature: 67, icon: "☁️", description: "Cloudy" },
-		{ type: "hot", temperature: 94, icon: "🔥", description: "Heatwave" },
-		{ type: "rainy", temperature: 60, icon: "🌧️", description: "Rainy" },
-		{ type: "cold", temperature: 48, icon: "❄️", description: "Chilly" },
+		{ type: "sunny", temperature: 76, icon: "sunny", description: "Sunny" },
+		{
+			type: "cloudy",
+			temperature: 67,
+			icon: "cloudy",
+			description: "Cloudy",
+		},
+		{ type: "hot", temperature: 94, icon: "hot", description: "Heatwave" },
+		{ type: "rainy", temperature: 60, icon: "rainy", description: "Rainy" },
+		{ type: "cold", temperature: 48, icon: "cold", description: "Chilly" },
 	];
 
 	type GamePhase = "prep" | "running" | "results" | "gameover";
@@ -87,7 +114,12 @@
 		direction: 1 | -1;
 		shirtColor: string;
 		skinColor: string;
-		outcome: "bought" | "too_expensive" | "bad_taste" | "sold_out" | "not_thirsty";
+		outcome:
+			| "bought"
+			| "too_expensive"
+			| "bad_taste"
+			| "sold_out"
+			| "not_thirsty";
 		reaction: string;
 		resolved: boolean;
 		x: number; // 0..100
@@ -168,7 +200,15 @@
 	let toastType = $state<"error" | "info" | "success">("info");
 	let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const SHIRT_COLORS = ["#f59e0b", "#10b981", "#3b82f6", "#ec4899", "#8b5cf6", "#ef4444", "#14b8a6"];
+	const SHIRT_COLORS = [
+		"#f59e0b",
+		"#10b981",
+		"#3b82f6",
+		"#ec4899",
+		"#8b5cf6",
+		"#ef4444",
+		"#14b8a6",
+	];
 	const SKIN_COLORS = ["#fcd34d", "#fdba74", "#d97706", "#b45309", "#fed7aa"];
 
 	// Derived Values
@@ -177,15 +217,15 @@
 			cups,
 			lemonsPerCup > 0 ? Math.floor(lemons / lemonsPerCup) : Infinity,
 			sugarPerCup > 0 ? Math.floor(sugar / sugarPerCup) : Infinity,
-			icePerCup > 0 ? Math.floor(ice / icePerCup) : Infinity
-		)
+			icePerCup > 0 ? Math.floor(ice / icePerCup) : Infinity,
+		),
 	);
 
 	const unitCostPerCup = $derived(
 		avgCupCost +
 			lemonsPerCup * avgLemonCost +
 			sugarPerCup * avgSugarCost +
-			icePerCup * avgIceCost
+			icePerCup * avgIceCost,
 	);
 
 	const marginPerCup = $derived(pricePerCup - unitCostPerCup);
@@ -200,32 +240,35 @@
 	const tasteInfo = $derived.by(() => {
 		const score = calculateTasteScore();
 		let label = "Balanced & Crisp";
-		let color = "#10b981";
+		let tone: "good" | "warn" | "sweet" | "cool" | "bad" = "good";
 
 		if (lemonsPerCup > sugarPerCup + 0.5) {
 			label = "Very Sour";
-			color = "#f59e0b";
+			tone = "warn";
 		} else if (sugarPerCup > lemonsPerCup + 0.5) {
 			label = "Too Sweet";
-			color = "#ec4899";
+			tone = "sweet";
 		} else if (lemonsPerCup < 1 && sugarPerCup < 1) {
 			label = "Watery";
-			color = "#60a5fa";
+			tone = "cool";
 		} else if (Math.abs(icePerCup - idealIceForWeather) >= 2) {
-			label = icePerCup < idealIceForWeather ? "Needs More Ice" : "Too Much Ice";
-			color = "#38bdf8";
+			label =
+				icePerCup < idealIceForWeather
+					? "Needs More Ice"
+					: "Too Much Ice";
+			tone = "cool";
 		} else if (score >= 90) {
 			label = "Signature Blend!";
-			color = "#10b981";
+			tone = "good";
 		} else if (score >= 70) {
 			label = "Pretty Good";
-			color = "#fbbf24";
+			tone = "warn";
 		} else {
 			label = "Off-Balance";
-			color = "#ef4444";
+			tone = "bad";
 		}
 
-		return { score, label, color };
+		return { score, label, tone };
 	});
 
 	const starRating = $derived((1 + (reputation / 100) * 4).toFixed(1));
@@ -234,7 +277,7 @@
 		getPackCost("cups", selectedCups) +
 			getPackCost("lemons", selectedLemons) +
 			getPackCost("sugar", selectedSugar) +
-			getPackCost("ice", selectedIce)
+			getPackCost("ice", selectedIce),
 	);
 
 	const dayClockLabel = $derived.by(() => {
@@ -256,7 +299,10 @@
 		return "#fde047"; // vibrant lemonade yellow
 	});
 
-	function showToast(msg: string, type: "error" | "info" | "success" = "info") {
+	function showToast(
+		msg: string,
+		type: "error" | "info" | "success" = "info",
+	) {
 		toastMessage = msg;
 		toastType = type;
 		if (toastTimer) clearTimeout(toastTimer);
@@ -269,14 +315,21 @@
 		const rand = Math.random();
 		let baseWeather: WeatherInfo;
 
-		if (rand < 0.35) baseWeather = weatherTypes[0]; // 35% sunny
-		else if (rand < 0.6) baseWeather = weatherTypes[1]; // 25% cloudy
-		else if (rand < 0.75) baseWeather = weatherTypes[2]; // 15% hot
-		else if (rand < 0.9) baseWeather = weatherTypes[3]; // 15% rainy
+		if (rand < 0.35)
+			baseWeather = weatherTypes[0]; // 35% sunny
+		else if (rand < 0.6)
+			baseWeather = weatherTypes[1]; // 25% cloudy
+		else if (rand < 0.75)
+			baseWeather = weatherTypes[2]; // 15% hot
+		else if (rand < 0.9)
+			baseWeather = weatherTypes[3]; // 15% rainy
 		else baseWeather = weatherTypes[4]; // 10% cold
 
 		const tempVariation = Math.floor(Math.random() * 13) - 6;
-		const finalTemp = Math.max(42, Math.min(104, baseWeather.temperature + tempVariation));
+		const finalTemp = Math.max(
+			42,
+			Math.min(104, baseWeather.temperature + tempVariation),
+		);
 
 		return {
 			...baseWeather,
@@ -312,7 +365,7 @@
 		existingQty: number,
 		existingAvg: number,
 		addedQty: number,
-		addedCost: number
+		addedCost: number,
 	): number {
 		if (addedQty <= 0) return existingAvg;
 		const totalQty = existingQty + addedQty;
@@ -333,17 +386,32 @@
 
 		if (selectedCups > 0) {
 			const cost = getPackCost("cups", selectedCups);
-			avgCupCost = updateWeightedAvg(cups, avgCupCost, selectedCups, cost);
+			avgCupCost = updateWeightedAvg(
+				cups,
+				avgCupCost,
+				selectedCups,
+				cost,
+			);
 			cups += selectedCups;
 		}
 		if (selectedLemons > 0) {
 			const cost = getPackCost("lemons", selectedLemons);
-			avgLemonCost = updateWeightedAvg(lemons, avgLemonCost, selectedLemons, cost);
+			avgLemonCost = updateWeightedAvg(
+				lemons,
+				avgLemonCost,
+				selectedLemons,
+				cost,
+			);
 			lemons += selectedLemons;
 		}
 		if (selectedSugar > 0) {
 			const cost = getPackCost("sugar", selectedSugar);
-			avgSugarCost = updateWeightedAvg(sugar, avgSugarCost, selectedSugar, cost);
+			avgSugarCost = updateWeightedAvg(
+				sugar,
+				avgSugarCost,
+				selectedSugar,
+				cost,
+			);
 			sugar += selectedSugar;
 		}
 		if (selectedIce > 0) {
@@ -423,7 +491,7 @@
 		kind: FloatingPopup["kind"],
 		x: number,
 		y: number,
-		subtext?: string
+		subtext?: string,
 	) {
 		const id = ++popupIdCounter;
 		popups = [...popups, { id, text, subtext, kind, x, y }];
@@ -465,12 +533,15 @@
 		const priceRatio = pricePerCup / fairPrice;
 		if (priceRatio > 1.0) {
 			// Probability of rejecting due to price rises steeply above fairPrice
-			const rejectProb = Math.min(0.95, Math.pow(priceRatio - 1.0, 1.35) * 1.15);
+			const rejectProb = Math.min(
+				0.95,
+				Math.pow(priceRatio - 1.0, 1.35) * 1.15,
+			);
 			if (Math.random() < rejectProb) {
 				return {
 					wantsToBuy: false,
 					reason: "too_expensive",
-					reaction: "💸 Too pricey!",
+					reaction: "Too pricey!",
 				};
 			}
 		}
@@ -478,15 +549,15 @@
 		// Taste check
 		const tastePassProb = 0.2 + (tasteScore / 100) * 0.8;
 		if (Math.random() > tastePassProb) {
-			let msg = "😖 Sour!";
-			if (sugarPerCup > lemonsPerCup + 0.5) msg = "🍬 Too sweet!";
-			else if (icePerCup < idealIceForWeather - 1) msg = "🥵 Needs ice!";
-			else if (icePerCup > idealIceForWeather + 1) msg = "🥶 Too icy!";
-			else if (lemonsPerCup < 1 && sugarPerCup < 1) msg = "💧 Watery!";
+			let msg = "Sour!";
+			if (sugarPerCup > lemonsPerCup + 0.5) msg = "Too sweet!";
+			else if (icePerCup < idealIceForWeather - 1) msg = "Needs ice!";
+			else if (icePerCup > idealIceForWeather + 1) msg = "Too icy!";
+			else if (lemonsPerCup < 1 && sugarPerCup < 1) msg = "Watery!";
 			return { wantsToBuy: false, reason: "bad_taste", reaction: msg };
 		}
 
-		const happyReactions = ["😋 Yum!", "🍋 Fresh!", "😍 Love it!", "👍 Crisp!"];
+		const happyReactions = ["Yum!", "Fresh!", "Love it!", "Crisp!"];
 		const reaction =
 			happyReactions[Math.floor(Math.random() * happyReactions.length)];
 		return { wantsToBuy: true, reason: "bought", reaction };
@@ -514,13 +585,13 @@
 		// Customer wants to buy — check stock!
 		if (!canMakeOneCup()) {
 			cust.outcome = "sold_out";
-			cust.reaction = "🚫 Sold out!";
+			cust.reaction = "Sold out!";
 			missedSoldOut++;
 			if (!soldOutDuringDay) {
 				soldOutDuringDay = true;
 				spawnPopup("SOLD OUT!", "negative", 50, 30);
 			} else {
-				spawnPopup("🚫 Sold out", "warning", 50, 44);
+				spawnPopup("Sold out", "warning", 50, 44);
 			}
 			return;
 		}
@@ -542,14 +613,23 @@
 		standPulse = true;
 		setTimeout(() => (standPulse = false), 180);
 
-		spawnPopup(`+$${pricePerCup.toFixed(2)}`, "money", 50, 32, decision.reaction);
+		spawnPopup(
+			`+$${pricePerCup.toFixed(2)}`,
+			"money",
+			50,
+			32,
+			decision.reaction,
+		);
 	}
 
 	function startDay() {
 		if (phase !== "prep" || showBuyMenu) return;
 
 		if (maxCupsPossible <= 0) {
-			showToast("You need enough cups, lemons, sugar & ice for at least 1 cup!", "error");
+			showToast(
+				"You need enough cups, lemons, sugar & ice for at least 1 cup!",
+				"error",
+			);
 			return;
 		}
 
@@ -571,7 +651,8 @@
 		// Generate animated customer stream spread across 0..0.82 of the day
 		const list: SimCustomer[] = [];
 		for (let i = 0; i < visitors; i++) {
-			const spawnAt = (i / Math.max(1, visitors)) * 0.78 + Math.random() * 0.04;
+			const spawnAt =
+				(i / Math.max(1, visitors)) * 0.78 + Math.random() * 0.04;
 			const direction: 1 | -1 = Math.random() > 0.45 ? 1 : -1;
 			list.push({
 				id: i,
@@ -609,7 +690,8 @@
 			const localT = (dayProgress - cust.spawnAt) / cust.duration;
 			if (localT < 0 || localT > 1) continue;
 
-			cust.x = cust.direction === 1 ? -8 + localT * 116 : 108 - localT * 116;
+			cust.x =
+				cust.direction === 1 ? -8 + localT * 116 : 108 - localT * 116;
 
 			// Trigger decision as customer passes the stand
 			if (!cust.resolved && localT >= 0.48) {
@@ -729,12 +811,19 @@
 		clearSelection();
 	}
 
-	function getBusinessRank(netProfit: number): { title: string; badge: string } {
-		if (netProfit >= 45) return { title: "Lemonade Tycoon", badge: "🏆" };
-		if (netProfit >= 25) return { title: "Savvy Entrepreneur", badge: "🌟" };
-		if (netProfit >= 10) return { title: "Neighborhood Favorite", badge: "🍋" };
-		if (netProfit >= 0) return { title: "Breaking Even", badge: "👍" };
-		return { title: "Needs Practice", badge: "📉" };
+	function getBusinessRank(netProfit: number): {
+		title: string;
+		badge: SpriteName;
+	} {
+		if (netProfit >= 45)
+			return { title: "Lemonade Tycoon", badge: "trophy" };
+		if (netProfit >= 25)
+			return { title: "Savvy Entrepreneur", badge: "sparkle" };
+		if (netProfit >= 10)
+			return { title: "Neighborhood Favorite", badge: "lemon" };
+		if (netProfit >= 0)
+			return { title: "Breaking Even", badge: "thumbsup" };
+		return { title: "Needs Practice", badge: "chart" };
 	}
 
 	onMount(() => {
@@ -751,10 +840,323 @@
 	});
 </script>
 
+<svelte:window
+	onkeydown={(e) => {
+		if (e.key === "Escape" && showBuyMenu) {
+			clearSelection();
+			showBuyMenu = false;
+		}
+	}}
+/>
+
+{#snippet sprite(name: SpriteName, size = 18)}
+	<svg
+		width={size}
+		height={size}
+		viewBox="0 0 24 24"
+		fill="none"
+		class="sprite-icon"
+		aria-hidden="true"
+	>
+		{#if name === "lemon"}
+			<path
+				d="M12 4.5C15.5 4.5 19.5 7.5 19.5 12.5C19.5 17 15.5 19.5 12 19.5C8.5 19.5 4.5 17 4.5 12.5C4.5 7.5 8.5 4.5 12 4.5Z"
+				fill="#fde047"
+				stroke="#ca8a04"
+				stroke-width="1.6"
+			/>
+			<path
+				d="M9 9.5C10.2 8 12.5 7.5 14.5 8.2"
+				stroke="#fef9c3"
+				stroke-width="1.6"
+				stroke-linecap="round"
+			/>
+			<path
+				d="M13 4.5C14 2.5 16.5 2 18 3.2C17 4.8 15 5.2 13 4.5Z"
+				fill="#22c55e"
+				stroke="#15803d"
+				stroke-width="1.2"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "cup"}
+			<path
+				d="M6.5 8H17.5L16 20.5H8L6.5 8Z"
+				fill="#fde047"
+				stroke="#ca8a04"
+				stroke-width="1.6"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M6 8H18"
+				stroke="#e4e4e7"
+				stroke-width="2.2"
+				stroke-linecap="round"
+			/>
+			<path
+				d="M13 8L15 3.5H17.5"
+				stroke="#ef4444"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<rect
+				x="9"
+				y="10.5"
+				width="2.5"
+				height="2.5"
+				rx="0.5"
+				fill="#e0f2fe"
+				opacity="0.9"
+			/>
+		{:else if name === "sugar"}
+			<rect
+				x="4"
+				y="9"
+				width="9"
+				height="9"
+				rx="1.8"
+				fill="#ffffff"
+				stroke="#a1a1aa"
+				stroke-width="1.5"
+			/>
+			<rect
+				x="11"
+				y="5"
+				width="9"
+				height="9"
+				rx="1.8"
+				fill="#f4f4f5"
+				stroke="#a1a1aa"
+				stroke-width="1.5"
+			/>
+			<circle cx="15.5" cy="9.5" r="1" fill="#f472b6" />
+			<circle cx="8.5" cy="13.5" r="1" fill="#f472b6" />
+		{:else if name === "ice"}
+			<rect
+				x="4.5"
+				y="4.5"
+				width="15"
+				height="15"
+				rx="3"
+				fill="#bae6fd"
+				stroke="#0284c7"
+				stroke-width="1.6"
+			/>
+			<path
+				d="M8 8.5L12 8.5M8 8.5L8 12.5"
+				stroke="#ffffff"
+				stroke-width="1.8"
+				stroke-linecap="round"
+			/>
+			<path
+				d="M15 15.5L12.5 15.5"
+				stroke="#38bdf8"
+				stroke-width="1.5"
+				stroke-linecap="round"
+			/>
+		{:else if name === "sunny"}
+			<circle
+				cx="12"
+				cy="12"
+				r="5"
+				fill="#facc15"
+				stroke="#ca8a04"
+				stroke-width="1.5"
+			/>
+			<path
+				d="M12 2.5V5M12 19V21.5M2.5 12H5M19 12H21.5M5.3 5.3L7.1 7.1M16.9 16.9L18.7 18.7M18.7 5.3L16.9 7.1M7.1 16.9L5.3 18.7"
+				stroke="#facc15"
+				stroke-width="2"
+				stroke-linecap="round"
+			/>
+		{:else if name === "hot"}
+			<circle
+				cx="12"
+				cy="12"
+				r="5.5"
+				fill="#f97316"
+				stroke="#c2410c"
+				stroke-width="1.5"
+			/>
+			<path
+				d="M12 2L13.5 5.5H10.5L12 2ZM12 22L13.5 18.5H10.5L12 22ZM2 12L5.5 10.5V13.5L2 12ZM22 12L18.5 10.5V13.5L22 12Z"
+				fill="#fb923c"
+			/>
+			<circle cx="12" cy="12" r="2.5" fill="#fde047" />
+		{:else if name === "cloudy"}
+			<path
+				d="M7.5 18H17.5C19.7 18 21.5 16.2 21.5 14C21.5 11.9 19.9 10.2 17.8 10C17.2 7.2 14.7 5 11.7 5C8.3 5 5.5 7.8 5.5 11.2C5.5 11.4 5.5 11.6 5.5 11.8C3.8 12.3 2.5 13.9 2.5 15.8C2.5 17 3.5 18 4.8 18H7.5Z"
+				fill="#cbd5e1"
+				stroke="#64748b"
+				stroke-width="1.5"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "rainy"}
+			<path
+				d="M7 14.5H17.5C19.4 14.5 21 12.9 21 11C21 9.2 19.6 7.7 17.8 7.5C17.2 5.2 15.1 3.5 12.5 3.5C9.5 3.5 7 5.9 7 9C5.1 9.3 3.5 10.9 3.5 12.8C3.5 13.8 4.3 14.5 5.5 14.5H7Z"
+				fill="#94a3b8"
+				stroke="#475569"
+				stroke-width="1.5"
+			/>
+			<path
+				d="M8 17.5L7 20.5M12.5 17.5L11.5 20.5M17 17.5L16 20.5"
+				stroke="#38bdf8"
+				stroke-width="2"
+				stroke-linecap="round"
+			/>
+		{:else if name === "cold"}
+			<path
+				d="M12 2.5V21.5M3.8 7.2L20.2 16.8M20.2 7.2L3.8 16.8"
+				stroke="#7dd3fc"
+				stroke-width="1.8"
+				stroke-linecap="round"
+			/>
+			<path
+				d="M10 4.5L12 6.5L14 4.5M10 19.5L12 17.5L14 19.5"
+				stroke="#bae6fd"
+				stroke-width="1.4"
+				stroke-linecap="round"
+			/>
+		{:else if name === "cart"}
+			<path
+				d="M3 4H5.5L7.5 15.5H18.5L20.5 7.5H6.5"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<circle cx="9" cy="19" r="1.5" fill="currentColor" />
+			<circle cx="17" cy="19" r="1.5" fill="currentColor" />
+		{:else if name === "clock"}
+			<circle
+				cx="12"
+				cy="12"
+				r="8.5"
+				stroke="currentColor"
+				stroke-width="1.8"
+			/>
+			<path
+				d="M12 7.5V12L15 14"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "star"}
+			<path
+				d="M12 2.5L14.9 8.5L21.5 9.4L16.7 14L17.9 20.5L12 17.4L6.1 20.5L7.3 14L2.5 9.4L9.1 8.5L12 2.5Z"
+				fill="#fbbf24"
+				stroke="#d97706"
+				stroke-width="1.4"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "skip"}
+			<path d="M5 6L13 12L5 18V6Z" fill="currentColor" />
+			<path d="M13 6L19 12L13 18V6Z" fill="currentColor" />
+			<rect x="19" y="6" width="2" height="12" fill="currentColor" />
+		{:else if name === "trophy"}
+			<path
+				d="M7 4H17V10C17 12.8 14.8 15 12 15C9.2 15 7 12.8 7 10V4Z"
+				fill="#fbbf24"
+				stroke="#b45309"
+				stroke-width="1.5"
+			/>
+			<path
+				d="M7 6H4.5C4.5 9 5.5 10.5 7 10.5M17 6H19.5C19.5 9 18.5 10.5 17 10.5"
+				stroke="#d97706"
+				stroke-width="1.5"
+				stroke-linecap="round"
+			/>
+			<path
+				d="M12 15V19M8.5 19H15.5"
+				stroke="#b45309"
+				stroke-width="1.8"
+				stroke-linecap="round"
+			/>
+		{:else if name === "sparkle"}
+			<path
+				d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+				fill="#fde047"
+				stroke="#ca8a04"
+				stroke-width="1.4"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "thumbsup"}
+			<path
+				d="M7 11V20H4V11H7ZM7 11L11 4C12 4 13 5 13 6.5V9.5H18.5C19.6 9.5 20.5 10.4 20.3 11.5L19.1 18.5C18.9 19.4 18.1 20 17.2 20H7"
+				fill="#34d399"
+				stroke="#047857"
+				stroke-width="1.5"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "chart"}
+			<path
+				d="M4 19H20M6 9L10.5 13.5L14 10L19 15"
+				stroke="#f87171"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M15.5 15H19V11.5"
+				stroke="#f87171"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		{:else if name === "ban"}
+			<circle
+				cx="12"
+				cy="12"
+				r="8.5"
+				stroke="currentColor"
+				stroke-width="1.8"
+			/>
+			<path
+				d="M6.5 6.5L17.5 17.5"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+			/>
+		{:else if name === "coin"}
+			<circle
+				cx="12"
+				cy="12"
+				r="8.5"
+				fill="#fbbf24"
+				stroke="#b45309"
+				stroke-width="1.5"
+			/>
+			<path
+				d="M12 7.5V16.5M14.2 9.5C14.2 8.7 13.2 8.2 12 8.2C10.8 8.2 9.8 8.8 9.8 9.6C9.8 11.5 14.2 11.2 14.2 13.3C14.2 14.2 13.2 14.8 12 14.8C10.8 14.8 9.8 14.2 9.8 13.4"
+				stroke="#78350f"
+				stroke-width="1.4"
+				stroke-linecap="round"
+			/>
+		{:else if name === "warn"}
+			<path
+				d="M12 3.5L21 19.5H3L12 3.5Z"
+				fill="#fbbf24"
+				stroke="#b45309"
+				stroke-width="1.5"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M12 9.5V13.5M12 16.5H12.01"
+				stroke="#18181b"
+				stroke-width="1.8"
+				stroke-linecap="round"
+			/>
+		{/if}
+	</svg>
+{/snippet}
+
 <div class="lemonade-container">
 	{#if toastMessage}
 		<div
 			class="toast toast-{toastType}"
+			role="status"
+			aria-live="polite"
 			in:fly={{ y: -16, duration: 220 }}
 			out:fade={{ duration: 180 }}
 		>
@@ -765,9 +1167,12 @@
 	<div class="header">
 		<div class="header-top">
 			<span class="day-badge">DAY {currentDay}/{TOTAL_DAYS}</span>
-			<span class="rep-badge" title="Stand Reputation">★ {starRating}</span>
+			<span class="rep-badge" title="Stand Reputation">
+				{@render sprite("star", 13)}
+				{starRating}
+			</span>
 		</div>
-		<h1>🍋 Lemonade Stand</h1>
+		<h1>{@render sprite("lemon", 28)} Lemonade Stand</h1>
 	</div>
 
 	{#if phase === "prep" || phase === "running"}
@@ -780,23 +1185,59 @@
 					aria-label="Lemonade Stand Scene"
 				>
 					<defs>
-						<linearGradient id="skySunny" x1="0" y1="0" x2="0" y2="1">
+						<linearGradient
+							id="skySunny"
+							x1="0"
+							y1="0"
+							x2="0"
+							y2="1"
+						>
 							<stop offset="0%" stop-color="#1e3a8a" />
-							<stop offset="100%" stop-color="#38bdf8" stop-opacity="0.45" />
+							<stop
+								offset="100%"
+								stop-color="#38bdf8"
+								stop-opacity="0.45"
+							/>
 						</linearGradient>
 						<linearGradient id="skyHot" x1="0" y1="0" x2="0" y2="1">
 							<stop offset="0%" stop-color="#7c2d12" />
-							<stop offset="100%" stop-color="#f59e0b" stop-opacity="0.45" />
+							<stop
+								offset="100%"
+								stop-color="#f59e0b"
+								stop-opacity="0.45"
+							/>
 						</linearGradient>
-						<linearGradient id="skyCloudy" x1="0" y1="0" x2="0" y2="1">
+						<linearGradient
+							id="skyCloudy"
+							x1="0"
+							y1="0"
+							x2="0"
+							y2="1"
+						>
 							<stop offset="0%" stop-color="#1e293b" />
-							<stop offset="100%" stop-color="#475569" stop-opacity="0.6" />
+							<stop
+								offset="100%"
+								stop-color="#475569"
+								stop-opacity="0.6"
+							/>
 						</linearGradient>
-						<linearGradient id="skyRainy" x1="0" y1="0" x2="0" y2="1">
+						<linearGradient
+							id="skyRainy"
+							x1="0"
+							y1="0"
+							x2="0"
+							y2="1"
+						>
 							<stop offset="0%" stop-color="#0f172a" />
 							<stop offset="100%" stop-color="#1e293b" />
 						</linearGradient>
-						<linearGradient id="skyCold" x1="0" y1="0" x2="0" y2="1">
+						<linearGradient
+							id="skyCold"
+							x1="0"
+							y1="0"
+							x2="0"
+							y2="1"
+						>
 							<stop offset="0%" stop-color="#0c4a6e" />
 							<stop offset="100%" stop-color="#1e293b" />
 						</linearGradient>
@@ -821,28 +1262,46 @@
 					{#if currentWeather.type === "sunny" || currentWeather.type === "hot"}
 						<g
 							class="sun-group"
-							transform="translate({phase === 'running' ? 60 + dayProgress * 300 : 355}, {phase === 'running' ? 42 - Math.sin(dayProgress * Math.PI) * 22 : 28})"
+							transform="translate({phase === 'running'
+								? 60 + dayProgress * 300
+								: 355}, {phase === 'running'
+								? 42 - Math.sin(dayProgress * Math.PI) * 22
+								: 28})"
 						>
 							<circle
 								r={currentWeather.type === "hot" ? 20 : 16}
-								fill={currentWeather.type === "hot" ? "#fb923c" : "#fde047"}
+								fill={currentWeather.type === "hot"
+									? "#fb923c"
+									: "#fde047"}
 								opacity="0.3"
 								class="sun-glow"
 							/>
 							<circle
 								r={currentWeather.type === "hot" ? 13 : 11}
-								fill={currentWeather.type === "hot" ? "#f97316" : "#facc15"}
+								fill={currentWeather.type === "hot"
+									? "#f97316"
+									: "#facc15"}
 							/>
 						</g>
 					{/if}
 
 					{#if currentWeather.type === "cloudy" || currentWeather.type === "rainy"}
-						<g class="cloud cloud-1" opacity={currentWeather.type === "rainy" ? 0.55 : 0.8}>
+						<g
+							class="cloud cloud-1"
+							opacity={currentWeather.type === "rainy"
+								? 0.55
+								: 0.8}
+						>
 							<circle cx="80" cy="28" r="14" fill="#94a3b8" />
 							<circle cx="96" cy="24" r="17" fill="#cbd5e1" />
 							<circle cx="114" cy="29" r="13" fill="#94a3b8" />
 						</g>
-						<g class="cloud cloud-2" opacity={currentWeather.type === "rainy" ? 0.55 : 0.75}>
+						<g
+							class="cloud cloud-2"
+							opacity={currentWeather.type === "rainy"
+								? 0.55
+								: 0.75}
+						>
 							<circle cx="290" cy="34" r="12" fill="#94a3b8" />
 							<circle cx="305" cy="30" r="15" fill="#cbd5e1" />
 							<circle cx="320" cy="35" r="11" fill="#94a3b8" />
@@ -880,18 +1339,61 @@
 
 					<!-- Ground & Sidewalk -->
 					<rect y="112" width="420" height="33" fill="#27272a" />
-					<line x1="0" y1="112" x2="420" y2="112" stroke="#3f3f46" stroke-width="2" />
+					<line
+						x1="0"
+						y1="112"
+						x2="420"
+						y2="112"
+						stroke="#3f3f46"
+						stroke-width="2"
+					/>
 
 					<!-- Lemonade Stand -->
-					<g class="stand-booth {standPulse ? 'stand-pop' : ''}" transform="translate(168, 44)">
+					<g
+						class="stand-booth {standPulse ? 'stand-pop' : ''}"
+						transform="translate(168, 44)"
+					>
 						<!-- Posts -->
-						<rect x="6" y="22" width="5" height="48" fill="#92400e" />
-						<rect x="73" y="22" width="5" height="48" fill="#92400e" />
+						<rect
+							x="6"
+							y="22"
+							width="5"
+							height="48"
+							fill="#92400e"
+						/>
+						<rect
+							x="73"
+							y="22"
+							width="5"
+							height="48"
+							fill="#92400e"
+						/>
 						<!-- Counter Base -->
-						<rect x="2" y="46" width="80" height="24" rx="2" fill="#b45309" />
-						<rect x="0" y="43" width="84" height="5" rx="2" fill="#d97706" />
+						<rect
+							x="2"
+							y="46"
+							width="80"
+							height="24"
+							rx="2"
+							fill="#b45309"
+						/>
+						<rect
+							x="0"
+							y="43"
+							width="84"
+							height="5"
+							rx="2"
+							fill="#d97706"
+						/>
 						<!-- Sign on front -->
-						<rect x="14" y="51" width="56" height="14" rx="2" fill="#fef3c7" />
+						<rect
+							x="14"
+							y="51"
+							width="56"
+							height="14"
+							rx="2"
+							fill="#fef3c7"
+						/>
 						<text
 							x="42"
 							y="61"
@@ -905,33 +1407,88 @@
 
 						<!-- Pitcher on counter -->
 						<g transform="translate(20, 27)">
-							<rect x="0" y="2" width="13" height="14" rx="2" fill="rgba(255,255,255,0.25)" stroke="#e4e4e7" stroke-width="1" />
+							<rect
+								x="0"
+								y="2"
+								width="13"
+								height="14"
+								rx="2"
+								fill="rgba(255,255,255,0.25)"
+								stroke="#e4e4e7"
+								stroke-width="1"
+							/>
 							<rect
 								x="1.5"
-								y={15 - Math.max(2, Math.min(11, (maxCupsPossible / 25) * 11))}
+								y={15 -
+									Math.max(
+										2,
+										Math.min(
+											11,
+											(maxCupsPossible / 25) * 11,
+										),
+									)}
 								width="10"
-								height={Math.max(2, Math.min(11, (maxCupsPossible / 25) * 11))}
+								height={Math.max(
+									2,
+									Math.min(11, (maxCupsPossible / 25) * 11),
+								)}
 								rx="1"
 								fill={pitcherColor}
 							/>
 							{#if icePerCup > 0}
-								<rect x="3" y="8" width="3" height="3" fill="#e0f2fe" opacity="0.85" />
-								<rect x="7" y="10" width="3" height="3" fill="#e0f2fe" opacity="0.85" />
+								<rect
+									x="3"
+									y="8"
+									width="3"
+									height="3"
+									fill="#e0f2fe"
+									opacity="0.85"
+								/>
+								<rect
+									x="7"
+									y="10"
+									width="3"
+									height="3"
+									fill="#e0f2fe"
+									opacity="0.85"
+								/>
 							{/if}
 						</g>
 
 						<!-- Cup stack -->
 						<g transform="translate(52, 33)">
-							<polygon points="2,10 10,10 11,2 1,2" fill="#f4f4f5" />
+							<polygon
+								points="2,10 10,10 11,2 1,2"
+								fill="#f4f4f5"
+							/>
 							<polygon points="3,6 9,6 10,0 2,0" fill="#e4e4e7" />
 						</g>
 
 						<!-- Striped Awning -->
 						<path d="M-4,22 L88,22 L82,8 L2,8 Z" fill="#fbbf24" />
-						<path d="M12,22 L24,22 L22,8 L14,8 Z" fill="#ffffff" opacity="0.85" />
-						<path d="M36,22 L48,22 L46,8 L38,8 Z" fill="#ffffff" opacity="0.85" />
-						<path d="M60,22 L72,22 L70,8 L62,8 Z" fill="#ffffff" opacity="0.85" />
-						<rect x="-4" y="20" width="92" height="4" rx="2" fill="#f59e0b" />
+						<path
+							d="M12,22 L24,22 L22,8 L14,8 Z"
+							fill="#ffffff"
+							opacity="0.85"
+						/>
+						<path
+							d="M36,22 L48,22 L46,8 L38,8 Z"
+							fill="#ffffff"
+							opacity="0.85"
+						/>
+						<path
+							d="M60,22 L72,22 L70,8 L62,8 Z"
+							fill="#ffffff"
+							opacity="0.85"
+						/>
+						<rect
+							x="-4"
+							y="20"
+							width="92"
+							height="4"
+							rx="2"
+							fill="#f59e0b"
+						/>
 					</g>
 
 					<!-- Animated Customers -->
@@ -939,17 +1496,51 @@
 						{#each simCustomers as cust (cust.id)}
 							{#if dayProgress >= cust.spawnAt && dayProgress <= cust.spawnAt + cust.duration}
 								{@const px = (cust.x / 100) * 420}
-								{@const bob = Math.abs(Math.sin(dayProgress * 45 + cust.bobPhase)) * 2.5}
-								<g transform="translate({px}, {114 + cust.yOffset - bob})">
+								{@const bob =
+									Math.abs(
+										Math.sin(
+											dayProgress * 45 + cust.bobPhase,
+										),
+									) * 2.5}
+								<g
+									transform="translate({px}, {114 +
+										cust.yOffset -
+										bob})"
+								>
 									<!-- Shadow -->
-									<ellipse cx="0" cy={8 + bob} rx="6" ry="2" fill="rgba(0,0,0,0.4)" />
+									<ellipse
+										cx="0"
+										cy={8 + bob}
+										rx="6"
+										ry="2"
+										fill="rgba(0,0,0,0.4)"
+									/>
 									<!-- Body -->
-									<rect x="-5" y="-12" width="10" height="14" rx="4" fill={cust.shirtColor} />
+									<rect
+										x="-5"
+										y="-12"
+										width="10"
+										height="14"
+										rx="4"
+										fill={cust.shirtColor}
+									/>
 									<!-- Head -->
-									<circle cx="0" cy="-17" r="5" fill={cust.skinColor} />
+									<circle
+										cx="0"
+										cy="-17"
+										r="5"
+										fill={cust.skinColor}
+									/>
 									<!-- Cup in hand if bought -->
 									{#if cust.outcome === "bought"}
-										<rect x={cust.direction * 5} y="-9" width="4" height="5" rx="1" fill="#fde047" />
+										<rect
+											x={cust.direction * 5}
+											y="-9"
+											width="4"
+											height="5"
+											rx="1"
+											fill="#fde047"
+										/>
 									{/if}
 								</g>
 							{/if}
@@ -975,15 +1566,25 @@
 				<!-- Top Overlay Badges on Scene -->
 				<div class="scene-hud">
 					<span class="weather-pill">
-						{currentWeather.icon} {currentWeather.description} · {currentWeather.temperature}°F
+						{@render sprite(currentWeather.icon, 14)}
+						{currentWeather.description} · {currentWeather.temperature}°F
 					</span>
 					{#if phase === "running"}
-						<span class="clock-pill">🕒 {dayClockLabel}</span>
+						<span class="clock-pill"
+							>{@render sprite("clock", 13)} {dayClockLabel}</span
+						>
 					{/if}
 				</div>
 
 				{#if soldOutDuringDay && phase === "running"}
-					<div class="sold-out-banner" in:scale={{ duration: 200 }}>SOLD OUT!</div>
+					<div
+						class="sold-out-banner"
+						role="status"
+						aria-live="polite"
+						in:scale={{ duration: 200 }}
+					>
+						SOLD OUT!
+					</div>
 				{/if}
 			</div>
 
@@ -1002,10 +1603,20 @@
 				<div class="stat supplies-stat">
 					<span class="label">Inventory</span>
 					<div class="supplies">
-						<span title="Cups">🥤 {cups}</span>
-						<span title="Lemons">🍋 {lemons}</span>
-						<span title="Sugar">🍬 {sugar}</span>
-						<span title="Ice (melts nightly)">🧊 {ice}</span>
+						<span title="Cups" aria-label="Cups: {cups}"
+							>{@render sprite("cup", 16)} {cups}</span
+						>
+						<span title="Lemons" aria-label="Lemons: {lemons}"
+							>{@render sprite("lemon", 16)} {lemons}</span
+						>
+						<span title="Sugar" aria-label="Sugar: {sugar}"
+							>{@render sprite("sugar", 16)} {sugar}</span
+						>
+						<span
+							title="Ice (melts nightly)"
+							aria-label="Ice: {ice}"
+							>{@render sprite("ice", 16)} {ice}</span
+						>
 					</div>
 				</div>
 			</div>
@@ -1016,71 +1627,132 @@
 					<div class="control-card">
 						<div class="card-head">
 							<span class="label">Price per Cup</span>
-							<span class="margin-tag" class:negative={marginPerCup < 0} class:positive={marginPerCup > 0}>
-								Cost ${unitCostPerCup.toFixed(2)} · Margin {marginPerCup >= 0 ? "+" : ""}${marginPerCup.toFixed(2)}
+							<span
+								class="margin-tag"
+								class:negative={marginPerCup < 0}
+								class:positive={marginPerCup > 0}
+							>
+								Cost ${unitCostPerCup.toFixed(2)} · Margin {marginPerCup >=
+								0
+									? "+"
+									: ""}${marginPerCup.toFixed(2)}
 							</span>
 						</div>
 						<div class="price-buttons">
 							<button
 								type="button"
-								onclick={() => (pricePerCup = Math.max(0.25, +(pricePerCup - 0.1).toFixed(2)))}
-							>-</button>
-							<span>${pricePerCup.toFixed(2)}</span>
+								aria-label="Decrease price per cup"
+								onclick={() =>
+									(pricePerCup = Math.max(
+										0.25,
+										+(pricePerCup - 0.1).toFixed(2),
+									))}>-</button
+							>
+							<span aria-live="polite"
+								>${pricePerCup.toFixed(2)}</span
+							>
 							<button
 								type="button"
-								onclick={() => (pricePerCup = Math.min(5.0, +(pricePerCup + 0.1).toFixed(2)))}
-							>+</button>
+								aria-label="Increase price per cup"
+								onclick={() =>
+									(pricePerCup = Math.min(
+										5.0,
+										+(pricePerCup + 0.1).toFixed(2),
+									))}>+</button
+							>
 						</div>
 					</div>
 
 					<div class="control-card">
 						<div class="card-head">
 							<span class="label">Recipe per Cup</span>
-							<span class="taste-badge" style="color: {tasteInfo.color}">
+							<span class="taste-badge taste-{tasteInfo.tone}">
 								{tasteInfo.label}
 							</span>
 						</div>
 						<div class="recipe-controls">
 							<div class="recipe-item">
-								<span>🍋 Lemons</span>
+								<span class="label-with-icon"
+									>{@render sprite("lemon", 17)} Lemons</span
+								>
 								<div class="recipe-control">
 									<button
 										type="button"
-										onclick={() => (lemonsPerCup = Math.max(0.5, +(lemonsPerCup - 0.5).toFixed(1)))}
-									>-</button>
+										aria-label="Decrease lemons per cup"
+										onclick={() =>
+											(lemonsPerCup = Math.max(
+												0.5,
+												+(lemonsPerCup - 0.5).toFixed(
+													1,
+												),
+											))}>-</button
+									>
 									<span>{lemonsPerCup}</span>
 									<button
 										type="button"
-										onclick={() => (lemonsPerCup = Math.min(3, +(lemonsPerCup + 0.5).toFixed(1)))}
-									>+</button>
+										aria-label="Increase lemons per cup"
+										onclick={() =>
+											(lemonsPerCup = Math.min(
+												3,
+												+(lemonsPerCup + 0.5).toFixed(
+													1,
+												),
+											))}>+</button
+									>
 								</div>
 							</div>
 							<div class="recipe-item">
-								<span>🍬 Sugar</span>
+								<span class="label-with-icon"
+									>{@render sprite("sugar", 17)} Sugar</span
+								>
 								<div class="recipe-control">
 									<button
 										type="button"
-										onclick={() => (sugarPerCup = Math.max(0.5, +(sugarPerCup - 0.5).toFixed(1)))}
-									>-</button>
+										aria-label="Decrease sugar per cup"
+										onclick={() =>
+											(sugarPerCup = Math.max(
+												0.5,
+												+(sugarPerCup - 0.5).toFixed(1),
+											))}>-</button
+									>
 									<span>{sugarPerCup}</span>
 									<button
 										type="button"
-										onclick={() => (sugarPerCup = Math.min(3, +(sugarPerCup + 0.5).toFixed(1)))}
-									>+</button>
+										aria-label="Increase sugar per cup"
+										onclick={() =>
+											(sugarPerCup = Math.min(
+												3,
+												+(sugarPerCup + 0.5).toFixed(1),
+											))}>+</button
+									>
 								</div>
 							</div>
 							<div class="recipe-item">
-								<span>🧊 Ice <small>(rec: {idealIceForWeather})</small></span>
+								<span class="label-with-icon"
+									>{@render sprite("ice", 17)} Ice
+									<small>(rec: {idealIceForWeather})</small
+									></span
+								>
 								<div class="recipe-control">
 									<button
 										type="button"
-										onclick={() => (icePerCup = Math.max(0, icePerCup - 1))}
-									>-</button>
+										aria-label="Decrease ice cubes per cup"
+										onclick={() =>
+											(icePerCup = Math.max(
+												0,
+												icePerCup - 1,
+											))}>-</button
+									>
 									<span>{icePerCup}</span>
 									<button
 										type="button"
-										onclick={() => (icePerCup = Math.min(5, icePerCup + 1))}
-									>+</button>
+										aria-label="Increase ice cubes per cup"
+										onclick={() =>
+											(icePerCup = Math.min(
+												5,
+												icePerCup + 1,
+											))}>+</button
+									>
 								</div>
 							</div>
 						</div>
@@ -1090,19 +1762,19 @@
 				<div class="action-buttons">
 					<button
 						type="button"
-						class="btn secondary-btn"
+						class="btn secondary-btn btn-with-icon"
 						class:pulse-hint={maxCupsPossible === 0}
 						onclick={() => (showBuyMenu = true)}
 					>
-						🛒 Buy Supplies
+						{@render sprite("cart", 17)} Buy Supplies
 					</button>
 					<button
 						type="button"
-						class="btn start-btn"
+						class="btn start-btn btn-with-icon"
 						onclick={startDay}
 						disabled={maxCupsPossible <= 0}
 					>
-						☀️ Open Stand
+						{@render sprite("sunny", 17)} Open Stand
 					</button>
 				</div>
 			{:else}
@@ -1115,15 +1787,24 @@
 						</div>
 						<div class="metric">
 							<span class="m-label">Revenue</span>
-							<span class="m-val positive">${revenue.toFixed(2)}</span>
+							<span class="m-val positive"
+								>${revenue.toFixed(2)}</span
+							>
 						</div>
 						<div class="metric">
 							<span class="m-label">Turned Away</span>
-							<span class="m-val">{missedTooExpensive + missedBadTaste + missedSoldOut}</span>
+							<span class="m-val"
+								>{missedTooExpensive +
+									missedBadTaste +
+									missedSoldOut}</span
+							>
 						</div>
 					</div>
 					<div class="progress-track">
-						<div class="progress-fill" style="width: {dayProgress * 100}%"></div>
+						<div
+							class="progress-fill"
+							style="width: {dayProgress * 100}%"
+						></div>
 					</div>
 					<div class="sim-controls">
 						<button
@@ -1133,8 +1814,12 @@
 						>
 							{simSpeed}x Speed
 						</button>
-						<button type="button" class="skip-btn" onclick={skipDayAnimation}>
-							Skip ⏭
+						<button
+							type="button"
+							class="skip-btn btn-with-icon"
+							onclick={skipDayAnimation}
+						>
+							Skip {@render sprite("skip", 15)}
 						</button>
 					</div>
 				</div>
@@ -1144,8 +1829,12 @@
 		<div class="results-panel" in:scale={{ duration: 220, start: 0.96 }}>
 			<h2>Day {currentDay} Summary</h2>
 			<div class="weather-display">
-				<span class="weather-icon">{currentWeather.icon}</span>
-				<span>{currentWeather.description} — {currentWeather.temperature}°F</span>
+				<span class="weather-icon"
+					>{@render sprite(currentWeather.icon, 24)}</span
+				>
+				<span
+					>{currentWeather.description} — {currentWeather.temperature}°F</span
+				>
 			</div>
 
 			<div class="results-stats">
@@ -1163,13 +1852,18 @@
 				</div>
 				<div class="result">
 					<span class="label">Melted Ice ({meltedIceCount})</span>
-					<span class="value negative">-${iceWasteCost.toFixed(2)}</span>
+					<span class="value negative"
+						>-${iceWasteCost.toFixed(2)}</span
+					>
 				</div>
 			</div>
 
 			<div class="net-profit-banner">
 				<span>Net Day Profit</span>
-				<strong class:positive={profit >= 0} class:negative={profit < 0}>
+				<strong
+					class:positive={profit >= 0}
+					class:negative={profit < 0}
+				>
 					{profit >= 0 ? "+" : "-"}${Math.abs(profit).toFixed(2)}
 				</strong>
 			</div>
@@ -1177,20 +1871,32 @@
 			{#if missedTooExpensive > 0 || missedBadTaste > 0 || missedSoldOut > 0}
 				<div class="feedback-chips">
 					{#if missedSoldOut > 0}
-						<span class="chip warn">🚫 {missedSoldOut} missed (sold out)</span>
+						<span class="chip warn"
+							>{@render sprite("ban", 13)}
+							{missedSoldOut} missed (sold out)</span
+						>
 					{/if}
 					{#if missedTooExpensive > 0}
-						<span class="chip warn">💸 {missedTooExpensive} thought price was high</span>
+						<span class="chip warn"
+							>{@render sprite("coin", 13)}
+							{missedTooExpensive} thought price was high</span
+						>
 					{/if}
 					{#if missedBadTaste > 0}
-						<span class="chip warn">😖 {missedBadTaste} disliked recipe/ice</span>
+						<span class="chip warn"
+							>{@render sprite("warn", 13)}
+							{missedBadTaste} disliked recipe/ice</span
+						>
 					{/if}
 				</div>
 			{/if}
 
 			<div class="forecast-box">
 				<span>Tomorrow's Forecast:</span>
-				<strong>{tomorrowWeather.icon} {tomorrowWeather.description} (~{tomorrowWeather.temperature}°F)</strong>
+				<strong class="label-with-icon"
+					>{@render sprite(tomorrowWeather.icon, 17)}
+					{tomorrowWeather.description} (~{tomorrowWeather.temperature}°F)</strong
+				>
 			</div>
 
 			<button type="button" class="btn next-btn" onclick={nextDay}>
@@ -1201,7 +1907,7 @@
 		{@const totalProfit = +(money - INITIAL_MONEY).toFixed(2)}
 		{@const rank = getBusinessRank(totalProfit)}
 		<div class="game-over-panel" in:scale={{ duration: 240, start: 0.96 }}>
-			<div class="rank-badge">{rank.badge}</div>
+			<div class="rank-badge">{@render sprite(rank.badge, 42)}</div>
 			<h2>{rank.title}</h2>
 			<p class="subtitle">7-Day Lemonade Stand Complete</p>
 
@@ -1212,7 +1918,8 @@
 						class="value"
 						class:positive={money >= INITIAL_MONEY}
 						class:negative={money < INITIAL_MONEY}
-					>${money.toFixed(2)}</span>
+						>${money.toFixed(2)}</span
+					>
 				</div>
 				<div class="final-stat">
 					<span class="label">Net Profit</span>
@@ -1220,11 +1927,16 @@
 						class="value"
 						class:positive={totalProfit >= 0}
 						class:negative={totalProfit < 0}
-					>{totalProfit >= 0 ? "+" : "-"}${Math.abs(totalProfit).toFixed(2)}</span>
+						>{totalProfit >= 0 ? "+" : "-"}${Math.abs(
+							totalProfit,
+						).toFixed(2)}</span
+					>
 				</div>
 				<div class="final-stat">
 					<span class="label">Reputation</span>
-					<span class="value">★ {starRating}</span>
+					<span class="value label-with-icon-center"
+						>{@render sprite("star", 18)} {starRating}</span
+					>
 				</div>
 			</div>
 
@@ -1233,51 +1945,80 @@
 				<div class="history-list">
 					{#each dailyHistory as entry}
 						<div class="history-entry">
-							<span>Day {entry.day} {entry.weather.icon}</span>
+							<span class="label-with-icon"
+								>Day {entry.day}
+								{@render sprite(entry.weather.icon, 15)}</span
+							>
 							<span>{entry.customers} sold</span>
-							<span class="muted">Rev ${entry.revenue.toFixed(2)}</span>
-							<span class:positive={entry.profit >= 0} class:negative={entry.profit < 0}>
-								{entry.profit >= 0 ? "+" : "-"}${Math.abs(entry.profit).toFixed(2)}
+							<span class="muted"
+								>Rev ${entry.revenue.toFixed(2)}</span
+							>
+							<span
+								class:positive={entry.profit >= 0}
+								class:negative={entry.profit < 0}
+							>
+								{entry.profit >= 0 ? "+" : "-"}${Math.abs(
+									entry.profit,
+								).toFixed(2)}
 							</span>
 						</div>
 					{/each}
 				</div>
 			</div>
-			<button type="button" class="btn restart-btn" onclick={resetGame}>Play Again</button>
+			<button type="button" class="btn restart-btn" onclick={resetGame}
+				>Play Again</button
+			>
 		</div>
 	{/if}
 
 	{#if showBuyMenu}
-		<div class="buy-menu-overlay" in:fade={{ duration: 150 }} out:fade={{ duration: 150 }}>
+		<div
+			class="buy-menu-overlay"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="buy-modal-title"
+			in:fade={{ duration: 150 }}
+			out:fade={{ duration: 150 }}
+		>
 			<div class="buy-menu" in:scale={{ duration: 180, start: 0.95 }}>
 				<div class="buy-header">
-					<h2>🛒 Wholesale Supplies</h2>
+					<h2 id="buy-modal-title" class="label-with-icon">
+						{@render sprite("cart", 20)} Wholesale Supplies
+					</h2>
 					<span class="cash-pill">Cash: ${money.toFixed(2)}</span>
 				</div>
-				<p class="buy-tip">Larger packs have lower unit costs. Unused ice melts each night!</p>
+				<p class="buy-tip">
+					Larger packs have lower unit costs. Unused ice melts each
+					night!
+				</p>
 
 				<div class="buy-rows">
-					{#each [
-						{ key: "cups" as SupplyKey, label: "🥤 Cups", current: cups, selected: selectedCups },
-						{ key: "lemons" as SupplyKey, label: "🍋 Lemons", current: lemons, selected: selectedLemons },
-						{ key: "sugar" as SupplyKey, label: "🍬 Sugar", current: sugar, selected: selectedSugar },
-						{ key: "ice" as SupplyKey, label: "🧊 Ice", current: ice, selected: selectedIce },
-					] as row}
+					{#each [{ key: "cups" as SupplyKey, icon: "cup" as SpriteName, label: "Cups", current: cups, selected: selectedCups }, { key: "lemons" as SupplyKey, icon: "lemon" as SpriteName, label: "Lemons", current: lemons, selected: selectedLemons }, { key: "sugar" as SupplyKey, icon: "sugar" as SpriteName, label: "Sugar", current: sugar, selected: selectedSugar }, { key: "ice" as SupplyKey, icon: "ice" as SpriteName, label: "Ice", current: ice, selected: selectedIce }] as row}
 						<div class="buy-row">
 							<div class="row-info">
-								<span class="row-name">{row.label}</span>
-								<span class="row-stock">Have: {row.current}</span>
+								<span class="row-name label-with-icon"
+									>{@render sprite(row.icon, 16)}
+									{row.label}</span
+								>
+								<span class="row-stock"
+									>Have: {row.current}</span
+								>
 							</div>
 							<div class="pack-options">
 								{#each SUPPLY_PACKS[row.key] as pack}
 									<button
 										type="button"
 										class="pack-btn"
-										class:selected={row.selected === pack.qty}
-										onclick={() => toggleSelect(row.key, pack.qty)}
+										class:selected={row.selected ===
+											pack.qty}
+										onclick={() =>
+											toggleSelect(row.key, pack.qty)}
 									>
-										<span class="pack-qty">+{pack.qty}</span>
-										<span class="pack-cost">${pack.cost.toFixed(2)}</span>
+										<span class="pack-qty">+{pack.qty}</span
+										>
+										<span class="pack-cost"
+											>${pack.cost.toFixed(2)}</span
+										>
 									</button>
 								{/each}
 							</div>
@@ -1297,7 +2038,8 @@
 						type="button"
 						class="btn buy-btn"
 						onclick={buySelected}
-						disabled={selectedTotalCost === 0 || selectedTotalCost > money + 0.0001}
+						disabled={selectedTotalCost === 0 ||
+							selectedTotalCost > money + 0.0001}
 					>
 						Purchase
 					</button>
@@ -1319,19 +2061,84 @@
 
 <style>
 	.lemonade-container {
+		--ls-bg: var(--app-bg, #09090b);
+		--ls-card-bg: #18181b;
+		--ls-card-border: rgba(255, 255, 255, 0.12);
+		--ls-card-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		--ls-sub-bg: rgba(255, 255, 255, 0.05);
+		--ls-sub-border: rgba(255, 255, 255, 0.08);
+		--ls-text: #ffffff;
+		--ls-text-muted: #d4d4d8;
+		--ls-text-soft: #a1a1aa;
+		--ls-btn-bg: #27272a;
+		--ls-btn-hover: #3f3f46;
+		--ls-btn-border: #3f3f46;
+		--ls-btn-text: #ffffff;
+		--ls-positive: #34d399;
+		--ls-negative: #f87171;
+		--ls-warn: #fde047;
+		--ls-sweet: #f472b6;
+		--ls-cool: #7dd3fc;
+		--ls-rep-bg: rgba(255, 255, 255, 0.08);
+		--ls-rep-border: rgba(255, 255, 255, 0.16);
+		--ls-rep-text: #fde047;
+		--ls-chip-bg: rgba(251, 191, 36, 0.16);
+		--ls-chip-text: #fde047;
+		--ls-forecast-bg: rgba(56, 189, 248, 0.12);
+		--ls-forecast-border: rgba(56, 189, 248, 0.28);
+		--ls-cash-pill-bg: rgba(16, 185, 129, 0.18);
+		--ls-cash-pill-text: #34d399;
+		--ls-overlay-bg: rgba(0, 0, 0, 0.78);
+
 		width: 100%;
 		height: 100%;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		color: var(--game-text-primary, #f4f4f5);
+		color: var(--ls-text);
 		font-family: "Outfit", "Inter", sans-serif;
-		background: #09090b;
+		background: var(--ls-bg);
 		padding: 1.25rem;
 		position: relative;
 		overflow-y: auto;
 		box-sizing: border-box;
+	}
+
+	:global(html[data-theme="light"]) .lemonade-container {
+		--ls-bg: var(--app-bg, #f7f1e6);
+		--ls-card-bg: #fffdf8;
+		--ls-card-border: rgba(106, 84, 58, 0.22);
+		--ls-card-shadow: 0 12px 32px rgba(47, 37, 28, 0.1);
+		--ls-sub-bg: #f5efe4;
+		--ls-sub-border: rgba(106, 84, 58, 0.16);
+		--ls-text: #2f251c;
+		--ls-text-muted: #544435;
+		--ls-text-soft: #6b5847;
+		--ls-btn-bg: #efe6d6;
+		--ls-btn-hover: #e4d7c1;
+		--ls-btn-border: rgba(106, 84, 58, 0.3);
+		--ls-btn-text: #2f251c;
+		--ls-positive: #047857;
+		--ls-negative: #b91c1c;
+		--ls-warn: #92400e;
+		--ls-sweet: #9d174d;
+		--ls-cool: #0369a1;
+		--ls-rep-bg: #fef3c7;
+		--ls-rep-border: rgba(146, 64, 14, 0.28);
+		--ls-rep-text: #78350f;
+		--ls-chip-bg: #fef3c7;
+		--ls-chip-text: #78350f;
+		--ls-forecast-bg: #e0f2fe;
+		--ls-forecast-border: rgba(3, 105, 161, 0.25);
+		--ls-cash-pill-bg: #d1fae5;
+		--ls-cash-pill-text: #065f46;
+		--ls-overlay-bg: rgba(47, 37, 28, 0.55);
+	}
+
+	.lemonade-container button:focus-visible {
+		outline: 2px solid #f59e0b;
+		outline-offset: 2px;
 	}
 
 	.toast {
@@ -1344,16 +2151,16 @@
 		border-radius: 999px;
 		font-weight: 700;
 		font-size: 0.88rem;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 		pointer-events: none;
 	}
 	.toast-error {
-		background: #ef4444;
-		color: white;
+		background: #dc2626;
+		color: #ffffff;
 	}
 	.toast-success {
-		background: #10b981;
-		color: #052e16;
+		background: #059669;
+		color: #ffffff;
 	}
 	.toast-info {
 		background: #fbbf24;
@@ -1375,7 +2182,7 @@
 
 	.day-badge {
 		background: #fbbf24;
-		color: #09090b;
+		color: #18181b;
 		font-weight: 900;
 		font-size: 0.72rem;
 		padding: 0.2rem 0.7rem;
@@ -1384,13 +2191,16 @@
 	}
 
 	.rep-badge {
-		background: rgba(255, 255, 255, 0.08);
-		border: 1px solid rgba(255, 255, 255, 0.14);
-		color: #fde047;
+		background: var(--ls-rep-bg);
+		border: 1px solid var(--ls-rep-border);
+		color: var(--ls-rep-text);
 		font-weight: 800;
 		font-size: 0.72rem;
 		padding: 0.18rem 0.6rem;
 		border-radius: 4px;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
 	}
 
 	h1 {
@@ -1398,19 +2208,60 @@
 		font-weight: 900;
 		margin: 0;
 		letter-spacing: -1.5px;
+		color: var(--ls-text);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+	}
+
+	.sprite-icon {
+		display: inline-block;
+		vertical-align: middle;
+		flex-shrink: 0;
+	}
+
+	.label-with-icon {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.label-with-icon-center {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.3rem;
+	}
+
+	.btn-with-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+	}
+
+	.weather-pill,
+	.clock-pill,
+	.supplies span,
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
 	}
 
 	.game-viewport,
 	.results-panel,
 	.game-over-panel {
-		background: #18181b;
-		padding: 1.25rem;
+		background: var(--ls-card-bg);
+		padding: 1.5rem;
 		border-radius: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+		border: 1px solid var(--ls-card-border);
+		box-shadow: var(--ls-card-shadow);
 		width: 100%;
-		max-width: 520px;
+		max-width: 820px;
 		box-sizing: border-box;
+		color: var(--ls-text);
 	}
 
 	/* Animated Scene */
@@ -1419,7 +2270,7 @@
 		width: 100%;
 		border-radius: 0.75rem;
 		overflow: hidden;
-		border: 1px solid rgba(255, 255, 255, 0.08);
+		border: 1px solid var(--ls-card-border);
 		margin-bottom: 1rem;
 		background: #0f172a;
 	}
@@ -1458,26 +2309,55 @@
 	}
 
 	@keyframes pulseGlow {
-		0%, 100% { opacity: 0.25; transform: scale(1); }
-		50% { opacity: 0.45; transform: scale(1.15); }
+		0%,
+		100% {
+			opacity: 0.25;
+			transform: scale(1);
+		}
+		50% {
+			opacity: 0.45;
+			transform: scale(1.15);
+		}
 	}
 
 	@keyframes driftCloud {
-		0% { transform: translateX(-18px); }
-		50% { transform: translateX(18px); }
-		100% { transform: translateX(-18px); }
+		0% {
+			transform: translateX(-18px);
+		}
+		50% {
+			transform: translateX(18px);
+		}
+		100% {
+			transform: translateX(-18px);
+		}
 	}
 
 	@keyframes fallRain {
-		0% { transform: translateY(-10px); opacity: 0; }
-		20% { opacity: 0.85; }
-		100% { transform: translateY(105px); opacity: 0.1; }
+		0% {
+			transform: translateY(-10px);
+			opacity: 0;
+		}
+		20% {
+			opacity: 0.85;
+		}
+		100% {
+			transform: translateY(105px);
+			opacity: 0.1;
+		}
 	}
 
 	@keyframes fallSnow {
-		0% { transform: translate(0, -10px); opacity: 0; }
-		20% { opacity: 0.9; }
-		100% { transform: translate(12px, 100px); opacity: 0; }
+		0% {
+			transform: translate(0, -10px);
+			opacity: 0;
+		}
+		20% {
+			opacity: 0.9;
+		}
+		100% {
+			transform: translate(12px, 100px);
+			opacity: 0;
+		}
 	}
 
 	.scene-hud {
@@ -1492,9 +2372,10 @@
 
 	.weather-pill,
 	.clock-pill {
-		background: rgba(9, 9, 11, 0.72);
+		background: rgba(9, 9, 11, 0.8);
+		color: #ffffff;
 		backdrop-filter: blur(6px);
-		border: 1px solid rgba(255, 255, 255, 0.12);
+		border: 1px solid rgba(255, 255, 255, 0.18);
 		padding: 0.22rem 0.6rem;
 		border-radius: 999px;
 		font-size: 0.75rem;
@@ -1506,13 +2387,13 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%) rotate(-6deg);
-		background: #ef4444;
-		color: white;
+		background: #dc2626;
+		color: #ffffff;
 		font-weight: 900;
 		font-size: 0.85rem;
 		padding: 0.25rem 0.75rem;
 		border-radius: 6px;
-		border: 2px solid white;
+		border: 2px solid #ffffff;
 		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 		pointer-events: none;
 	}
@@ -1532,19 +2413,39 @@
 		align-items: center;
 		font-weight: 900;
 		font-size: 0.85rem;
-		text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+		text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
 		animation: floatUpFade 1.15s ease-out forwards;
 		white-space: nowrap;
 	}
-	.popup-money { color: #34d399; }
-	.popup-warning { color: #fbbf24; font-size: 0.78rem; }
-	.popup-negative { color: #f87171; font-size: 0.78rem; }
-	.popup-sub { font-size: 0.7rem; color: #fef08a; }
+	.popup-money {
+		color: #34d399;
+	}
+	.popup-warning {
+		color: #fde047;
+		font-size: 0.78rem;
+	}
+	.popup-negative {
+		color: #f87171;
+		font-size: 0.78rem;
+	}
+	.popup-sub {
+		font-size: 0.7rem;
+		color: #fef08a;
+	}
 
 	@keyframes floatUpFade {
-		0% { opacity: 0; transform: translate(-50%, 0) scale(0.8); }
-		20% { opacity: 1; transform: translate(-50%, -10px) scale(1.05); }
-		100% { opacity: 0; transform: translate(-50%, -36px) scale(0.95); }
+		0% {
+			opacity: 0;
+			transform: translate(-50%, 0) scale(0.8);
+		}
+		20% {
+			opacity: 1;
+			transform: translate(-50%, -10px) scale(1.05);
+		}
+		100% {
+			opacity: 0;
+			transform: translate(-50%, -36px) scale(0.95);
+		}
 	}
 
 	/* Stats Panel */
@@ -1555,9 +2456,9 @@
 		gap: 0.75rem;
 		margin-bottom: 1rem;
 		padding: 0.75rem;
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--ls-sub-bg);
 		border-radius: 0.75rem;
-		border: 1px solid rgba(255, 255, 255, 0.06);
+		border: 1px solid var(--ls-sub-border);
 	}
 
 	.stat {
@@ -1568,7 +2469,7 @@
 
 	.stat .label {
 		font-size: 0.68rem;
-		color: var(--game-text-soft, #a1a1aa);
+		color: var(--ls-text-soft);
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -1581,7 +2482,7 @@
 	}
 
 	.stat .cash {
-		color: #34d399;
+		color: var(--ls-positive);
 	}
 
 	.supplies {
@@ -1600,8 +2501,8 @@
 	}
 
 	.control-card {
-		background: rgba(255, 255, 255, 0.04);
-		border: 1px solid rgba(255, 255, 255, 0.06);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		border-radius: 0.75rem;
 		padding: 0.85rem;
 	}
@@ -1619,13 +2520,28 @@
 		font-weight: 800;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
-		color: var(--game-text-muted, #a1a1aa);
+		color: var(--ls-text-muted);
 	}
 
 	.margin-tag,
 	.taste-badge {
 		font-size: 0.75rem;
 		font-weight: 700;
+	}
+	.taste-good {
+		color: var(--ls-positive);
+	}
+	.taste-warn {
+		color: var(--ls-warn);
+	}
+	.taste-sweet {
+		color: var(--ls-sweet);
+	}
+	.taste-cool {
+		color: var(--ls-cool);
+	}
+	.taste-bad {
+		color: var(--ls-negative);
 	}
 
 	.price-buttons {
@@ -1637,13 +2553,15 @@
 
 	.price-buttons button,
 	.recipe-control button {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: var(--game-text-primary, #f4f4f5);
+		background: var(--ls-btn-bg);
+		border: 1px solid var(--ls-btn-border);
+		color: var(--ls-btn-text);
 		border-radius: 8px;
 		font-weight: 800;
 		cursor: pointer;
-		transition: background 0.15s, transform 0.1s;
+		transition:
+			background 0.15s,
+			transform 0.1s;
 	}
 
 	.price-buttons button {
@@ -1653,7 +2571,7 @@
 
 	.price-buttons button:hover,
 	.recipe-control button:hover {
-		background: #3f3f46;
+		background: var(--ls-btn-hover);
 	}
 
 	.price-buttons button:active,
@@ -1683,7 +2601,7 @@
 	}
 
 	.recipe-item small {
-		color: #a1a1aa;
+		color: var(--ls-text-soft);
 		font-weight: 500;
 		font-size: 0.75rem;
 	}
@@ -1721,7 +2639,9 @@
 		font-weight: 800;
 		font-size: 0.95rem;
 		cursor: pointer;
-		transition: transform 0.15s, background 0.15s;
+		transition:
+			transform 0.15s,
+			background 0.15s;
 	}
 
 	.btn:disabled {
@@ -1735,30 +2655,35 @@
 
 	.start-btn {
 		background: #fbbf24;
-		color: #09090b;
+		color: #18181b;
 	}
 	.start-btn:hover:not(:disabled) {
 		background: #f59e0b;
 	}
 
 	.secondary-btn {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: var(--game-text-primary, #f4f4f5);
+		background: var(--ls-btn-bg);
+		border: 1px solid var(--ls-btn-border);
+		color: var(--ls-btn-text);
 	}
 	.secondary-btn:hover {
-		background: #3f3f46;
+		background: var(--ls-btn-hover);
 	}
 
 	.pulse-hint {
-		border-color: #fbbf24;
-		box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
+		border-color: #f59e0b;
+		box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
 		animation: gentlePulse 1.8s ease-in-out infinite;
 	}
 
 	@keyframes gentlePulse {
-		0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
-		50% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
+		0%,
+		100% {
+			box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+		}
+		50% {
+			box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+		}
 	}
 
 	/* Running Bar */
@@ -1776,7 +2701,8 @@
 	}
 
 	.metric {
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		padding: 0.5rem;
 		border-radius: 8px;
 	}
@@ -1784,7 +2710,7 @@
 		display: block;
 		font-size: 0.68rem;
 		text-transform: uppercase;
-		color: #a1a1aa;
+		color: var(--ls-text-soft);
 		font-weight: 700;
 	}
 	.m-val {
@@ -1795,13 +2721,13 @@
 	.progress-track {
 		width: 100%;
 		height: 8px;
-		background: #27272a;
+		background: var(--ls-btn-bg);
 		border-radius: 999px;
 		overflow: hidden;
 	}
 	.progress-fill {
 		height: 100%;
-		background: linear-gradient(90deg, #fbbf24, #10b981);
+		background: linear-gradient(90deg, #f59e0b, #10b981);
 		transition: width 0.08s linear;
 	}
 
@@ -1818,13 +2744,13 @@
 		font-weight: 800;
 		font-size: 0.85rem;
 		cursor: pointer;
-		border: 1px solid #3f3f46;
-		background: #27272a;
-		color: #f4f4f5;
+		border: 1px solid var(--ls-btn-border);
+		background: var(--ls-btn-bg);
+		color: var(--ls-btn-text);
 	}
 	.speed-btn:hover,
 	.skip-btn:hover {
-		background: #3f3f46;
+		background: var(--ls-btn-hover);
 	}
 
 	/* Results & Game Over */
@@ -1846,7 +2772,7 @@
 	}
 
 	.subtitle {
-		color: #a1a1aa;
+		color: var(--ls-text-soft);
 		font-size: 0.85rem;
 		margin: -0.4rem 0 1rem;
 	}
@@ -1860,7 +2786,8 @@
 		font-weight: 600;
 		margin-bottom: 1rem;
 		padding: 0.6rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		border-radius: 8px;
 	}
 
@@ -1876,14 +2803,15 @@
 	}
 
 	.result {
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		padding: 0.75rem;
 		border-radius: 8px;
 	}
 
 	.result .label {
 		font-size: 0.7rem;
-		color: var(--game-text-soft, #a1a1aa);
+		color: var(--ls-text-soft);
 		font-weight: 700;
 		text-transform: uppercase;
 		display: block;
@@ -1900,7 +2828,8 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 0.85rem 1rem;
-		background: rgba(255, 255, 255, 0.06);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		border-radius: 10px;
 		margin-bottom: 0.85rem;
 		font-weight: 700;
@@ -1922,9 +2851,9 @@
 		font-size: 0.75rem;
 		padding: 0.25rem 0.6rem;
 		border-radius: 999px;
-		background: rgba(251, 191, 36, 0.14);
-		color: #fde047;
-		font-weight: 600;
+		background: var(--ls-chip-bg);
+		color: var(--ls-chip-text);
+		font-weight: 700;
 	}
 
 	.forecast-box {
@@ -1932,26 +2861,32 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 0.65rem 0.9rem;
-		background: rgba(56, 189, 248, 0.1);
-		border: 1px solid rgba(56, 189, 248, 0.22);
+		background: var(--ls-forecast-bg);
+		border: 1px solid var(--ls-forecast-border);
 		border-radius: 8px;
 		font-size: 0.85rem;
 		margin-bottom: 1rem;
 	}
 
-	.positive { color: #10b981; }
-	.negative { color: #ef4444; }
-	.muted { color: #a1a1aa; }
+	.positive {
+		color: var(--ls-positive);
+	}
+	.negative {
+		color: var(--ls-negative);
+	}
+	.muted {
+		color: var(--ls-text-soft);
+	}
 
 	.next-btn,
 	.restart-btn {
-		background: #10b981;
-		color: #052e16;
+		background: #059669;
+		color: #ffffff;
 		width: 100%;
 	}
 	.next-btn:hover,
 	.restart-btn:hover {
-		background: #059669;
+		background: #047857;
 	}
 
 	.final-stats {
@@ -1962,14 +2897,15 @@
 	}
 
 	.final-stat {
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		padding: 0.75rem 0.5rem;
 		border-radius: 8px;
 	}
 
 	.final-stat .label {
 		font-size: 0.7rem;
-		color: var(--game-text-soft, #a1a1aa);
+		color: var(--ls-text-soft);
 		font-weight: 700;
 		text-transform: uppercase;
 		display: block;
@@ -1992,13 +2928,14 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		margin: 0 0 0.5rem;
-		color: #a1a1aa;
+		color: var(--ls-text-muted);
 	}
 
 	.history-list {
 		max-height: 170px;
 		overflow-y: auto;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		border-radius: 8px;
 		padding: 0.4rem;
 	}
@@ -2008,7 +2945,7 @@
 		grid-template-columns: 1.1fr 0.9fr 1.1fr 0.9fr;
 		gap: 0.4rem;
 		padding: 0.45rem 0.5rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid var(--ls-sub-border);
 		font-size: 0.82rem;
 		font-weight: 600;
 	}
@@ -2023,7 +2960,7 @@
 	.buy-menu-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.8);
+		background: var(--ls-overlay-bg);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -2033,11 +2970,12 @@
 	}
 
 	.buy-menu {
-		background: #18181b;
+		background: var(--ls-card-bg);
+		color: var(--ls-text);
 		padding: 1.5rem;
 		border-radius: 1rem;
-		border: 1px solid #27272a;
-		box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+		border: 1px solid var(--ls-card-border);
+		box-shadow: var(--ls-card-shadow);
 		width: 100%;
 		max-width: 460px;
 		max-height: 90dvh;
@@ -2058,8 +2996,8 @@
 	}
 
 	.cash-pill {
-		background: rgba(16, 185, 129, 0.15);
-		color: #34d399;
+		background: var(--ls-cash-pill-bg);
+		color: var(--ls-cash-pill-text);
 		padding: 0.25rem 0.65rem;
 		border-radius: 999px;
 		font-weight: 800;
@@ -2067,7 +3005,7 @@
 	}
 
 	.buy-tip {
-		color: #a1a1aa;
+		color: var(--ls-text-muted);
 		font-size: 0.8rem;
 		margin: 0 0 1rem;
 	}
@@ -2084,10 +3022,10 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: 0.75rem;
-		background: rgba(255, 255, 255, 0.03);
+		background: var(--ls-sub-bg);
 		padding: 0.65rem 0.75rem;
 		border-radius: 10px;
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--ls-sub-border);
 	}
 
 	.row-info {
@@ -2101,7 +3039,7 @@
 	}
 	.row-stock {
 		font-size: 0.72rem;
-		color: #a1a1aa;
+		color: var(--ls-text-soft);
 	}
 
 	.pack-options {
@@ -2117,21 +3055,21 @@
 		align-items: center;
 		padding: 0.4rem 0.35rem;
 		border-radius: 8px;
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: #f4f4f5;
+		background: var(--ls-btn-bg);
+		border: 1px solid var(--ls-btn-border);
+		color: var(--ls-btn-text);
 		cursor: pointer;
 		transition: all 0.15s;
 	}
 
 	.pack-btn:hover {
-		background: #3f3f46;
+		background: var(--ls-btn-hover);
 	}
 
 	.pack-btn.selected {
 		background: #fbbf24;
-		border-color: #fbbf24;
-		color: #09090b;
+		border-color: #d97706;
+		color: #18181b;
 	}
 
 	.pack-qty {
@@ -2141,14 +3079,15 @@
 	.pack-cost {
 		font-size: 0.72rem;
 		font-weight: 700;
-		opacity: 0.85;
+		opacity: 0.9;
 	}
 
 	.buy-preview {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		background: rgba(255, 255, 255, 0.05);
+		background: var(--ls-sub-bg);
+		border: 1px solid var(--ls-sub-border);
 		padding: 0.75rem 1rem;
 		border-radius: 8px;
 		margin-bottom: 1rem;
@@ -2164,20 +3103,84 @@
 	}
 
 	.buy-btn {
-		background: #10b981;
-		color: #052e16;
+		background: #059669;
+		color: #ffffff;
 	}
 	.buy-btn:hover:not(:disabled) {
-		background: #059669;
+		background: #047857;
 	}
 
 	.close-btn {
-		background: #27272a;
-		border: 1px solid #3f3f46;
-		color: #f4f4f5;
+		background: var(--ls-btn-bg);
+		border: 1px solid var(--ls-btn-border);
+		color: var(--ls-btn-text);
 	}
 	.close-btn:hover {
-		background: #3f3f46;
+		background: var(--ls-btn-hover);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sun-glow,
+		.cloud-1,
+		.cloud-2,
+		.raindrop,
+		.snowflake,
+		.pulse-hint {
+			animation: none;
+		}
+		.stand-booth,
+		.progress-fill,
+		.btn {
+			transition: none;
+		}
+	}
+
+	@media (min-width: 680px) {
+		.lemonade-container {
+			padding: 1.5rem 2rem;
+		}
+		h1 {
+			font-size: 2.25rem;
+		}
+		.stand-svg {
+			max-height: 280px;
+		}
+		.stats-panel {
+			padding: 0.9rem 1.25rem;
+		}
+		.stat .value {
+			font-size: 1.25rem;
+		}
+		.supplies {
+			gap: 0.9rem;
+			font-size: 1rem;
+		}
+		.controls-grid {
+			display: grid;
+			grid-template-columns: 1fr 1.25fr;
+			gap: 1rem;
+		}
+		.control-card {
+			padding: 1rem 1.1rem;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+		.price-buttons {
+			margin: auto 0;
+			padding: 0.5rem 0;
+		}
+		.price-buttons span {
+			font-size: 1.6rem;
+		}
+		.btn {
+			padding: 1rem 1.25rem;
+			font-size: 1.05rem;
+		}
+		.buy-menu {
+			max-width: 560px;
+			padding: 1.75rem;
+		}
 	}
 
 	@media (max-width: 600px) {
@@ -2199,7 +3202,7 @@
 		}
 		.supplies-stat {
 			width: 100%;
-			border-top: 1px solid rgba(255, 255, 255, 0.06);
+			border-top: 1px solid var(--ls-sub-border);
 			padding-top: 0.4rem;
 		}
 		.buy-row {
