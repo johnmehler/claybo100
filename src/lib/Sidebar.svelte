@@ -92,13 +92,13 @@
 				<p class="controls-label">GAME CONTROLS</p>
 				<div class="nav-list">
 					{#if activeGameActions.help}
-						<button class="nav-button control-btn help" onclick={activeGameActions.help}>
+						<button class="nav-button control-btn help" onclick={() => { activeGameActions.help?.(); handleGameSelect(); }}>
 							<div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Help Icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></div>
 							<span class="nav-label-text">How to Play</span>
 						</button>
 					{/if}
 					{#if activeGameActions.restart}
-						<button class="nav-button control-btn restart" onclick={activeGameActions.restart}>
+						<button class="nav-button control-btn restart" onclick={() => { activeGameActions.restart?.(); handleGameSelect(); }}>
 							<div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Restart Icon"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
 							<span class="nav-label-text">Restart Game</span>
 						</button>

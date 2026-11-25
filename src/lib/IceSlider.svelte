@@ -403,7 +403,7 @@
 				playSound("pit");
 				showToast(
 					res.outcome === "pit"
-						? "Fell into meltwater!"
+						? "Fell into lava!"
 						: "Infinite loop! Rewinding...",
 				);
 				setTimeout(() => {
@@ -616,8 +616,8 @@
 				you <em>right on top</em> of it.
 			</li>
 			<li>
-				<span class="badge pit-badge">Meltwater</span> Hazard! Sliding into
-				it splashes and rewinds.
+				<span class="badge pit-badge">Lava Pit</span> Hazard! Sliding into
+				it sizzles and rewinds.
 			</li>
 			<li>
 				<span class="badge bumper-badge">Crystal Bumper</span> 45° prism
@@ -1113,7 +1113,7 @@
 						onclick={() => startRandomMode("classic")}
 					>
 						<strong>Classic</strong>
-						<span>12×12 · + Pits &amp; Bumpers</span>
+						<span>12×12 · + Lava &amp; Bumpers</span>
 					</button>
 					<button
 						class="rand-btn"
@@ -1153,10 +1153,11 @@
 		--ice-sticky-color: #a5d8f8;
 		--ice-pit-bg: radial-gradient(
 			circle at center,
-			#081224 30%,
-			#132c4c 100%
+			#fbbf24 0%,
+			#ea580c 48%,
+			#7c1d13 100%
 		);
-		--ice-pit-border: rgba(92, 179, 255, 0.35);
+		--ice-pit-border: rgba(251, 146, 60, 0.7);
 		--ice-bumper-color: #5eead4;
 		--ice-trail-stroke: rgba(255, 255, 255, 0.42);
 		--ice-secondary-bg: rgba(255, 255, 255, 0.06);
@@ -1185,10 +1186,11 @@
 		--ice-sticky-color: #344e94;
 		--ice-pit-bg: radial-gradient(
 			circle at center,
-			#1c2d48 30%,
-			#37557a 100%
+			#f59e0b 0%,
+			#dc2626 55%,
+			#7f1d1d 100%
 		);
-		--ice-pit-border: rgba(52, 78, 148, 0.45);
+		--ice-pit-border: rgba(234, 88, 12, 0.65);
 		--ice-bumper-color: #0d9488;
 		--ice-trail-stroke: rgba(75, 106, 190, 0.45);
 		--ice-secondary-bg: rgba(255, 248, 237, 0.88);
@@ -1444,13 +1446,16 @@
 		border: 1px solid var(--ice-pit-border);
 		border-radius: 0.35rem;
 		margin: 2px;
+		box-shadow:
+			inset 0 0 10px rgba(251, 146, 60, 0.45),
+			0 0 8px rgba(234, 88, 12, 0.25);
 	}
 
 	.pit-icon {
 		width: 66%;
 		height: 66%;
-		color: #60a5fa;
-		opacity: 0.8;
+		color: #fef08a;
+		opacity: 0.9;
 		display: flex;
 	}
 
@@ -1954,8 +1959,8 @@
 	}
 
 	.pit-badge {
-		background: #132c4c;
-		color: #60a5fa;
+		background: #7c1d13;
+		color: #fdba74;
 	}
 
 	.bumper-badge {

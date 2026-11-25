@@ -117,7 +117,7 @@ const RAW_LEVELS: RawLevelDef[] = [
 	{
 		id: 'lvl-5',
 		name: 'Thin Margin',
-		subtitle: 'Avoid the dark meltwater pits',
+		subtitle: 'Avoid the molten lava pits',
 		rows: [
 			'.......##*',
 			'.S#.......',
