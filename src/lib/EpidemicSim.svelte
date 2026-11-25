@@ -17,9 +17,9 @@
 	const WIDTH = 800;
 	const HEIGHT = 600;
 	const HOSPITAL_CAPACITY = 50;
-	const INITIAL_BUDGET = 140000;
+	const INITIAL_BUDGET = 100000;
 
-	type State = "S" | "I" | "R" | "D";
+	type State = "S" | "I" | "R";
 	interface Person {
 		x: number;
 		y: number;
@@ -27,6 +27,7 @@
 		baseVy: number;
 		state: State;
 		infectionDay: number;
+		recoveryDuration: number;
 	}
 
 	const SPEED_OPTIONS = [
@@ -38,7 +39,7 @@
 	type SimSpeed = (typeof SPEED_OPTIONS)[number]["value"];
 
 	let people: Person[] = [];
-	let stats = $state({ s: 0, i: 0, r: 0, d: 0 });
+	let stats = $state({ s: 0, i: 0, r: 0 });
 	let days = $state(0);
 	let isGameOver = $state(false);
 	let isPaused = $state(true);
@@ -58,19 +59,14 @@
 	let immuneRate = $derived(
 		difficulty === "EASY" ? 0.25 : difficulty === "MED" ? 0.15 : 0.05,
 	);
-	let durationBase = $derived(
-		difficulty === "EASY" ? 160 : difficulty === "MED" ? 210 : 250,
-	);
-	let fatalityRate = $derived(
-		difficulty === "EASY" ? 0.01 : difficulty === "MED" ? 0.02 : 0.05,
-	);
+	const durationBase = 240; // 4 days
 
 	// Derived System Stats
 	let transmissionChance = $derived(
 		transmissionBase * (1 - 0.3 * sanitaryProtocols),
 	);
 	let recoveryDuration = $derived(
-		durationBase * (1 - 0.3 * testingIsolation),
+		durationBase * (1 - 0.5 * testingIsolation),
 	);
 
 	// Economic Variables
@@ -91,21 +87,19 @@
 		costMobility + costHealthDrain + costTesting + costSanitary,
 	);
 
-	let history = $state<{ s: number; i: number; r: number; d: number }[]>([]);
+	let history = $state<{ s: number; i: number; r: number }[]>([]);
 	let activeEncounters = new Set<number>(); // Numeric pair keys: i * POPULATION_SIZE + j
 
 	function syncStats() {
 		let s = 0,
 			i = 0,
-			r = 0,
-			d = 0;
+			r = 0;
 		for (const p of people) {
 			if (p.state === "S") s++;
 			else if (p.state === "I") i++;
 			else if (p.state === "R") r++;
-			else if (p.state === "D") d++;
 		}
-		stats = { s, i, r, d };
+		stats = { s, i, r };
 	}
 
 	function initSim() {
@@ -143,6 +137,7 @@
 				baseVy: Math.sin(angle) * BASE_SPEED,
 				state: isImmune ? "R" : isInfected ? "I" : "S",
 				infectionDay: isInfected ? 0 : -1,
+				recoveryDuration: isInfected ? recoveryDuration : 0,
 			});
 		}
 		people = newPeople;
@@ -157,6 +152,12 @@
 
 	function step() {
 		if (isPaused || isGameOver) return;
+
+		if (days === 0) {
+			for (const p of people) {
+				if (p.state === "I") p.recoveryDuration = recoveryDuration;
+			}
+		}
 
 		days++;
 
@@ -173,7 +174,6 @@
 
 		for (let i = 0; i < len; i++) {
 			const p = people[i];
-			if (p.state === "D") continue;
 
 			p.x += p.baseVx * physSpeed;
 			p.y += p.baseVy * physSpeed;
@@ -195,15 +195,14 @@
 
 			if (p.state === "I") {
 				p.infectionDay++;
-				if (p.infectionDay > recoveryDuration) {
-					p.state = Math.random() < fatalityRate ? "D" : "R";
+				if (p.infectionDay > p.recoveryDuration) {
+					p.state = "R";
 					continue;
 				}
 
 				for (let j = 0; j < len; j++) {
 					if (i === j) continue;
 					const other = people[j];
-					if (other.state === "D") continue;
 
 					const dx = p.x - other.x;
 					const dy = p.y - other.y;
@@ -222,6 +221,7 @@
 							) {
 								other.state = "I";
 								other.infectionDay = 0;
+								other.recoveryDuration = recoveryDuration;
 							}
 						}
 					} else {
@@ -249,20 +249,7 @@
 
 		ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-		// Draw deceased first so living agents render on top
 		for (const p of people) {
-			if (p.state !== "D") continue;
-			ctx.globalAlpha = 0.45;
-			ctx.fillStyle = "#555";
-			ctx.beginPath();
-			ctx.arc(p.x, p.y, RADIUS, 0, Math.PI * 2);
-			ctx.fill();
-		}
-		ctx.globalAlpha = 1;
-
-		for (const p of people) {
-			if (p.state === "D") continue;
-
 			if (p.state === "S") {
 				ctx.fillStyle = "#6fb1fc";
 			} else if (p.state === "R") {
@@ -396,7 +383,7 @@
 				<span class={stats.i > HOSPITAL_CAPACITY ? "over-cap" : ""}
 					>Hlth: {costHealthDrain}</span
 				>
-				<span>Test: {costTesting}</span>
+				<span>Abx: {costTesting}</span>
 				<span>Protocols: {costSanitary}</span>
 			</div>
 		</div>
@@ -438,22 +425,22 @@
 									The economy failed before the virus was
 									contained.
 								</p>
-							{:else if stats.d > POPULATION_SIZE * 0.1}
-								<h2 class="lost">PUBLIC HEALTH CRISIS</h2>
-								<p>
-									Outbreak ended, but casualties exceeded 10%
-									of population.
-								</p>
-							{:else}
+							{:else if stats.s >= POPULATION_SIZE * 0.5}
 								<h2 class="won">OUTBREAK CONTAINED</h2>
 								<p>
-									Successful management! The population is
-									safe.
+									Stopped the spread early while keeping most
+									of the population uninfected.
+								</p>
+							{:else}
+								<h2 class="won">HERD IMMUNITY ACHIEVED</h2>
+								<p>
+									The population built enough immunity to halt
+									the spread.
 								</p>
 							{/if}
 							<p>
 								Simulation Duration: {Math.floor(days / 60)} Days
-								| Final Deceased: {stats.d}
+								| Uninfected: {stats.s} / {POPULATION_SIZE}
 							</p>
 							<button class="action-btn" onclick={initSim}
 								>RESET CHALLENGE</button
@@ -475,10 +462,6 @@
 				<div class="stat">
 					<span class="label">RECOVERED</span>
 					<span class="value r-val">{stats.r}</span>
-				</div>
-				<div class="stat">
-					<span class="label">DECEASED</span>
-					<span class="value d-val">{stats.d}</span>
 				</div>
 			</div>
 		</div>
@@ -549,10 +532,6 @@
 							{/if}
 						</span>
 					</div>
-					<div class="bio-row">
-						<span>Fatality Rate:</span>
-						<span>{(fatalityRate * 100).toFixed(1)}%</span>
-					</div>
 				</div>
 			</div>
 
@@ -573,15 +552,15 @@
 			</div>
 
 			<div class="control-group controllable">
-				<label for="quarantine-slider"
-					>Quarantine & Testing: {testingIsolation === 0
+				<label for="antibiotics-slider"
+					>Antibiotics: {testingIsolation === 0
 						? "OFF"
 						: testingIsolation === 0.5
 							? "STANDARD"
 							: "INTENSIVE"}</label
 				>
 				<input
-					id="quarantine-slider"
+					id="antibiotics-slider"
 					type="range"
 					min="0"
 					max="1"
@@ -627,31 +606,21 @@
 					/>
 					{#if history.length > 1}
 						{@const maxIdx = history.length - 1}
-						{@const dPoints = history
+						{@const iPoints = history
 							.map(
 								(h, idx) =>
-									`${(idx / maxIdx) * 100},${50 - (h.d / POPULATION_SIZE) * 50}`,
-							)
-							.join(" ")}
-						{@const idPoints = history
-							.map(
-								(h, idx) =>
-									`${(idx / maxIdx) * 100},${50 - ((h.i + h.d) / POPULATION_SIZE) * 50}`,
+									`${(idx / maxIdx) * 100},${50 - (h.i / POPULATION_SIZE) * 50}`,
 							)
 							.join(" ")}
 						<polygon
-							points="0,50 {idPoints} 100,50"
+							points="0,50 {iPoints} 100,50"
 							fill="rgba(255, 110, 97, 0.45)"
 						/>
 						<polyline
-							points={idPoints}
+							points={iPoints}
 							fill="none"
 							stroke="#ff6e61"
 							stroke-width="1.2"
-						/>
-						<polygon
-							points="0,50 {dPoints} 100,50"
-							fill="rgba(100, 100, 100, 0.7)"
 						/>
 					{/if}
 				</svg>
@@ -794,9 +763,6 @@
 	}
 	.r-val {
 		color: #69af4b;
-	}
-	.d-val {
-		color: #888;
 	}
 
 	.economic-bar {
