@@ -112,7 +112,11 @@
 	];
 
 	let levelIndex = $state(0);
-	const level = $derived(LEVELS[levelIndex]);
+	let freeplayStage = $state(0); // 0 = campaign levels 1-6, >= 1 = freeplay #N
+	let freeplayLevel = $state<Level | null>(null);
+	const level = $derived(
+		freeplayStage > 0 && freeplayLevel ? freeplayLevel : LEVELS[levelIndex],
+	);
 
 	let animationId: number | null = null;
 	let endShotTimer: ReturnType<typeof setTimeout> | null = null;
@@ -154,18 +158,246 @@
 	const toX = (m: number) => (m / WORLD_WIDTH) * 100;
 	const toY = (m: number) => (m / WORLD_HEIGHT) * 100;
 
+	const randRange = (min: number, max: number) =>
+		Math.round((min + Math.random() * (max - min)) * 10) / 10;
+
+	function resolveBlockerCollisions(
+		x: number,
+		y: number,
+		vx: number,
+		vy: number,
+		blockers: Blocker[],
+	) {
+		for (const b of blockers) {
+			const closestX = Math.max(b.x, Math.min(x, b.x + b.w));
+			const closestY = Math.max(b.y, Math.min(y, b.y + b.h));
+			const dx = x - closestX;
+			const dy = y - closestY;
+			const distSq = dx * dx + dy * dy;
+
+			if (distSq < BALL_R * BALL_R) {
+				const dist = Math.sqrt(distSq);
+				let nx = 0;
+				let ny = 1;
+				if (dist > 0.0001) {
+					nx = dx / dist;
+					ny = dy / dist;
+				} else {
+					const leftPen = x - b.x;
+					const rightPen = b.x + b.w - x;
+					const botPen = y - b.y;
+					const topPen = b.y + b.h - y;
+					const minPen = Math.min(leftPen, rightPen, botPen, topPen);
+					if (minPen === leftPen) {
+						nx = -1;
+						ny = 0;
+					} else if (minPen === rightPen) {
+						nx = 1;
+						ny = 0;
+					} else if (minPen === botPen) {
+						nx = 0;
+						ny = -1;
+					} else {
+						nx = 0;
+						ny = 1;
+					}
+				}
+				x = closestX + nx * BALL_R;
+				y = closestY + ny * BALL_R;
+				const dot = vx * nx + vy * ny;
+				if (dot < 0) {
+					vx = (vx - 2 * dot * nx) * 0.65;
+					vy = (vy - 2 * dot * ny) * 0.65;
+				}
+			}
+		}
+		return { x, y, vx, vy };
+	}
+
+	function isLevelSolvable(candidate: Level): boolean {
+		const rimBack = candidate.hoopX + BB_THICKNESS + 0.1;
+		const rimFront = candidate.hoopX + 1.8;
+		const safeMargin = BALL_R * 0.6;
+		const sdt = 0.02;
+
+		for (let deg = 15; deg <= 80; deg += 4) {
+			const rad = (deg * Math.PI) / 180;
+			for (let pwr = 10; pwr <= 25; pwr += 1.5) {
+				let vx = -pwr * Math.cos(rad);
+				let vy = pwr * Math.sin(rad);
+				let x = candidate.cannonX - BARREL_LEN_M * Math.cos(rad);
+				let y = CANNON_PIVOT_Y_M + BARREL_LEN_M * Math.sin(rad);
+
+				for (let step = 0; step < 220; step++) {
+					const prevX = x;
+					x += vx * sdt;
+					vx += candidate.windX * sdt;
+					vy += (candidate.windY - GRAVITY) * sdt;
+					y += vy * sdt;
+
+					const hit = resolveBlockerCollisions(
+						x,
+						y,
+						vx,
+						vy,
+						candidate.blockers,
+					);
+					x = hit.x;
+					y = hit.y;
+					vx = hit.vx;
+					vy = hit.vy;
+
+					if (
+						x - BALL_R <= candidate.hoopX + BB_THICKNESS &&
+						prevX - BALL_R > candidate.hoopX + BB_THICKNESS &&
+						y >= candidate.hoopY &&
+						y <= candidate.hoopY + BB_HEIGHT
+					) {
+						x = candidate.hoopX + BB_THICKNESS + BALL_R;
+						vx = -vx * 0.6;
+					}
+
+					if (
+						y < candidate.hoopY &&
+						y > candidate.hoopY - 0.5 &&
+						vy < 0 &&
+						x > rimBack + safeMargin &&
+						x < rimFront - safeMargin
+					) {
+						return true;
+					}
+
+					if (y < 0 || x < -2 || x > WORLD_WIDTH + 2) break;
+				}
+			}
+		}
+		return false;
+	}
+
+	function generateFreeplayLevel(stage: number): Level {
+		for (let attempt = 0; attempt < 25; attempt++) {
+			const cannonX = randRange(25.5, 28.5);
+			const hoopX = randRange(2.5, 4.5);
+			const hoopY = randRange(3.5, 6.5);
+			const windDir = Math.random() < 0.5 ? -1 : 1;
+			const windX = Number((windDir * randRange(0.7, 2.6)).toFixed(1));
+			const windY =
+				Math.random() < 0.65 ? randRange(-0.8, 0.8) : 0;
+
+			const blockers: Blocker[] = [];
+			const pattern = Math.floor(Math.random() * 4);
+			const midX = randRange(12.5, 17.5);
+
+			if (pattern === 0) {
+				// Single mid-court wall
+				blockers.push({ x: midX, y: 0, w: 1.0, h: randRange(4.8, 7.2) });
+			} else if (pattern === 1) {
+				// Window / gate to thread through
+				const gapBot = randRange(4.2, 6.0);
+				const gapH = randRange(3.0, 4.0);
+				blockers.push({ x: midX, y: 0, w: 1.0, h: gapBot });
+				blockers.push({
+					x: midX,
+					y: gapBot + gapH,
+					w: 1.0,
+					h: WORLD_HEIGHT - (gapBot + gapH),
+				});
+			} else if (pattern === 2) {
+				// Low ceiling to shoot under
+				blockers.push({
+					x: randRange(10.5, 13.5),
+					y: randRange(6.8, 8.5),
+					w: randRange(4.5, 7.0),
+					h: 1.2,
+				});
+			} else {
+				// Two staggered obstacles
+				blockers.push({
+					x: randRange(17.0, 19.5),
+					y: 0,
+					w: 1.0,
+					h: randRange(4.5, 6.8),
+				});
+				blockers.push({
+					x: randRange(9.0, 12.0),
+					y: randRange(9.4, 11.0),
+					w: 1.6,
+					h: WORLD_HEIGHT - 9.4,
+				});
+			}
+
+			const candidate: Level = {
+				name: `FREEPLAY #${stage}`,
+				cannonX,
+				hoopX,
+				hoopY,
+				windX,
+				windY,
+				blockers,
+			};
+
+			if (isLevelSolvable(candidate)) {
+				return candidate;
+			}
+		}
+
+		// Guaranteed-solvable fallback
+		return {
+			name: `FREEPLAY #${stage}`,
+			cannonX: 27.5,
+			hoopX: 3.5,
+			hoopY: 4.5,
+			windX: randRange(-1.8, 1.8),
+			windY: 0,
+			blockers: [{ x: 15.0, y: 0, w: 1.0, h: 5.5 }],
+		};
+	}
+
+	function clearShotState() {
+		trajectory = [];
+		feedback = null;
+		peakHeight = 0;
+		totalDistance = 0;
+		totalTime = 0;
+	}
+
 	function selectLevel(idx: number) {
 		if (isShooting) return;
 		if (endShotTimer) {
 			clearTimeout(endShotTimer);
 			endShotTimer = null;
 		}
-		levelIndex = (idx + LEVELS.length) % LEVELS.length;
-		trajectory = [];
-		feedback = null;
-		peakHeight = 0;
-		totalDistance = 0;
-		totalTime = 0;
+		if (idx < 0) {
+			levelIndex = 0;
+			freeplayStage = 0;
+			freeplayLevel = null;
+		} else if (idx >= LEVELS.length) {
+			freeplayStage = Math.max(1, idx - LEVELS.length + 1);
+			freeplayLevel = generateFreeplayLevel(freeplayStage);
+		} else {
+			freeplayStage = 0;
+			freeplayLevel = null;
+			levelIndex = idx;
+		}
+		clearShotState();
+	}
+
+	function prevLevel() {
+		if (freeplayStage > 1) {
+			selectLevel(LEVELS.length + freeplayStage - 2);
+		} else if (freeplayStage === 1) {
+			selectLevel(LEVELS.length - 1);
+		} else if (levelIndex > 0) {
+			selectLevel(levelIndex - 1);
+		}
+	}
+
+	function nextLevel() {
+		if (freeplayStage > 0) {
+			selectLevel(LEVELS.length + freeplayStage);
+		} else {
+			selectLevel(levelIndex + 1);
+		}
 	}
 
 	function shoot() {
@@ -221,53 +453,18 @@
 				totalDistance = Math.abs(curX_m - startX_m);
 
 				// Blocker Collisions (circle vs AABB)
-				for (const b of activeBlockers) {
-					const closestX = Math.max(b.x, Math.min(curX_m, b.x + b.w));
-					const closestY = Math.max(b.y, Math.min(curY_m, b.y + b.h));
-					const dx = curX_m - closestX;
-					const dy = curY_m - closestY;
-					const distSq = dx * dx + dy * dy;
-
-					if (distSq < BALL_R * BALL_R) {
-						const dist = Math.sqrt(distSq);
-						let nx = 0;
-						let ny = 1;
-						if (dist > 0.0001) {
-							nx = dx / dist;
-							ny = dy / dist;
-						} else {
-							const leftPen = curX_m - b.x;
-							const rightPen = b.x + b.w - curX_m;
-							const botPen = curY_m - b.y;
-							const topPen = b.y + b.h - curY_m;
-							const minPen = Math.min(
-								leftPen,
-								rightPen,
-								botPen,
-								topPen,
-							);
-							if (minPen === leftPen) {
-								nx = -1;
-								ny = 0;
-							} else if (minPen === rightPen) {
-								nx = 1;
-								ny = 0;
-							} else if (minPen === botPen) {
-								nx = 0;
-								ny = -1;
-							} else {
-								nx = 0;
-								ny = 1;
-							}
-						}
-						curX_m = closestX + nx * BALL_R;
-						curY_m = closestY + ny * BALL_R;
-						const dot = vx * nx + vy * ny;
-						if (dot < 0) {
-							vx = (vx - 2 * dot * nx) * 0.65;
-							vy = (vy - 2 * dot * ny) * 0.65;
-						}
-					}
+				if (activeBlockers.length > 0) {
+					const hit = resolveBlockerCollisions(
+						curX_m,
+						curY_m,
+						vx,
+						vy,
+						activeBlockers,
+					);
+					curX_m = hit.x;
+					curY_m = hit.y;
+					vx = hit.vx;
+					vy = hit.vy;
 				}
 
 				// Backboard Collision
@@ -361,7 +558,7 @@
 				ballY = 0;
 				feedback = null;
 				if (scored) {
-					selectLevel(levelIndex + 1);
+					nextLevel();
 				}
 			}
 		}, 1800);
@@ -371,6 +568,8 @@
 		score = 0;
 		attempts = 0;
 		levelIndex = 0;
+		freeplayStage = 0;
+		freeplayLevel = null;
 		feedback = null;
 		isShooting = false;
 		trajectory = [];
@@ -410,21 +609,27 @@
 	<div class="board-wrapper">
 		<div class="game-stats">
 			<div class="stat level-stat">
-				<span class="label">LEVEL {levelIndex + 1}/{LEVELS.length}</span
-				>
+				<span class="label">
+					{#if freeplayStage > 0}
+						FREEPLAY
+					{:else}
+						LEVEL {levelIndex + 1}/{LEVELS.length}
+					{/if}
+				</span>
 				<div class="level-nav">
 					<button
 						class="level-btn"
-						onclick={() => selectLevel(levelIndex - 1)}
-						disabled={isShooting}
+						onclick={prevLevel}
+						disabled={isShooting || (freeplayStage === 0 && levelIndex === 0)}
 						aria-label="Previous level">‹</button
 					>
 					<span class="level-name">{level.name}</span>
 					<button
 						class="level-btn"
-						onclick={() => selectLevel(levelIndex + 1)}
+						onclick={nextLevel}
 						disabled={isShooting}
-						aria-label="Next level">›</button
+						aria-label={freeplayStage > 0 ? "Generate new level" : "Next level"}
+						>›</button
 					>
 				</div>
 			</div>
@@ -453,7 +658,8 @@
 		</div>
 
 		<div class="court-container">
-			<div class="court">
+			<div class="court-stage">
+				<div class="court">
 				{#if windEnabled && windMag > 0}
 					{@const streakDur = Math.max(1.8, 4.4 - windMag * 0.7)}
 					<div class="wind-field" aria-hidden="true">
@@ -581,16 +787,6 @@
 						</div>
 					{/if}
 				{/if}
-
-				<div
-					class="distance-label"
-					style="left: {toX(HOOP_X_M)}%; width: {toX(
-						CANNON_X_M - HOOP_X_M,
-					)}%"
-				>
-					<div class="dist-line"></div>
-					<span>{(CANNON_X_M - HOOP_X_M).toFixed(1)}m</span>
-				</div>
 
 				<svg
 					class="hoop-svg"
@@ -768,6 +964,19 @@
 					<div class="feedback" in:fade>{feedback}</div>
 				{/if}
 			</div>
+
+			<div class="distance-row">
+				<div
+					class="distance-label"
+					style="left: {toX(HOOP_X_M)}%; width: {toX(
+						CANNON_X_M - HOOP_X_M,
+					)}%"
+				>
+					<div class="dist-line"></div>
+					<span>{(CANNON_X_M - HOOP_X_M).toFixed(1)}m</span>
+				</div>
+			</div>
+		</div>
 		</div>
 	</div>
 
@@ -946,14 +1155,28 @@
 		container-type: size;
 	}
 
+	.court-stage {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		width: min(100cqw, calc((100cqh - 3.4vmin) * 2));
+	}
+
 	.court {
 		position: relative;
 		background: var(--panel-bg);
 		border-radius: 2vmin;
 		border: 1px solid var(--panel-border);
 		overflow: hidden;
-		width: min(100cqw, 200cqh);
-		height: min(100cqh, 50cqw);
+		width: 100%;
+		height: min(calc(100cqh - 3.4vmin), 50cqw);
+	}
+
+	.distance-row {
+		position: relative;
+		width: 100%;
+		height: 3.4vmin;
+		flex-shrink: 0;
 	}
 
 	.bottom-bar {
@@ -1100,7 +1323,7 @@
 
 	.distance-label {
 		position: absolute;
-		bottom: 2vmin;
+		top: 0.45vmin;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -1111,9 +1334,11 @@
 
 	.dist-line {
 		width: 100%;
-		height: 1px;
+		height: 0.5vmin;
 		border-top: 1px dashed var(--panel-border);
-		margin-bottom: 0.5vmin;
+		border-left: 1px solid var(--panel-border);
+		border-right: 1px solid var(--panel-border);
+		margin-bottom: 0.2vmin;
 	}
 
 	.cannon-base {
