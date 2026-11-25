@@ -383,7 +383,12 @@ export function simulateSlide(
 			if (x === startX && y === startY && waypoints.length === 1) {
 				return { waypoints, endPos: { x, y }, outcome: 'blocked' };
 			}
-			waypoints[waypoints.length - 1] = { x, y, kind: 'stop' };
+			const last = waypoints[waypoints.length - 1];
+			if (last.x !== x || last.y !== y) {
+				waypoints.push({ x, y, kind: 'stop' });
+			} else {
+				waypoints[waypoints.length - 1] = { x, y, kind: 'stop' };
+			}
 			return { waypoints, endPos: { x, y }, outcome: 'stop' };
 		}
 

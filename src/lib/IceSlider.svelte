@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Instructions from './Instructions.svelte';
-	import InGameMenu from './InGameMenu.svelte';
-	import { fade, scale } from 'svelte/transition';
-	import { onMount } from 'svelte';
+	import Instructions from "./Instructions.svelte";
+	import InGameMenu from "./InGameMenu.svelte";
+	import { fade, scale } from "svelte/transition";
+	import { onMount } from "svelte";
 	import {
 		getCuratedLevels,
 		generateRandomLevel,
@@ -11,8 +11,8 @@
 		type Difficulty,
 		type ParsedLevel,
 		type Pos,
-		type Waypoint
-	} from './iceSliderEngine';
+		type Waypoint,
+	} from "./iceSliderEngine";
 
 	let { onBack, registerActions } = $props<{
 		onBack: () => void;
@@ -23,14 +23,14 @@
 		}) => void;
 	}>();
 
-	const STORAGE_KEY = 'iceslider-progress-v2';
+	const STORAGE_KEY = "iceslider-progress-v2";
 
 	let instructions: any;
 	const curatedLevels = getCuratedLevels();
 
 	// Mode & progression
-	let mode = $state<'campaign' | 'random'>('campaign');
-	let difficulty = $state<Difficulty>('classic');
+	let mode = $state<"campaign" | "random">("campaign");
+	let difficulty = $state<Difficulty>("classic");
 	let currentLevelIdx = $state(0);
 	let level = $state<ParsedLevel>(curatedLevels[0]);
 	let starsByLevel = $state<Record<string, number>>({});
@@ -44,7 +44,9 @@
 	let isGameOver = $state(false);
 	let isMoving = $state(false);
 	let moveSegments = $state<Waypoint[][]>([]);
-	let moveHistory = $state<{ pos: Pos; segments: Waypoint[][]; moves: number }[]>([]);
+	let moveHistory = $state<
+		{ pos: Pos; segments: Waypoint[][]; moves: number }[]
+	>([]);
 
 	// UI & helpers
 	let showOptimal = $state(false);
@@ -66,18 +68,30 @@
 	let audioCtx: AudioContext | null = null;
 
 	function getAudio(): AudioContext | null {
-		if (soundMuted || typeof window === 'undefined') return null;
+		if (soundMuted || typeof window === "undefined") return null;
 		if (!audioCtx) {
-			const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+			const Ctx =
+				window.AudioContext ||
+				(
+					window as unknown as {
+						webkitAudioContext: typeof AudioContext;
+					}
+				).webkitAudioContext;
 			if (Ctx) audioCtx = new Ctx();
 		}
-		if (audioCtx && audioCtx.state === 'suspended') {
+		if (audioCtx && audioCtx.state === "suspended") {
 			audioCtx.resume().catch(() => {});
 		}
 		return audioCtx;
 	}
 
-	function playTone(freq: number, dur: number, type: OscillatorType = 'sine', gainVal = 0.06, slideTo?: number) {
+	function playTone(
+		freq: number,
+		dur: number,
+		type: OscillatorType = "sine",
+		gainVal = 0.06,
+		slideTo?: number,
+	) {
 		const ctx = getAudio();
 		if (!ctx) return;
 		const now = ctx.currentTime;
@@ -85,7 +99,8 @@
 		const gain = ctx.createGain();
 		osc.type = type;
 		osc.frequency.setValueAtTime(freq, now);
-		if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
+		if (slideTo)
+			osc.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
 		gain.gain.setValueAtTime(gainVal, now);
 		gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
 		osc.connect(gain);
@@ -94,61 +109,67 @@
 		osc.stop(now + dur);
 	}
 
-	function playSound(kind: 'slide' | 'stop' | 'bounce' | 'warp' | 'pit' | 'win' | 'bump') {
+	function playSound(
+		kind: "slide" | "stop" | "bounce" | "warp" | "pit" | "win" | "bump",
+	) {
 		switch (kind) {
-			case 'slide':
-				playTone(260, 0.12, 'sine', 0.04, 420);
+			case "slide":
+				playTone(260, 0.12, "sine", 0.04, 420);
 				break;
-			case 'stop':
-				playTone(180, 0.07, 'triangle', 0.06, 120);
+			case "stop":
+				playTone(180, 0.07, "triangle", 0.06, 120);
 				break;
-			case 'bounce':
-				playTone(540, 0.1, 'sine', 0.06, 720);
+			case "bounce":
+				playTone(540, 0.1, "sine", 0.06, 720);
 				break;
-			case 'warp':
-				playTone(380, 0.18, 'sine', 0.06, 860);
+			case "warp":
+				playTone(380, 0.18, "sine", 0.06, 860);
 				break;
-			case 'pit':
-				playTone(240, 0.22, 'sawtooth', 0.05, 90);
+			case "pit":
+				playTone(240, 0.22, "sawtooth", 0.05, 90);
 				break;
-			case 'bump':
-				playTone(130, 0.06, 'triangle', 0.05, 100);
+			case "bump":
+				playTone(130, 0.06, "triangle", 0.05, 100);
 				break;
-			case 'win':
-				playTone(523.25, 0.14, 'sine', 0.07);
-				setTimeout(() => playTone(659.25, 0.14, 'sine', 0.07), 90);
-				setTimeout(() => playTone(783.99, 0.24, 'sine', 0.08), 180);
+			case "win":
+				playTone(523.25, 0.14, "sine", 0.07);
+				setTimeout(() => playTone(659.25, 0.14, "sine", 0.07), 90);
+				setTimeout(() => playTone(783.99, 0.24, "sine", 0.08), 180);
 				break;
 		}
 	}
 
 	function saveProgress() {
-		if (typeof localStorage === 'undefined') return;
+		if (typeof localStorage === "undefined") return;
 		try {
 			localStorage.setItem(
 				STORAGE_KEY,
 				JSON.stringify({
 					currentLevelIdx,
 					starsByLevel,
-					soundMuted
-				})
+					soundMuted,
+				}),
 			);
 		} catch {}
 	}
 
 	function loadProgress() {
-		if (typeof localStorage === 'undefined') return;
+		if (typeof localStorage === "undefined") return;
 		try {
 			const raw = localStorage.getItem(STORAGE_KEY);
 			if (!raw) return;
 			const data = JSON.parse(raw);
-			if (typeof data.currentLevelIdx === 'number' && data.currentLevelIdx >= 0 && data.currentLevelIdx < curatedLevels.length) {
+			if (
+				typeof data.currentLevelIdx === "number" &&
+				data.currentLevelIdx >= 0 &&
+				data.currentLevelIdx < curatedLevels.length
+			) {
 				currentLevelIdx = data.currentLevelIdx;
 			}
-			if (data.starsByLevel && typeof data.starsByLevel === 'object') {
+			if (data.starsByLevel && typeof data.starsByLevel === "object") {
 				starsByLevel = data.starsByLevel;
 			}
-			if (typeof data.soundMuted === 'boolean') {
+			if (typeof data.soundMuted === "boolean") {
 				soundMuted = data.soundMuted;
 			}
 		} catch {}
@@ -189,7 +210,7 @@
 	}
 
 	function selectCampaignLevel(idx: number) {
-		mode = 'campaign';
+		mode = "campaign";
 		currentLevelIdx = Math.max(0, Math.min(curatedLevels.length - 1, idx));
 		showLevelSelect = false;
 		loadLevelObj(curatedLevels[currentLevelIdx]);
@@ -197,7 +218,7 @@
 	}
 
 	function startRandomMode(diff: Difficulty) {
-		mode = 'random';
+		mode = "random";
 		difficulty = diff;
 		showLevelSelect = false;
 		loadLevelObj(generateRandomLevel(diff));
@@ -208,7 +229,7 @@
 	}
 
 	function nextPuzzle() {
-		if (mode === 'campaign') {
+		if (mode === "campaign") {
 			if (currentLevelIdx < curatedLevels.length - 1) {
 				selectCampaignLevel(currentLevelIdx + 1);
 			} else {
@@ -238,10 +259,15 @@
 
 	function requestHint() {
 		if (isGameOver || isMoving) return;
-		const sol = solveFrom(playerPos, level.goal, level.grid, level.portalPairs);
+		const sol = solveFrom(
+			playerPos,
+			level.goal,
+			level.grid,
+			level.portalPairs,
+		);
 		if (!sol || sol.dirs.length === 0) {
 			isDeadEnd = true;
-			showToast('Dead end! Press Undo [Z] or Restart [R]');
+			showToast("Dead end! Press Undo [Z] or Restart [R]");
 			return;
 		}
 		isDeadEnd = false;
@@ -253,27 +279,34 @@
 	}
 
 	function triggerBump(dx: number, dy: number) {
-		playSound('bump');
+		playSound("bump");
 		bumpOffset = { x: dx * 0.16, y: dy * 0.16 };
 		setTimeout(() => {
 			bumpOffset = { x: 0, y: 0 };
 		}, 110);
 	}
 
-	function animateWaypoints(
-		waypoints: Waypoint[],
-		onDone: () => void
-	) {
+	function animateWaypoints(waypoints: Waypoint[], onDone: () => void) {
 		// Split into continuous sub-spans (breaking on warp)
-		const spans: { from: Pos; to: Pos; kind: Waypoint['kind']; dist: number }[] = [];
+		const spans: {
+			from: Pos;
+			to: Pos;
+			kind: Waypoint["kind"];
+			dist: number;
+		}[] = [];
 		for (let i = 0; i < waypoints.length - 1; i++) {
 			const a = waypoints[i];
 			const b = waypoints[i + 1];
-			if (a.kind === 'warp') {
-				spans.push({ from: a, to: b, kind: 'warp', dist: 0.4 });
+			if (a.kind === "warp") {
+				spans.push({ from: a, to: b, kind: "warp", dist: 0.4 });
 			} else {
 				const dist = Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
-				spans.push({ from: a, to: b, kind: b.kind, dist: Math.max(0.5, dist) });
+				spans.push({
+					from: a,
+					to: b,
+					kind: b.kind,
+					dist: Math.max(0.5, dist),
+				});
 			}
 		}
 
@@ -289,28 +322,34 @@
 		const step = (now: number) => {
 			if (!isMoving) return;
 			const span = spans[spanIdx];
-			const duration = span.kind === 'warp' ? 95 : Math.min(220, Math.max(75, span.dist * 24));
+			const duration =
+				span.kind === "warp"
+					? 95
+					: Math.min(220, Math.max(75, span.dist * 24));
 			const t = Math.min(1, (now - spanStart) / duration);
 			// Ease out quad for crisp deceleration at stop, linear for mid-bounce
-			const eased = span.kind === 'stop' ? 1 - (1 - t) * (1 - t) : t;
+			const eased = span.kind === "stop" ? 1 - (1 - t) * (1 - t) : t;
 
-			if (span.kind === 'warp') {
-				renderPos = t < 0.5 ? { x: span.from.x, y: span.from.y } : { x: span.to.x, y: span.to.y };
+			if (span.kind === "warp") {
+				renderPos =
+					t < 0.5
+						? { x: span.from.x, y: span.from.y }
+						: { x: span.to.x, y: span.to.y };
 				if (!bouncedFlags.has(spanIdx)) {
 					bouncedFlags.add(spanIdx);
-					playSound('warp');
+					playSound("warp");
 				}
 			} else {
 				renderPos = {
 					x: span.from.x + (span.to.x - span.from.x) * eased,
-					y: span.from.y + (span.to.y - span.from.y) * eased
+					y: span.from.y + (span.to.y - span.from.y) * eased,
 				};
 			}
 
 			if (t >= 1) {
-				if (span.kind === 'bounce' && !bouncedFlags.has(spanIdx)) {
+				if (span.kind === "bounce" && !bouncedFlags.has(spanIdx)) {
 					bouncedFlags.add(spanIdx);
-					playSound('bounce');
+					playSound("bounce");
 				}
 				spanIdx++;
 				if (spanIdx >= spans.length) {
@@ -342,27 +381,31 @@
 			dy,
 			level.grid,
 			level.goal,
-			level.portalPairs
+			level.portalPairs,
 		);
 
-		if (res.outcome === 'blocked') {
+		if (res.outcome === "blocked") {
 			triggerBump(dx, dy);
 			return;
 		}
 
 		hintDir = null;
 		isMoving = true;
-		playSound('slide');
+		playSound("slide");
 
 		const prevPos = { ...playerPos };
 		const prevSegments = moveSegments;
 		const prevMoves = moves;
 
-		if (res.outcome === 'pit' || res.outcome === 'loop') {
+		if (res.outcome === "pit" || res.outcome === "loop") {
 			animateWaypoints(res.waypoints, () => {
 				isSplashing = true;
-				playSound('pit');
-				showToast(res.outcome === 'pit' ? 'Fell into meltwater!' : 'Infinite loop! Rewinding...');
+				playSound("pit");
+				showToast(
+					res.outcome === "pit"
+						? "Fell into meltwater!"
+						: "Infinite loop! Rewinding...",
+				);
 				setTimeout(() => {
 					isSplashing = false;
 					isMoving = false;
@@ -373,19 +416,22 @@
 			return;
 		}
 
-		moveHistory = [...moveHistory, { pos: prevPos, segments: prevSegments, moves: prevMoves }];
+		moveHistory = [
+			...moveHistory,
+			{ pos: prevPos, segments: prevSegments, moves: prevMoves },
+		];
 		moveSegments = [...moveSegments, res.waypoints];
 		playerPos = { ...res.endPos };
 		moves = prevMoves + 1;
 
 		animateWaypoints(res.waypoints, () => {
 			isMoving = false;
-			if (res.outcome === 'goal') {
+			if (res.outcome === "goal") {
 				isGameOver = true;
 				isDeadEnd = false;
-				playSound('win');
+				playSound("win");
 				const earned = earnedStars(moves, parMoves);
-				if (mode === 'campaign') {
+				if (mode === "campaign") {
 					const best = starsByLevel[level.id] ?? 0;
 					if (earned > best) {
 						starsByLevel = { ...starsByLevel, [level.id]: earned };
@@ -393,7 +439,7 @@
 					}
 				}
 			} else {
-				playSound('stop');
+				playSound("stop");
 				checkDeadEnd(res.endPos);
 				if (bufferedMove) {
 					const now = Date.now();
@@ -423,30 +469,30 @@
 
 	function handleKeyDown(e: KeyboardEvent) {
 		const key = e.key.toLowerCase();
-		if (key === 'escape' && showLevelSelect) {
+		if (key === "escape" && showLevelSelect) {
 			showLevelSelect = false;
 			return;
 		}
 		if (showLevelSelect) return;
 
-		if (key === 'r') {
+		if (key === "r") {
 			resetGame();
 			return;
 		}
-		if (key === 'n') {
+		if (key === "n") {
 			nextPuzzle();
 			return;
 		}
-		if (key === 'z' || e.key === 'Backspace') {
+		if (key === "z" || e.key === "Backspace") {
 			e.preventDefault();
 			undoMove();
 			return;
 		}
-		if (key === 'h') {
+		if (key === "h") {
 			requestHint();
 			return;
 		}
-		if (key === 'm') {
+		if (key === "m") {
 			soundMuted = !soundMuted;
 			saveProgress();
 			return;
@@ -454,24 +500,24 @@
 
 		if (isGameOver) return;
 		switch (e.key) {
-			case 'ArrowUp':
-			case 'w':
-			case 'W':
+			case "ArrowUp":
+			case "w":
+			case "W":
 				move(0, -1);
 				break;
-			case 'ArrowDown':
-			case 's':
-			case 'S':
+			case "ArrowDown":
+			case "s":
+			case "S":
 				move(0, 1);
 				break;
-			case 'ArrowLeft':
-			case 'a':
-			case 'A':
+			case "ArrowLeft":
+			case "a":
+			case "A":
 				move(-1, 0);
 				break;
-			case 'ArrowRight':
-			case 'd':
-			case 'D':
+			case "ArrowRight":
+			case "d":
+			case "D":
 				move(1, 0);
 				break;
 		}
@@ -507,62 +553,99 @@
 		let current: string[] = [];
 		for (const w of waypoints) {
 			current.push(`${w.x + 0.5},${w.y + 0.5}`);
-			if (w.kind === 'warp') {
-				if (current.length >= 2) lines.push(current.join(' '));
+			if (w.kind === "warp") {
+				if (current.length >= 2) lines.push(current.join(" "));
 				current = [];
 			}
 		}
-		if (current.length >= 2) lines.push(current.join(' '));
+		if (current.length >= 2) lines.push(current.join(" "));
 		return lines;
 	}
 
 	const parMoves = $derived(level.optimal.dirs.length);
 	const currentStars = $derived(earnedStars(moves, parMoves));
 	const totalCampaignStars = $derived(
-		curatedLevels.reduce((sum, l) => sum + (starsByLevel[l.id] ?? 0), 0)
+		curatedLevels.reduce((sum, l) => sum + (starsByLevel[l.id] ?? 0), 0),
 	);
 
 	$effect(() => {
 		registerActions({
 			restart: resetGame,
 			newShuffle: nextPuzzle,
-			help: () => instructions.open()
+			help: () => instructions.open(),
 		});
 	});
 
 	onMount(() => {
 		loadProgress();
 		loadLevelObj(curatedLevels[currentLevelIdx]);
-		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener("keydown", handleKeyDown);
 		return () => {
-			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener("keydown", handleKeyDown);
 			clearAnimation();
 		};
 	});
 </script>
 
 <div class="game-inner">
-	<Instructions bind:this={instructions} gameId="iceslider" title="Ice Slider Puzzle">
-		<p><strong>Goal:</strong> Slide the coral block to the golden star in as few moves as possible.</p>
-		<p>Once you start sliding, you keep gliding across the ice until an obstacle stops or redirects you. Move with <strong>Arrow keys</strong>, <strong>WASD</strong>, <strong>clicking a direction</strong>, or <strong>swiping</strong>.</p>
+	<Instructions
+		bind:this={instructions}
+		gameId="iceslider"
+		title="Ice Slider Puzzle"
+	>
+		<p>
+			<strong>Goal:</strong> Slide the coral block to the golden star in as
+			few moves as possible.
+		</p>
+		<p>
+			Once you start sliding, you keep gliding across the ice until an
+			obstacle stops or redirects you. Move with <strong
+				>Arrow keys</strong
+			>, <strong>WASD</strong>, <strong>clicking a direction</strong>, or
+			<strong>swiping</strong>.
+		</p>
 		<hr class="inst-sep" />
 		<p><strong>Tile Guide:</strong></p>
 		<ul class="inst-list">
-			<li><span class="badge wall-badge">Glacier Wall</span> Stops you in the tile <em>before</em> it.</li>
-			<li><span class="badge sticky-badge">Snow Pad</span> Friction stops you <em>right on top</em> of it.</li>
-			<li><span class="badge pit-badge">Meltwater</span> Hazard! Sliding into it splashes and rewinds.</li>
-			<li><span class="badge bumper-badge">Crystal Bumper</span> 45° prism (<code>/</code> or <code>\</code>) that deflects you 90°.</li>
-			<li><span class="badge portal-badge">Frost Portal</span> Warps you to its twin while keeping your momentum.</li>
+			<li>
+				<span class="badge wall-badge">Glacier Wall</span> Stops you in
+				the tile <em>before</em> it.
+			</li>
+			<li>
+				<span class="badge sticky-badge">Snow Pad</span> Friction stops
+				you <em>right on top</em> of it.
+			</li>
+			<li>
+				<span class="badge pit-badge">Meltwater</span> Hazard! Sliding into
+				it splashes and rewinds.
+			</li>
+			<li>
+				<span class="badge bumper-badge">Crystal Bumper</span> 45° prism
+				(<code>/</code> or <code>\</code>) that deflects you 90°.
+			</li>
+			<li>
+				<span class="badge portal-badge">Frost Portal</span> Warps you to
+				its twin while keeping your momentum.
+			</li>
 		</ul>
 		<hr class="inst-sep" />
-		<p class="inst-keys"><strong>Shortcuts:</strong> [Z] Undo · [H] Hint · [R] Restart · [N] Next · [M] Mute</p>
+		<p class="inst-keys">
+			<strong>Shortcuts:</strong> [Z] Undo · [H] Hint · [R] Restart · [N] Next
+			· [M] Mute
+		</p>
 	</Instructions>
 
 	<InGameMenu {onBack} onHelp={() => instructions.open()}>
 		<div class="stats-center">
-			<button class="level-pill" onclick={() => (showLevelSelect = !showLevelSelect)} title="Select Level or Mode">
-				{#if mode === 'campaign'}
-					<span class="pill-tag">LVL {currentLevelIdx + 1}/{curatedLevels.length}</span>
+			<button
+				class="level-pill"
+				onclick={() => (showLevelSelect = !showLevelSelect)}
+				title="Select Level or Mode"
+			>
+				{#if mode === "campaign"}
+					<span class="pill-tag"
+						>LVL {currentLevelIdx + 1}/{curatedLevels.length}</span
+					>
 					<span class="pill-name">{level.name}</span>
 				{:else}
 					<span class="pill-tag">{difficulty.toUpperCase()}</span>
@@ -573,11 +656,15 @@
 
 			<div class="stat">
 				<span class="label">PAR</span>
-				<span class="value">{parMoves || '-'}</span>
+				<span class="value">{parMoves || "-"}</span>
 			</div>
 			<div class="stat">
 				<span class="label">MOVES</span>
-				<span class="value" class:over-par={parMoves > 0 && moves > parMoves}>{moves}</span>
+				<span
+					class="value"
+					class:over-par={parMoves > 0 && moves > parMoves}
+					>{moves}</span
+				>
 			</div>
 		</div>
 
@@ -586,7 +673,9 @@
 				<button
 					class="nav-extra-btn"
 					onclick={undoMove}
-					disabled={moveHistory.length === 0 || isGameOver || isMoving}
+					disabled={moveHistory.length === 0 ||
+						isGameOver ||
+						isMoving}
 					title="Undo last move [Z]"
 				>
 					UNDO
@@ -600,11 +689,22 @@
 				>
 					HINT
 				</button>
-				<button class="nav-extra-btn" onclick={resetGame} title="Restart puzzle [R]">
+				<button
+					class="nav-extra-btn"
+					onclick={resetGame}
+					title="Restart puzzle [R]"
+				>
 					RESTART
 				</button>
-				<button class="nav-extra-btn accent-btn" onclick={nextPuzzle} title="Next / New Puzzle [N]">
-					{mode === 'campaign' && currentLevelIdx < curatedLevels.length - 1 ? 'NEXT' : 'NEW'}
+				<button
+					class="nav-extra-btn accent-btn"
+					onclick={nextPuzzle}
+					title="Next / New Puzzle [N]"
+				>
+					{mode === "campaign" &&
+					currentLevelIdx < curatedLevels.length - 1
+						? "NEXT"
+						: "NEW"}
 				</button>
 				<button
 					class="nav-extra-btn icon-btn"
@@ -612,10 +712,10 @@
 						soundMuted = !soundMuted;
 						saveProgress();
 					}}
-					title={soundMuted ? 'Unmute sounds [M]' : 'Mute sounds [M]'}
-					aria-label={soundMuted ? 'Unmute sounds' : 'Mute sounds'}
+					title={soundMuted ? "Unmute sounds [M]" : "Mute sounds [M]"}
+					aria-label={soundMuted ? "Unmute sounds" : "Mute sounds"}
 				>
-					{soundMuted ? '🔇' : '🔊'}
+					{soundMuted ? "🔇" : "🔊"}
 				</button>
 			</div>
 		{/snippet}
@@ -624,9 +724,13 @@
 	<div class="sub-banner">
 		<span class="level-subtitle">{level.subtitle}</span>
 		{#if toastMsg}
-			<span class="status-pill warn" in:fade={{ duration: 150 }}>{toastMsg}</span>
+			<span class="status-pill warn" in:fade={{ duration: 150 }}
+				>{toastMsg}</span
+			>
 		{:else if isDeadEnd && !isGameOver}
-			<span class="status-pill warn" in:fade={{ duration: 150 }}>Dead end — Undo [Z] or Restart [R]</span>
+			<span class="status-pill warn" in:fade={{ duration: 150 }}
+				>Dead end — Undo [Z] or Restart [R]</span
+			>
 		{/if}
 	</div>
 
@@ -644,18 +748,23 @@
 			>
 				{#each level.grid as row, y}
 					{#each row as cell, x}
-						{@const isGoal = x === level.goal.x && y === level.goal.y}
-						{@const isStart = x === level.start.x && y === level.start.y}
-						{@const portalColor = level.portalColors.get(`${x},${y}`) ?? 0}
+						{@const isGoal =
+							x === level.goal.x && y === level.goal.y}
+						{@const isStart =
+							x === level.start.x && y === level.start.y}
+						{@const portalColor =
+							level.portalColors.get(`${x},${y}`) ?? 0}
 						<button
 							type="button"
 							class="cell"
-							class:wall={cell === 'wall'}
-							class:sticky={cell === 'sticky'}
-							class:pit={cell === 'pit'}
-							class:bumper={cell === 'bumper_slash' || cell === 'bumper_backslash'}
-							class:portal={cell === 'portal'}
-							class:portal-alt={cell === 'portal' && portalColor % 2 === 1}
+							class:wall={cell === "wall"}
+							class:sticky={cell === "sticky"}
+							class:pit={cell === "pit"}
+							class:bumper={cell === "bumper_slash" ||
+								cell === "bumper_backslash"}
+							class:portal={cell === "portal"}
+							class:portal-alt={cell === "portal" &&
+								portalColor % 2 === 1}
 							class:goal={isGoal}
 							class:start-mark={isStart && !isGoal}
 							onclick={() => handleCellClick(x, y)}
@@ -663,40 +772,87 @@
 						>
 							{#if isGoal}
 								<div class="goal-icon">
-									<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-										<path d="M12 2L14.9 8.6L22 9.3L16.6 14L18.2 21L12 17.3L5.8 21L7.4 14L2 9.3L9.1 8.6L12 2Z" />
+									<svg
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										stroke="currentColor"
+										stroke-width="1.5"
+									>
+										<path
+											d="M12 2L14.9 8.6L22 9.3L16.6 14L18.2 21L12 17.3L5.8 21L7.4 14L2 9.3L9.1 8.6L12 2Z"
+										/>
 									</svg>
 								</div>
-							{:else if cell === 'sticky'}
+							{:else if cell === "sticky"}
 								<div class="sticky-icon">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-										<circle cx="12" cy="12" r="6" stroke-dasharray="3 2" />
-										<circle cx="12" cy="12" r="2.2" fill="currentColor" />
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2.2"
+									>
+										<circle
+											cx="12"
+											cy="12"
+											r="6"
+											stroke-dasharray="3 2"
+										/>
+										<circle
+											cx="12"
+											cy="12"
+											r="2.2"
+											fill="currentColor"
+										/>
 									</svg>
 								</div>
-							{:else if cell === 'pit'}
+							{:else if cell === "pit"}
 								<div class="pit-icon">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+									>
 										<path d="M5 9c2-2 4-2 6 0s4 2 6 0" />
 										<path d="M6 15c2-2 4-2 6 0s4 2 6 0" />
 									</svg>
 								</div>
-							{:else if cell === 'bumper_slash'}
+							{:else if cell === "bumper_slash"}
 								<svg class="bumper-svg" viewBox="0 0 24 24">
-									<line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+									<line
+										x1="4"
+										y1="20"
+										x2="20"
+										y2="4"
+										stroke="currentColor"
+										stroke-width="4"
+										stroke-linecap="round"
+									/>
 								</svg>
-							{:else if cell === 'bumper_backslash'}
+							{:else if cell === "bumper_backslash"}
 								<svg class="bumper-svg" viewBox="0 0 24 24">
-									<line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+									<line
+										x1="4"
+										y1="4"
+										x2="20"
+										y2="20"
+										stroke="currentColor"
+										stroke-width="4"
+										stroke-linecap="round"
+									/>
 								</svg>
-							{:else if cell === 'portal'}
+							{:else if cell === "portal"}
 								<div class="portal-ring"></div>
 							{/if}
 						</button>
 					{/each}
 				{/each}
 
-				<svg class="path-overlay" viewBox="0 0 {level.size} {level.size}">
+				<svg
+					class="path-overlay"
+					viewBox="0 0 {level.size} {level.size}"
+				>
 					{#each moveSegments as seg}
 						{#each segmentPolylines(seg) as pts}
 							<polyline
@@ -726,7 +882,12 @@
 							{/each}
 						{/each}
 						{#each level.optimal.path.slice(1) as p, i}
-							<circle cx={p.x + 0.5} cy={p.y + 0.5} r="0.22" fill="var(--color-golden)" />
+							<circle
+								cx={p.x + 0.5}
+								cy={p.y + 0.5}
+								r="0.22"
+								fill="var(--color-golden)"
+							/>
 							<text
 								x={p.x + 0.5}
 								y={p.y + 0.52}
@@ -750,12 +911,25 @@
 							top: {((playerPos.y + hintDir.y * 0.85) / level.size) * 100}%;
 							width: {100 / level.size}%;
 							height: {100 / level.size}%;
-							transform: rotate({hintDir.x === 1 ? 0 : hintDir.x === -1 ? 180 : hintDir.y === 1 ? 90 : -90}deg);
+							transform: rotate({hintDir.x === 1
+							? 0
+							: hintDir.x === -1
+								? 180
+								: hintDir.y === 1
+									? 90
+									: -90}deg);
 						"
 						in:fade={{ duration: 150 }}
 					>
 						<svg viewBox="0 0 24 24" fill="currentColor">
-							<path d="M5 12h12m-5-5l5 5-5 5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+							<path
+								d="M5 12h12m-5-5l5 5-5 5"
+								stroke="currentColor"
+								stroke-width="3"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								fill="none"
+							/>
 						</svg>
 					</div>
 				{/if}
@@ -764,10 +938,11 @@
 					class="player"
 					class:splashing={isSplashing}
 					style="
-						left: {((renderPos.x + bumpOffset.x) / level.size) * 100}%;
-						top: {((renderPos.y + bumpOffset.y) / level.size) * 100}%;
+						left: {(renderPos.x / level.size) * 100}%;
+						top: {(renderPos.y / level.size) * 100}%;
 						width: {100 / level.size}%;
 						height: {100 / level.size}%;
+						transform: translate({bumpOffset.x * 100}%, {bumpOffset.y * 100}%);
 					"
 				>
 					<div class="player-block">
@@ -778,22 +953,37 @@
 
 			{#if isGameOver}
 				<div class="victory-overlay" in:fade={{ duration: 200 }}>
-					<div class="victory-card" in:scale={{ start: 0.92, duration: 220 }}>
-						<div class="stars-row" aria-label="{currentStars} out of 3 stars">
+					<div
+						class="victory-card"
+						in:scale={{ start: 0.92, duration: 220 }}
+					>
+						<div
+							class="stars-row"
+							aria-label="{currentStars} out of 3 stars"
+						>
 							{#each [1, 2, 3] as s}
-								<span class="star" class:earned={s <= currentStars}>★</span>
+								<span
+									class="star"
+									class:earned={s <= currentStars}>★</span
+								>
 							{/each}
 						</div>
-						<h2>{currentStars === 3 ? 'Optimal!' : 'Puzzle Solved!'}</h2>
+						<h2>
+							{currentStars === 3 ? "Optimal!" : "Puzzle Solved!"}
+						</h2>
 						<p class="victory-stats">
-							Solved in <strong>{moves}</strong> {moves === 1 ? 'move' : 'moves'}
+							Solved in <strong>{moves}</strong>
+							{moves === 1 ? "move" : "moves"}
 							{#if parMoves > 0}
 								<span class="par-note">(Par {parMoves})</span>
 							{/if}
 						</p>
 						<div class="victory-actions">
 							<button class="action-btn" onclick={nextPuzzle}>
-								{mode === 'campaign' && currentLevelIdx < curatedLevels.length - 1 ? 'NEXT LEVEL' : 'NEW PUZZLE'}
+								{mode === "campaign" &&
+								currentLevelIdx < curatedLevels.length - 1
+									? "NEXT LEVEL"
+									: "NEW PUZZLE"}
 							</button>
 							<button
 								class="action-btn secondary"
@@ -801,9 +991,12 @@
 									showOptimal = !showOptimal;
 								}}
 							>
-								{showOptimal ? 'HIDE' : 'SHOW'} OPTIMAL
+								{showOptimal ? "HIDE" : "SHOW"} OPTIMAL
 							</button>
-							<button class="action-btn secondary" onclick={resetGame}>RETRY</button>
+							<button
+								class="action-btn secondary"
+								onclick={resetGame}>RETRY</button
+							>
 						</div>
 					</div>
 				</div>
@@ -813,13 +1006,32 @@
 
 	<div class="bottom-bar">
 		<div class="dpad" aria-label="Directional Controls">
-			<button class="dpad-btn" onclick={() => move(-1, 0)} aria-label="Slide Left">◀</button>
-			<button class="dpad-btn" onclick={() => move(0, -1)} aria-label="Slide Up">▲</button>
-			<button class="dpad-btn" onclick={() => move(0, 1)} aria-label="Slide Down">▼</button>
-			<button class="dpad-btn" onclick={() => move(1, 0)} aria-label="Slide Right">▶</button>
+			<button
+				class="dpad-btn"
+				onclick={() => move(-1, 0)}
+				aria-label="Slide Left">◀</button
+			>
+			<button
+				class="dpad-btn"
+				onclick={() => move(0, -1)}
+				aria-label="Slide Up">▲</button
+			>
+			<button
+				class="dpad-btn"
+				onclick={() => move(0, 1)}
+				aria-label="Slide Down">▼</button
+			>
+			<button
+				class="dpad-btn"
+				onclick={() => move(1, 0)}
+				aria-label="Slide Right">▶</button
+			>
 		</div>
 		{#if isGameOver && showOptimal}
-			<button class="nav-extra-btn active" onclick={() => (showOptimal = false)}>
+			<button
+				class="nav-extra-btn active"
+				onclick={() => (showOptimal = false)}
+			>
 				HIDE OPTIMAL PATH
 			</button>
 		{/if}
@@ -836,7 +1048,7 @@
 				if (e.target === e.currentTarget) showLevelSelect = false;
 			}}
 			onkeydown={(e) => {
-				if (e.key === 'Escape') showLevelSelect = false;
+				if (e.key === "Escape") showLevelSelect = false;
 			}}
 			in:fade={{ duration: 150 }}
 		>
@@ -844,9 +1056,16 @@
 				<div class="modal-header">
 					<div>
 						<h3>Select Puzzle</h3>
-						<p class="modal-sub">Campaign Stars: {totalCampaignStars} / {curatedLevels.length * 3} ★</p>
+						<p class="modal-sub">
+							Campaign Stars: {totalCampaignStars} / {curatedLevels.length *
+								3} ★
+						</p>
 					</div>
-					<button class="close-btn" onclick={() => (showLevelSelect = false)} aria-label="Close">✕</button>
+					<button
+						class="close-btn"
+						onclick={() => (showLevelSelect = false)}
+						aria-label="Close">✕</button
+					>
 				</div>
 
 				<div class="section-label">CAMPAIGN LEVELS</div>
@@ -855,7 +1074,8 @@
 						{@const earned = starsByLevel[lvl.id] ?? 0}
 						<button
 							class="lvl-card"
-							class:active={mode === 'campaign' && currentLevelIdx === i}
+							class:active={mode === "campaign" &&
+								currentLevelIdx === i}
 							onclick={() => selectCampaignLevel(i)}
 						>
 							<div class="lvl-top">
@@ -867,7 +1087,10 @@
 								</span>
 							</div>
 							<div class="lvl-title">{lvl.name}</div>
-							<div class="lvl-meta">{lvl.size}×{lvl.size} · Par {lvl.optimal.dirs.length}</div>
+							<div class="lvl-meta">
+								{lvl.size}×{lvl.size} · Par {lvl.optimal.dirs
+									.length}
+							</div>
 						</button>
 					{/each}
 				</div>
@@ -876,24 +1099,27 @@
 				<div class="random-row">
 					<button
 						class="rand-btn"
-						class:active={mode === 'random' && difficulty === 'chill'}
-						onclick={() => startRandomMode('chill')}
+						class:active={mode === "random" &&
+							difficulty === "chill"}
+						onclick={() => startRandomMode("chill")}
 					>
 						<strong>Chill</strong>
 						<span>9×9 · Walls &amp; Snow</span>
 					</button>
 					<button
 						class="rand-btn"
-						class:active={mode === 'random' && difficulty === 'classic'}
-						onclick={() => startRandomMode('classic')}
+						class:active={mode === "random" &&
+							difficulty === "classic"}
+						onclick={() => startRandomMode("classic")}
 					>
 						<strong>Classic</strong>
 						<span>12×12 · + Pits &amp; Bumpers</span>
 					</button>
 					<button
 						class="rand-btn"
-						class:active={mode === 'random' && difficulty === 'master'}
-						onclick={() => startRandomMode('master')}
+						class:active={mode === "random" &&
+							difficulty === "master"}
+						onclick={() => startRandomMode("master")}
 					>
 						<strong>Master</strong>
 						<span>15×15 · All Mechanics</span>
@@ -912,7 +1138,11 @@
 		height: 100%;
 		color: var(--app-text);
 		position: relative;
-		--ice-board-bg: linear-gradient(145deg, rgba(165, 216, 248, 0.08), rgba(75, 106, 190, 0.05));
+		--ice-board-bg: linear-gradient(
+			145deg,
+			rgba(165, 216, 248, 0.08),
+			rgba(75, 106, 190, 0.05)
+		);
 		--ice-board-border: rgba(165, 216, 248, 0.22);
 		--ice-board-shadow: rgba(0, 0, 0, 0.55);
 		--ice-cell-border: rgba(165, 216, 248, 0.07);
@@ -921,7 +1151,11 @@
 		--ice-sticky-bg: rgba(165, 216, 248, 0.14);
 		--ice-sticky-border: rgba(165, 216, 248, 0.35);
 		--ice-sticky-color: #a5d8f8;
-		--ice-pit-bg: radial-gradient(circle at center, #081224 30%, #132c4c 100%);
+		--ice-pit-bg: radial-gradient(
+			circle at center,
+			#081224 30%,
+			#132c4c 100%
+		);
 		--ice-pit-border: rgba(92, 179, 255, 0.35);
 		--ice-bumper-color: #5eead4;
 		--ice-trail-stroke: rgba(255, 255, 255, 0.42);
@@ -935,8 +1169,12 @@
 		--ice-modal-bg: #12151e;
 	}
 
-	:global(html[data-theme='light']) .game-inner {
-		--ice-board-bg: linear-gradient(145deg, rgba(225, 241, 252, 0.92), rgba(247, 241, 230, 0.95));
+	:global(html[data-theme="light"]) .game-inner {
+		--ice-board-bg: linear-gradient(
+			145deg,
+			rgba(225, 241, 252, 0.92),
+			rgba(247, 241, 230, 0.95)
+		);
 		--ice-board-border: rgba(75, 106, 190, 0.28);
 		--ice-board-shadow: rgba(65, 82, 110, 0.18);
 		--ice-cell-border: rgba(75, 106, 190, 0.11);
@@ -945,7 +1183,11 @@
 		--ice-sticky-bg: rgba(75, 106, 190, 0.14);
 		--ice-sticky-border: rgba(75, 106, 190, 0.38);
 		--ice-sticky-color: #344e94;
-		--ice-pit-bg: radial-gradient(circle at center, #1c2d48 30%, #37557a 100%);
+		--ice-pit-bg: radial-gradient(
+			circle at center,
+			#1c2d48 30%,
+			#37557a 100%
+		);
 		--ice-pit-border: rgba(52, 78, 148, 0.45);
 		--ice-bumper-color: #0d9488;
 		--ice-trail-stroke: rgba(75, 106, 190, 0.45);
@@ -1242,12 +1484,19 @@
 	}
 
 	@keyframes spinPulse {
-		0%, 100% { transform: scale(0.92); opacity: 0.85; }
-		50% { transform: scale(1.06); opacity: 1; }
+		0%,
+		100% {
+			transform: scale(0.92);
+			opacity: 0.85;
+		}
+		50% {
+			transform: scale(1.06);
+			opacity: 1;
+		}
 	}
 
 	.cell.start-mark::after {
-		content: '';
+		content: "";
 		width: 24%;
 		height: 24%;
 		border-radius: 50%;
@@ -1256,7 +1505,11 @@
 	}
 
 	.cell.goal {
-		background: radial-gradient(circle, rgba(255, 203, 92, 0.24) 0%, transparent 72%);
+		background: radial-gradient(
+			circle,
+			rgba(255, 203, 92, 0.24) 0%,
+			transparent 72%
+		);
 	}
 
 	.goal-icon {
@@ -1269,8 +1522,15 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { transform: scale(0.95); opacity: 0.88; }
-		50% { transform: scale(1.12); opacity: 1; }
+		0%,
+		100% {
+			transform: scale(0.95);
+			opacity: 0.88;
+		}
+		50% {
+			transform: scale(1.12);
+			opacity: 1;
+		}
 	}
 
 	.path-overlay {
@@ -1300,13 +1560,20 @@
 	}
 
 	@keyframes hintPulse {
-		0%, 100% { opacity: 0.6; }
-		50% { opacity: 1; }
+		0%,
+		100% {
+			opacity: 0.6;
+		}
+		50% {
+			opacity: 1;
+		}
 	}
 
 	.player {
 		position: absolute;
-		padding: 8%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		z-index: 10;
 		pointer-events: none;
 		box-sizing: border-box;
@@ -1318,14 +1585,23 @@
 	}
 
 	@keyframes splashShake {
-		0%, 100% { transform: scale(1); }
-		30% { transform: scale(0.75) rotate(-10deg); opacity: 0.6; }
-		60% { transform: scale(0.85) rotate(10deg); opacity: 0.4; }
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		30% {
+			transform: scale(0.75) rotate(-10deg);
+			opacity: 0.6;
+		}
+		60% {
+			transform: scale(0.85) rotate(10deg);
+			opacity: 0.4;
+		}
 	}
 
 	.player-block {
-		width: 100%;
-		height: 100%;
+		width: 78%;
+		height: 78%;
 		background: linear-gradient(135deg, #ff857a 0%, #ff5a4c 100%);
 		border-radius: 22%;
 		box-shadow:
@@ -1381,7 +1657,7 @@
 		color: rgba(255, 255, 255, 0.16);
 	}
 
-	:global(html[data-theme='light']) .star {
+	:global(html[data-theme="light"]) .star {
 		color: rgba(47, 37, 28, 0.18);
 	}
 
