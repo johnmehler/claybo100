@@ -15,8 +15,6 @@
 	const TOUCH_DIST_SQ = (RADIUS * 2.5) ** 2;
 	const WIDTH = 800;
 	const HEIGHT = 600;
-	const VAX_COST_PER_UNIT = 1000;
-	const VAX_BATCH_SIZE = 10;
 	const HOSPITAL_CAPACITY = 20;
 	const INITIAL_BUDGET = 100000;
 
@@ -28,7 +26,6 @@
 		baseVy: number;
 		state: State;
 		infectionDay: number;
-		vaxFlash: number;
 	}
 
 	let people: Person[] = [];
@@ -85,11 +82,6 @@
 		costMobility + costHealthDrain + costTesting + costSanitary,
 	);
 
-	const vaxBatchCost = VAX_BATCH_SIZE * VAX_COST_PER_UNIT;
-	let canVaccinate = $derived(
-		!isGameOver && budget >= vaxBatchCost && stats.s > 0,
-	);
-
 	let history = $state<{ s: number; i: number; r: number; d: number }[]>([]);
 	let activeEncounters = new Set<number>(); // Numeric pair keys: i * POPULATION_SIZE + j
 
@@ -124,7 +116,6 @@
 				baseVy: (Math.random() - 0.5) * 4,
 				state: isImmune ? "R" : isInfected ? "I" : "S",
 				infectionDay: isInfected ? 0 : -1,
-				vaxFlash: 0,
 			});
 		}
 		people = newPeople;
@@ -134,37 +125,6 @@
 		activeEncounters.clear();
 		isGameOver = false;
 		isPaused = true;
-		drawCanvas();
-	}
-
-	function vaccinateBatch() {
-		if (!canVaccinate) return;
-		const susceptibleIndices: number[] = [];
-		for (let i = 0; i < people.length; i++) {
-			if (people[i].state === "S") susceptibleIndices.push(i);
-		}
-		if (susceptibleIndices.length === 0) return;
-
-		const count = Math.min(VAX_BATCH_SIZE, susceptibleIndices.length);
-		const actualCost = count * VAX_COST_PER_UNIT;
-		if (budget < actualCost) return;
-
-		// Fisher-Yates partial shuffle to pick random susceptible agents
-		for (let k = 0; k < count; k++) {
-			const randIdx =
-				k + Math.floor(Math.random() * (susceptibleIndices.length - k));
-			const chosen = susceptibleIndices[randIdx];
-			susceptibleIndices[randIdx] = susceptibleIndices[k];
-			people[chosen].state = "R";
-			people[chosen].vaxFlash = 24;
-		}
-
-		budget -= actualCost;
-		if (budget <= 0) {
-			budget = 0;
-			isGameOver = true;
-		}
-		syncStats();
 		drawCanvas();
 	}
 
@@ -186,7 +146,6 @@
 
 		for (let i = 0; i < len; i++) {
 			const p = people[i];
-			if (p.vaxFlash > 0) p.vaxFlash--;
 			if (p.state === "D") continue;
 
 			p.x += p.baseVx * physSpeed;
@@ -293,18 +252,6 @@
 				ctx.lineWidth = 2;
 				ctx.beginPath();
 				ctx.arc(p.x, p.y, RADIUS + t * 8, 0, Math.PI * 2);
-				ctx.stroke();
-				ctx.restore();
-			}
-
-			// Vaccination ring flash
-			if (p.vaxFlash > 0) {
-				const t = 1 - p.vaxFlash / 24;
-				ctx.save();
-				ctx.strokeStyle = `rgba(105, 175, 75, ${1 - t})`;
-				ctx.lineWidth = 2;
-				ctx.beginPath();
-				ctx.arc(p.x, p.y, RADIUS + t * 9, 0, Math.PI * 2);
 				ctx.stroke();
 				ctx.restore();
 			}
@@ -633,20 +580,6 @@
 				</div>
 			</div>
 
-			<div class="control-group controllable">
-				<span class="control-label">Emergency Vaccination</span>
-				<button
-					class="vax-btn"
-					disabled={!canVaccinate}
-					onclick={vaccinateBatch}
-				>
-					VACCINATE {VAX_BATCH_SIZE} (-${vaxBatchCost.toLocaleString()})
-				</button>
-				<div class="hint">
-					Immunizes {VAX_BATCH_SIZE} susceptible people instantly
-				</div>
-			</div>
-
 			<div class="history-chart">
 				<svg viewBox="0 0 100 50" preserveAspectRatio="none">
 					<line
@@ -688,7 +621,7 @@
 						/>
 					{/if}
 				</svg>
-				<div class="chart-label">EPIDEMIC CURVE (DASHED = 20 CAP)</div>
+				<div class="chart-label">PANDEMIC CURVE (DASHED = 20 CAP)</div>
 			</div>
 		</div>
 	</div>
@@ -705,7 +638,7 @@
 
 	.nav-extra-btn {
 		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.14);
+		border: 1px solid color-mix(in srgb, var(--app-text) 22%, transparent);
 		color: var(--game-text-muted);
 		padding: 1vmin 2vmin;
 		border-radius: 1vmin;
@@ -922,6 +855,7 @@
 
 	.controls-panel {
 		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid var(--panel-border);
 		border-radius: 2vmin;
 		padding: 2vmin;
 		display: flex;
@@ -956,7 +890,7 @@
 
 	.diff-btn {
 		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.12);
+		border: 1px solid color-mix(in srgb, var(--app-text) 22%, transparent);
 		color: var(--game-text-muted);
 		padding: 0.9vmin 0.5vmin;
 		border-radius: 0.8vmin;
@@ -968,7 +902,7 @@
 
 	.diff-btn:hover:not(:disabled) {
 		background: rgba(255, 255, 255, 0.12);
-		border-color: rgba(255, 255, 255, 0.25);
+		border-color: color-mix(in srgb, var(--app-text) 45%, transparent);
 		color: var(--game-text-primary);
 	}
 
@@ -981,31 +915,6 @@
 
 	.diff-btn:disabled {
 		opacity: 0.55;
-		cursor: not-allowed;
-	}
-
-	.vax-btn {
-		background: rgba(105, 175, 75, 0.18);
-		border: 1px solid #69af4b;
-		color: #a8e08e;
-		padding: 1vmin 1.2vmin;
-		border-radius: 0.8vmin;
-		font-size: clamp(0.7rem, 1.25vmin, 0.88rem);
-		font-weight: 800;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.vax-btn:hover:not(:disabled) {
-		background: #69af4b;
-		color: #0b1409;
-	}
-
-	.vax-btn:disabled {
-		opacity: 0.4;
-		border-color: rgba(255, 255, 255, 0.15);
-		color: var(--game-text-muted);
-		background: rgba(255, 255, 255, 0.04);
 		cursor: not-allowed;
 	}
 
@@ -1101,7 +1010,7 @@
 		margin-top: 2vmin;
 		background: var(--color-bittersweet);
 		color: var(--game-text-on-accent);
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--app-text) 25%, transparent);
 		padding: 1.4vmin 3.5vmin;
 		border-radius: 1vmin;
 		font-size: clamp(0.85rem, 1.6vmin, 1.05rem);

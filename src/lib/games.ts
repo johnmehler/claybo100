@@ -113,11 +113,11 @@ export const games = [
 	},
 	{
 		id: 'epidemicsim',
-		label: 'Epidemic Sim',
+		label: 'Pandemic',
 		description: 'Visualize the spread of viruses through a population.',
 		cardClass: 'epidemic-card',
 		updated: '2026-05-15',
-		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Epidemic Sim Icon"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>`
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Pandemic Icon"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>`
 	},
 	{
 		id: 'lasermaze',
@@ -209,8 +209,8 @@ export const gameCategories = [
 		name: 'Simulations',
 		slug: 'business',
 		hubTitle: 'Online Simulation Games – Free Business, Economics & Science Sims',
-		hubDescription: 'Play free simulation games online including Lemonade Stand, Apex Industries, and Epidemic Sim.',
-		hubIntro: 'Practice microeconomics, supply and demand, pricing strategy, profit margin math, and SIR epidemic modeling in interactive browser simulations.',
+		hubDescription: 'Play free simulation games online including Lemonade Stand, Apex Industries, and Pandemic.',
+		hubIntro: 'Practice microeconomics, supply and demand, pricing strategy, profit margin math, and SIR pandemic modeling in interactive browser simulations.',
 		delay: 800,
 		gameIds: ['lemonadestand', 'apexindustries', 'epidemicsim']
 	},

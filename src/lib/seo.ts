@@ -173,7 +173,7 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 		]
 	},
 	'epidemicsim': {
-		name: 'How to play the Epidemic Simulator',
+		name: 'How to play Pandemic',
 		description: 'Use mobility, testing, and quarantine policies to manage a virus outbreak in a population.',
 		steps: [
 			{ name: 'Read the SIR state', text: 'The population is split into Susceptible, Infected, and Recovered compartments. Watch how each curve evolves day by day.' },
@@ -332,11 +332,11 @@ export const gameSEO: Record<string, GameSEO> = {
 		about: 'Lunar Lander is a thrust-vs-gravity classic descended from a 1969 text simulation and Atari\'s 1979 arcade hit. Touch down gently, upright, on the pad — with the fuel you have left.'
 	},
 	'epidemicsim': {
-		title: 'Epidemic Simulator — SIR Model Virus Spread Game Online',
-		description: 'Play an epidemic simulator online. Use mobility, testing, and quarantine to manage a virus outbreak in a population. SIR-model based, mobile and school friendly.',
-		keywords: ['epidemic simulator', 'sir model game', 'virus spread simulation', 'pandemic simulator', 'disease spread game', 'flatten the curve game'],
+		title: 'Pandemic — SIR Model Virus Spread Game Online',
+		description: 'Play Pandemic online. Use mobility, testing, and quarantine to manage a virus outbreak in a population. SIR-model based, mobile and school friendly.',
+		keywords: ['pandemic simulator', 'sir model game', 'virus spread simulation', 'epidemic simulator', 'disease spread game', 'flatten the curve game'],
 		genre: 'Simulation',
-		about: 'This epidemic simulator is built on the SIR (Susceptible–Infected–Recovered) model developed by Kermack and McKendrick in 1927 — the same math behind every "flatten the curve" chart you saw in 2020.'
+		about: 'Pandemic is built on the SIR (Susceptible–Infected–Recovered) model developed by Kermack and McKendrick in 1927 — the same math behind every "flatten the curve" chart you saw in 2020.'
 	},
 	'lasermaze': {
 		title: 'Laser Maze Online – Play Free Physics Mirror Puzzle',

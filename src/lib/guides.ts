@@ -165,7 +165,7 @@ export const gameGuides: Record<string, string> = {
 <p>Yes. No logins, no chat. A classic for teaching Newton's laws, fuel economy, and proportional control — works on phones and Chromebooks.</p>
 `,
 
-	'epidemicsim': `<h2>Epidemic Simulator: History, Rules &amp; Strategy</h2>
+	'epidemicsim': `<h2>Pandemic: History, Rules &amp; Strategy</h2>
 <p>Epidemic modeling dates to Daniel Bernoulli's 1766 analysis of smallpox inoculation. The modern SIR model (Susceptible-Infected-Recovered) was developed by Kermack and McKendrick in 1927 and remains the foundation of epidemiological forecasting. The COVID-19 pandemic brought these models into public consciousness, as "flatten the curve" became a global rallying cry based directly on SIR mathematics.</p>
 <h3>How to Play</h3>
 <p>Manage the spread of a virus through a population using policy controls: mobility restrictions, testing and isolation programs, and quarantine fines. Balance public health outcomes against your limited budget. The simulation runs day by day as you adjust your response strategy.</p>
