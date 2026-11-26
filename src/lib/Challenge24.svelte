@@ -19,9 +19,9 @@
 		[5, 6, 7, 8], // Level 4: (5 + 7) × (8 − 6) = 24
 		[2, 7, 8, 9], // Level 5: 2 × (9 + 7) − 8 = 24
 		[1, 5, 5, 5], // Level 6: 5 × (5 − 1 ÷ 5) = 24
-		[2, 5, 5, 10], // Level 7: (5 − 2 ÷ 10) × 5 = 24
-		[3, 3, 7, 7], // Level 8: 7 × (3 + 3 ÷ 7) = 24
-		[1, 4, 5, 6], // Level 9: 4 ÷ (1 − 5 ÷ 6) = 24
+		[1, 3, 4, 6], // Level 7: 6 ÷ (1 − 3 ÷ 4) = 24
+		[1, 2, 7, 7], // Level 8: (7 × 7 − 1) ÷ 2 = 24
+		[3, 3, 8, 8], // Level 9: 8 ÷ (3 − 8 ÷ 3) = 24
 		[23, 23, 23, 23] // Level 10: (23 × 23 + 23) ÷ 23 = 24
 	];
 
@@ -76,16 +76,24 @@
 		return f.d === 1 && f.n === 24;
 	}
 
+	interface HintStep {
+		aId: number;
+		op: '+' | '-' | '*' | '/';
+		bId: number;
+	}
+
 	/**
 	 * Finds a valid expression reaching 24 from the given numbers, or null if unsolvable.
 	 * When integerOnly is true, rejects intermediate fractions (used for Easy mode).
 	 */
 	function solve24(
-		items: { val: Frac; expr: string }[],
+		items: { id: number; val: Frac; expr: string }[],
 		integerOnly: boolean
-	): string | null {
+	): { expr: string; firstStep: HintStep | null } | null {
 		if (items.length === 1) {
-			return isTwentyFour(items[0].val) ? items[0].expr : null;
+			return isTwentyFour(items[0].val)
+				? { expr: items[0].expr, firstStep: null }
+				: null;
 		}
 
 		for (let i = 0; i < items.length; i++) {
@@ -94,32 +102,40 @@
 				const b = items[j];
 				const rest = items.filter((_, idx) => idx !== i && idx !== j);
 
-				const ops: { val: Frac; expr: string }[] = [];
+				const ops: { val: Frac; expr: string; step: HintStep }[] = [];
 				const add = applyOp(a.val, b.val, '+')!;
-				ops.push({ val: add, expr: `(${a.expr} + ${b.expr})` });
+				ops.push({ val: add, expr: `(${a.expr} + ${b.expr})`, step: { aId: a.id, op: '+', bId: b.id } });
 
 				const mul = applyOp(a.val, b.val, '*')!;
-				ops.push({ val: mul, expr: `(${a.expr} × ${b.expr})` });
+				ops.push({ val: mul, expr: `(${a.expr} × ${b.expr})`, step: { aId: a.id, op: '*', bId: b.id } });
 
 				const sub1 = applyOp(a.val, b.val, '-')!;
-				ops.push({ val: sub1, expr: `(${a.expr} − ${b.expr})` });
+				ops.push({ val: sub1, expr: `(${a.expr} − ${b.expr})`, step: { aId: a.id, op: '-', bId: b.id } });
 
 				const sub2 = applyOp(b.val, a.val, '-')!;
-				ops.push({ val: sub2, expr: `(${b.expr} − ${a.expr})` });
+				ops.push({ val: sub2, expr: `(${b.expr} − ${a.expr})`, step: { aId: b.id, op: '-', bId: a.id } });
 
 				const div1 = applyOp(a.val, b.val, '/');
 				if (div1 && (!integerOnly || div1.d === 1)) {
-					ops.push({ val: div1, expr: `(${a.expr} ÷ ${b.expr})` });
+					ops.push({ val: div1, expr: `(${a.expr} ÷ ${b.expr})`, step: { aId: a.id, op: '/', bId: b.id } });
 				}
 
 				const div2 = applyOp(b.val, a.val, '/');
 				if (div2 && (!integerOnly || div2.d === 1)) {
-					ops.push({ val: div2, expr: `(${b.expr} ÷ ${a.expr})` });
+					ops.push({ val: div2, expr: `(${b.expr} ÷ ${a.expr})`, step: { aId: b.id, op: '/', bId: a.id } });
 				}
 
 				for (const next of ops) {
-					const found = solve24([...rest, next], integerOnly);
-					if (found) return found;
+					const found = solve24(
+						[...rest, { id: -1, val: next.val, expr: next.expr }],
+						integerOnly
+					);
+					if (found) {
+						return {
+							expr: found.expr,
+							firstStep: next.step
+						};
+					}
 				}
 			}
 		}
@@ -134,8 +150,9 @@
 	let historyStack = $state<CardBlock[][]>([]);
 	let selectedBlockId = $state<number | null>(null);
 	let selectedOp = $state<string | null>(null);
-	let solutionHint = $state<string | null>(null);
-	let showSolution = $state(false);
+	let hintTarget = $state<HintStep | null>(null);
+	let hintStage = $state<0 | 1 | 2 | 3>(0);
+	let hintDeadEnd = $state(false);
 	let solved = $state(false);
 	let streak = $state(0);
 	let elapsedSeconds = $state(0);
@@ -162,14 +179,42 @@
 		return `${m}:${s.toString().padStart(2, '0')}`;
 	}
 
+	function clearHint() {
+		hintTarget = null;
+		hintStage = 0;
+		hintDeadEnd = false;
+	}
+
+	function triggerHint() {
+		if (solved) return;
+		if (hintTarget && hintStage < 3) {
+			hintStage = (hintStage + 1) as 1 | 2 | 3;
+			return;
+		}
+		if (hintStage === 3) return;
+
+		const active = blocks.filter((b) => !b.used);
+		const integerOnly = difficulty === 'easy';
+		const found = solve24(
+			active.map((b) => ({ id: b.id, val: b.val, expr: b.expr })),
+			integerOnly
+		);
+		if (!found || !found.firstStep) {
+			hintDeadEnd = true;
+			hintTarget = null;
+			hintStage = 0;
+			return;
+		}
+		hintDeadEnd = false;
+		hintTarget = found.firstStep;
+		hintStage = 1;
+	}
+
 	function loadLevel(idx: number) {
 		difficulty = 'levels';
 		currentLevel = Math.max(0, Math.min(idx, LEVEL_PUZZLES.length - 1));
 		const nums = LEVEL_PUZZLES[currentLevel];
-		const items = nums.map((n) => ({ val: makeFrac(n), expr: String(n) }));
-		const found = solve24(items, false) ?? '';
 		initialNums = [...nums];
-		solutionHint = found ? found.slice(1, -1) : null;
 		resetHand();
 		elapsedSeconds = 0;
 		startTimer();
@@ -186,31 +231,22 @@
 		const maxVal = diff === 'hard' ? 13 : 9;
 		const integerOnly = diff === 'easy';
 
-		let nums: number[] = [3, 8, 3, 8];
-		let sol: string | null = null;
+		let nums: number[] = [1, 2, 3, 4];
 
 		for (let attempt = 0; attempt < 400; attempt++) {
 			const cand = Array.from(
 				{ length: 4 },
 				() => 1 + Math.floor(Math.random() * maxVal)
 			);
-			const items = cand.map((n) => ({ val: makeFrac(n), expr: String(n) }));
+			const items = cand.map((n, idx) => ({ id: idx + 1, val: makeFrac(n), expr: String(n) }));
 			const found = solve24(items, integerOnly);
 			if (found) {
-				// For med/hard, prefer hands that aren't trivial pure-addition if easy failed
 				nums = cand;
-				sol = found;
 				break;
 			}
 		}
 
-		if (!sol) {
-			nums = [1, 2, 3, 4];
-			sol = '((1 + 2 + 3) × 4)';
-		}
-
 		initialNums = nums;
-		solutionHint = sol.slice(1, -1); // strip outer parens
 		resetHand();
 		elapsedSeconds = 0;
 		startTimer();
@@ -227,7 +263,7 @@
 		historyStack = [];
 		selectedBlockId = null;
 		selectedOp = null;
-		showSolution = false;
+		clearHint();
 		solved = false;
 	}
 
@@ -237,6 +273,7 @@
 		historyStack = historyStack.slice(0, -1);
 		selectedBlockId = null;
 		selectedOp = null;
+		clearHint();
 	}
 
 	function selectBlock(id: number) {
@@ -289,6 +326,7 @@
 			),
 			newBlock
 		];
+		clearHint();
 
 		const active = blocks.filter((b) => !b.used);
 		if (active.length === 1 && isTwentyFour(active[0].val)) {
@@ -453,6 +491,8 @@
 					type="button"
 					class="num-card"
 					class:selected={selectedBlockId === block.id}
+					class:hinted={(hintStage >= 1 && hintTarget?.aId === block.id) ||
+						(hintStage >= 3 && hintTarget?.bId === block.id)}
 					class:won={solved && isTwentyFour(block.val)}
 					onclick={() => selectBlock(block.id)}
 					in:scale={{ duration: 180 }}
@@ -471,6 +511,7 @@
 					type="button"
 					class="op-btn"
 					class:active={selectedOp === op}
+					class:hinted={hintStage >= 2 && hintTarget?.op === op}
 					disabled={selectedBlockId === null || solved}
 					onclick={() => selectOp(op)}
 				>
@@ -491,15 +532,16 @@
 			<button
 				type="button"
 				class="util-btn"
-				onclick={() => (showSolution = !showSolution)}
+				disabled={solved}
+				onclick={triggerHint}
 			>
-				{showSolution ? 'HIDE HINT' : 'HINT'}
+				HINT
 			</button>
 		</div>
 
-		{#if showSolution && solutionHint}
+		{#if hintDeadEnd}
 			<div class="hint-banner" in:fade>
-				Solution: <strong>{solutionHint} = 24</strong>
+				No solution from current state — try <strong>Undo</strong> or <strong>Reset</strong>.
 			</div>
 		{/if}
 
@@ -672,6 +714,11 @@
 		box-shadow: 0 0 20px rgba(255, 110, 97, 0.25);
 	}
 
+	.num-card.hinted {
+		border-color: var(--color-golden);
+		box-shadow: 0 0 18px color-mix(in srgb, var(--color-golden) 45%, transparent);
+	}
+
 	.num-card.won {
 		border-color: var(--color-apple);
 		background: color-mix(in srgb, var(--color-apple) 22%, transparent);
@@ -716,6 +763,13 @@
 		background: var(--color-golden);
 		border-color: var(--color-golden);
 		color: #1f1912;
+	}
+
+	.op-btn.hinted:not(.active) {
+		opacity: 1;
+		border-color: var(--color-golden);
+		color: var(--color-golden);
+		box-shadow: 0 0 14px color-mix(in srgb, var(--color-golden) 45%, transparent);
 	}
 
 	.op-btn:disabled {
