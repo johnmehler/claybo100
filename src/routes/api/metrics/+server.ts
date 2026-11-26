@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { env } from '$env/dynamic/public';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { RequestHandler } from './$types';
 
