@@ -1,4 +1,14 @@
 export const gameGuides: Record<string, string> = {
+	'kakuro': `<h2>Kakuro (Cross Sums): History, Rules &amp; Strategy</h2>
+<p>Kakuro — short for Japanese <em>kasan kurosu</em> ("addition cross") — was first published in Dell Magazines in 1950 under the name "Cross Sums" before becoming a sensation in Japan alongside Sudoku. It blends crossword structure with arithmetic deduction.</p>
+<h3>How to Play</h3>
+<p>Fill every white square with a digit from 1 to 9. Clue cells are split diagonally: the top-right number gives the sum of the horizontal run to its right, and the bottom-left number gives the sum of the vertical run below it. No digit may repeat within any continuous run.</p>
+<h3>Strategy Tips</h3>
+<p>Start with <strong>unique sum combinations</strong>: a 2-cell 3 must be 1+2, a 2-cell 17 must be 8+9, and a 3-cell 6 must be 1+2+3. Look for intersections where an Across run and a Down run share only a single valid digit.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes. No logins, no ads, and runs entirely in your browser on Chromebooks, tablets, and phones.</p>
+`,
+
 	'sliding-tiles': `<h2>The Sliding Tiles Puzzle: History, Rules &amp; Strategy</h2>
 <p>The sliding tiles puzzle, also known as the 15-puzzle, was invented by Noyes Palmer Chapman in 1874 and became one of the world's first viral crazes. Sam Loyd famously offered a cash prize for solving an "impossible" configuration, which mathematicians later proved was indeed unsolvable — launching the field of permutation group theory.</p>
 <h3>How to Play</h3>

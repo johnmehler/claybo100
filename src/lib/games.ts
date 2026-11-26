@@ -174,6 +174,14 @@ export const games = [
 		cardClass: 'trig-card',
 		updated: '2026-11-25',
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Trigonometry Icon"><circle cx="12" cy="12" r="9"/><path d="M12 12l6.5-4.5"/><path d="M12 12h9"/></svg>`
+	},
+	{
+		id: 'kakuro',
+		label: 'Kakuro',
+		description: 'Cross-sum number puzzle. Fill every run to match its clue.',
+		cardClass: 'kakuro-card',
+		updated: '2026-11-25',
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Kakuro Icon"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="3" x2="12" y2="12"/></svg>`
 	}
 ];
 
@@ -182,10 +190,10 @@ export const gameCategories = [
 		name: 'Puzzles',
 		slug: 'puzzles',
 		hubTitle: 'Online Math Puzzles – Free Logic & Brain Games',
-		hubDescription: 'Play free online math puzzles including Tower of Hanoi, Sliding Tiles (15-Puzzle), Peg Solitaire, Knight’s Tour, and Ice Slider.',
+		hubDescription: 'Play free online math puzzles including Kakuro, Tower of Hanoi, Sliding Tiles (15-Puzzle), Peg Solitaire, Knight’s Tour, and Ice Slider.',
 		hubIntro: 'Sharpen your logical reasoning, recursion, and spatial planning with classic single-player logic puzzles. Every puzzle runs free in your browser with no downloads.',
 		delay: 200,
-		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'iceslider']
+		gameIds: ['sliding-tiles', 'pegboard', 'hanoi', 'knights-tour', 'iceslider', 'kakuro']
 	},
 	{
 		name: 'Abstract Games',

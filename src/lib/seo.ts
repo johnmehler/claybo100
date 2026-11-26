@@ -18,6 +18,17 @@ export type GameSEO = {
 };
 
 export const gameHowTo: Record<string, { name: string; description: string; steps: HowToStep[] }> = {
+	'kakuro': {
+		name: 'How to solve Kakuro puzzles',
+		description: 'Fill white cells with digits 1–9 so each horizontal and vertical run sums to its clue without repeating digits.',
+		steps: [
+			{ name: 'Read the diagonal clues', text: 'Top-right numbers give the Across sum; bottom-left numbers give the Down sum.' },
+			{ name: 'Spot unique sums', text: 'Look for runs like 3 in 2 cells (1+2) or 17 in 2 cells (8+9) that have only one possible set of digits.' },
+			{ name: 'Use intersections', text: 'Where an Across run meets a Down run, keep only digits valid in both runs.' },
+			{ name: 'Avoid repeating digits', text: 'No digit 1–9 can appear more than once in the same continuous horizontal or vertical run.' },
+			{ name: 'Complete the grid', text: 'Fill all white cells with matching sums and zero duplicates to solve the puzzle.' }
+		]
+	},
 	'sliding-tiles': {
 		name: 'How to play the Sliding Tiles (15) puzzle',
 		description: 'Slide numbered tiles into the empty space to arrange them 1–15 in order on a 4×4 grid.',
@@ -230,6 +241,13 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 };
 
 export const gameSEO: Record<string, GameSEO> = {
+	'kakuro': {
+		title: 'Kakuro Online — Play Free Cross-Sum Number Puzzles',
+		description: 'Play Kakuro (Cross Sums) online free. Fill the grid with digits 1–9 to match every Across and Down sum clue. Mobile & school friendly.',
+		keywords: ['kakuro online', 'cross sums puzzle', 'kakuro game free', 'number crossword puzzle', 'kakuro unblocked', 'logic sum puzzle'],
+		genre: 'Puzzle',
+		about: 'Kakuro (Cross Sums) combines crossword-style grids with arithmetic deduction. Fill every white cell with 1–9 so each run sums to its clue with no repeated digits.'
+	},
 	'sliding-tiles': {
 		title: 'Sliding Tiles Puzzle — Play the 15 Puzzle Online Free',
 		description: 'Play the classic 15 puzzle online free. Slide numbered tiles into order in your browser. No downloads, works on mobile and at school.',

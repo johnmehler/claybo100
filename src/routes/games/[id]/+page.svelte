@@ -73,6 +73,7 @@
 		arithmetic: () => import("$lib/MathDrill.svelte"),
 		calculus: () => import("$lib/CalculusGame.svelte"),
 		trig: () => import("$lib/TrigGame.svelte"),
+		kakuro: () => import("$lib/Kakuro.svelte"),
 		"addition-subtraction": () => import("$lib/MathDrill.svelte"),
 		"multiplication-drills": () => import("$lib/MathDrill.svelte"),
 		"division-drills": () => import("$lib/MathDrill.svelte"),
