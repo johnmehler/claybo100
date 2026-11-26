@@ -1,48 +1,56 @@
 <script lang="ts">
-	import { games, getGamesByCategory, allHubs, getPlayAnchorText } from '$lib/games';
-	import { fade } from 'svelte/transition';
+	import {
+		games,
+		getGamesByCategory,
+		allHubs,
+		getPlayAnchorText,
+	} from "$lib/games";
+	import { fade } from "svelte/transition";
 
 	const gameCategories = getGamesByCategory();
 
-	const siteUrl = 'https://onlinemath.games';
-	const pageTitle = 'Online Math Games - Free Online Math and Puzzle Games';
+	const siteUrl = "https://onlinemath.games";
+	const pageTitle = "Online Math Games - Free Online Math and Puzzle Games";
 	const pageDescription =
-		'onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity.';
+		"onlinemath.games: a free collection of interactive logic puzzles, strategy games, and physics simulations designed to challenge your mind and spark curiosity.";
 
 	const homeSchema = JSON.stringify({
-		'@context': 'https://schema.org',
-		'@graph': [
+		"@context": "https://schema.org",
+		"@graph": [
 			{
-				'@type': 'WebSite',
-				name: 'onlinemath.games',
+				"@type": "WebSite",
+				name: "onlinemath.games",
 				url: `${siteUrl}/`,
 				description: pageDescription,
-				inLanguage: 'en'
+				inLanguage: "en",
 			},
 			{
-				'@type': 'CollectionPage',
+				"@type": "CollectionPage",
 				name: pageTitle,
 				url: `${siteUrl}/`,
 				description: pageDescription,
 				mainEntity: {
-					'@type': 'ItemList',
+					"@type": "ItemList",
 					numberOfItems: games.length,
 					itemListElement: games.map((g, index) => ({
-						'@type': 'ListItem',
+						"@type": "ListItem",
 						position: index + 1,
 						name: g.label,
-						url: `${siteUrl}/games/${g.id}`
-					}))
-				}
-			}
-		]
+						url: `${siteUrl}/games/${g.id}`,
+					})),
+				},
+			},
+		],
 	});
 </script>
 
 <svelte:head>
 	<title>{pageTitle}</title>
 	<meta name="description" content={pageDescription} />
-	<meta name="keywords" content="free math games, online logic puzzles, interactive physics simulations, browser strategy games, classroom math games unblocked, math museum games, onlinemath.games" />
+	<meta
+		name="keywords"
+		content="free math games, online logic puzzles, interactive physics simulations, browser strategy games, classroom math games unblocked, math museum games, onlinemath.games"
+	/>
 	<link rel="canonical" href={`${siteUrl}/`} />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content={pageTitle} />
@@ -60,7 +68,9 @@
 <main id="main-view" class="main-container centered">
 	<div id="menu-screen" class="menu-screen" in:fade={{ duration: 400 }}>
 		<header id="app-header" class="header" in:fade={{ duration: 800 }}>
-			<h1 id="app-title">ONLINEMATH<span class="highlight">.GAMES</span></h1>
+			<h1 id="app-title">
+				ONLINEMATH<span class="highlight">.GAMES</span>
+			</h1>
 			<p id="app-subtitle" class="app-subtitle">EXPLORE THE COLLECTION</p>
 			<nav class="hub-nav" aria-label="Game Categories">
 				{#each allHubs as hub}
@@ -71,18 +81,28 @@
 
 		<div id="game-list" class="game-catalog">
 			{#each gameCategories as category}
-				<div class="category" in:fade={{ duration: 800, delay: category.delay }}>
+				<div
+					class="category"
+					in:fade={{ duration: 800, delay: category.delay }}
+				>
 					<h2 class="category-title">
-						<a href="/{category.slug}" class="category-link">{category.name}</a>
+						<a href="/{category.slug}" class="category-link"
+							>{category.name}</a
+						>
 					</h2>
 					<div class="game-grid">
 						{#each category.games as game}
-							<a href="/games/{game.id}" class="game-card {game.cardClass}">
+							<a
+								href="/games/{game.id}"
+								class="game-card {game.cardClass}"
+							>
 								<div class="card-icon">{@html game.icon}</div>
 								<div class="card-content">
 									<h3>{game.label}</h3>
 									<p>{game.description}</p>
-									<span class="card-cta">{getPlayAnchorText(game)} &rarr;</span>
+									<span class="card-cta"
+										>{getPlayAnchorText(game)} &rarr;</span
+									>
 								</div>
 							</a>
 						{/each}
@@ -95,8 +115,7 @@
 
 <style>
 	.main-container {
-		width: 100%;
-		height: 100vh;
+		height: calc(100vh - var(--byline-height, 26px));
 		overflow: hidden;
 		background: var(--app-bg);
 		display: flex;
@@ -164,7 +183,9 @@
 		border-radius: 999px;
 		background: var(--panel-bg);
 		border: 1px solid var(--panel-border);
-		transition: color 0.2s ease, border-color 0.2s ease;
+		transition:
+			color 0.2s ease,
+			border-color 0.2s ease;
 	}
 
 	.hub-link:hover {
@@ -255,7 +276,10 @@
 		align-items: center;
 		gap: clamp(0.75rem, 1.2vmin, 1.05rem);
 		cursor: pointer;
-		transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+		transition:
+			background 0.2s ease,
+			border-color 0.2s ease,
+			transform 0.2s ease;
 		text-align: left;
 		position: relative;
 		overflow: hidden;
@@ -399,4 +423,5 @@
 			line-clamp: 2;
 		}
 	}
+</style>
 </style>
