@@ -1,4 +1,14 @@
 export const gameGuides: Record<string, string> = {
+	'challenge24': `<h2>Challenge 24: History, Rules &amp; Strategy</h2>
+<p>The 24 Game was invented by Robert Sun in 1988 to make mental arithmetic and algebraic thinking fast and competitive in classrooms. Every dealt card has at least one exact way to reach 24 using all four numbers once.</p>
+<h3>How to Play</h3>
+<p>Combine all four numbers using <strong>+</strong>, <strong>−</strong>, <strong>×</strong>, and <strong>÷</strong> until a single card with value <strong>24</strong> remains. Click a number, an operator, and a second number to merge them.</p>
+<h3>Strategy Tips</h3>
+<p>Work backwards from factor pairs of 24: <strong>3 × 8</strong>, <strong>4 × 6</strong>, <strong>2 × 12</strong>, or <strong>24 × 1</strong>. On Medium and Hard, watch for fraction intermediates like <code>8 ÷ (3 − 8 ÷ 3) = 24</code>.</p>
+<h3>Is this game school-safe?</h3>
+<p>Yes. No logins, no ads, and runs entirely in your browser on Chromebooks, tablets, and phones.</p>
+`,
+
 	'kakuro': `<h2>Kakuro (Cross Sums): History, Rules &amp; Strategy</h2>
 <p>Kakuro — short for Japanese <em>kasan kurosu</em> ("addition cross") — was first published in Dell Magazines in 1950 under the name "Cross Sums" before becoming a sensation in Japan alongside Sudoku. It blends crossword structure with arithmetic deduction.</p>
 <h3>How to Play</h3>

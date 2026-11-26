@@ -18,6 +18,17 @@ export type GameSEO = {
 };
 
 export const gameHowTo: Record<string, { name: string; description: string; steps: HowToStep[] }> = {
+	'challenge24': {
+		name: 'How to play Challenge 24',
+		description: 'Combine four numbers with +, −, ×, and ÷ to make 24 using each number once.',
+		steps: [
+			{ name: 'Pick a difficulty', text: 'Choose Easy (1–9 integer steps), Med (1–9 with fractions), or Hard (1–13).' },
+			{ name: 'Select your first number', text: 'Click a number card or press keys 1–4.' },
+			{ name: 'Choose an operator', text: 'Select +, −, ×, or ÷ to combine two numbers.' },
+			{ name: 'Aim for factor pairs of 24', text: 'Try building 3×8, 4×6, or 2×12 from the remaining numbers.' },
+			{ name: 'Reach 24', text: 'Use all four numbers exactly once until the final card equals 24.' }
+		]
+	},
 	'kakuro': {
 		name: 'How to solve Kakuro puzzles',
 		description: 'Fill white cells with digits 1–9 so each horizontal and vertical run sums to its clue without repeating digits.',
@@ -241,6 +252,13 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 };
 
 export const gameSEO: Record<string, GameSEO> = {
+	'challenge24': {
+		title: 'Challenge 24 Online — Play the Classic 24 Math Game Free',
+		description: 'Play Challenge 24 online free. Combine 4 numbers using +, −, ×, and ÷ to make 24. Guaranteed solvable hands, mobile & school friendly.',
+		keywords: ['challenge 24', '24 game online', 'make 24 math game', '24 card game free', 'mental math 24', '24 game unblocked'],
+		genre: 'Educational',
+		about: 'Challenge 24 is the classic mental-math puzzle: combine four dealt numbers using +, −, ×, and ÷ to make 24, using every number exactly once.'
+	},
 	'kakuro': {
 		title: 'Kakuro Online — Play Free Cross-Sum Number Puzzles',
 		description: 'Play Kakuro (Cross Sums) online free. Fill the grid with digits 1–9 to match every Across and Down sum clue. Mobile & school friendly.',

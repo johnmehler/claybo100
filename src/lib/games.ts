@@ -182,6 +182,14 @@ export const games = [
 		cardClass: 'kakuro-card',
 		updated: '2026-11-25',
 		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Kakuro Icon"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="3" x2="12" y2="12"/></svg>`
+	},
+	{
+		id: 'challenge24',
+		label: 'Challenge 24',
+		description: 'Combine 4 numbers using +, −, ×, ÷ to make 24.',
+		cardClass: 'challenge24-card',
+		updated: '2026-11-25',
+		icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Challenge 24 Icon"><rect x="3" y="3" width="18" height="18" rx="3"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor" stroke="none">24</text></svg>`
 	}
 ];
 
@@ -225,11 +233,11 @@ export const gameCategories = [
 	{
 		name: 'Math',
 		slug: 'math',
-		hubTitle: 'Math Games Online – Arithmetic, Krypto, Calculus & Trigonometry',
-		hubDescription: 'Practice math online free: Arithmetic speed drills (+, −, ×, ÷), Krypto, Calculus (derivatives, integrals, limits), and Trigonometry.',
-		hubIntro: 'Sharpen your math skills from foundational arithmetic and Krypto to unit-circle trigonometry and calculus drills.',
+		hubTitle: 'Math Games Online – Arithmetic, Krypto, Challenge 24, Calculus & Trigonometry',
+		hubDescription: 'Practice math online free: Arithmetic speed drills (+, −, ×, ÷), Krypto, Challenge 24, Calculus (derivatives, integrals, limits), and Trigonometry.',
+		hubIntro: 'Sharpen your math skills from foundational arithmetic, Krypto, and Challenge 24 to unit-circle trigonometry and calculus drills.',
 		delay: 1000,
-		gameIds: ['arithmetic', 'krypto', 'calculus', 'trig']
+		gameIds: ['arithmetic', 'krypto', 'challenge24', 'calculus', 'trig']
 	}
 ];
 
