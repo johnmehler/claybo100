@@ -4,6 +4,7 @@
 	import Instructions from './Instructions.svelte';
 	import InGameMenu from './InGameMenu.svelte';
 	import {
+		PUZZLE_BANK,
 		STARTER_PUZZLE,
 		generateKakuroPuzzle,
 		type KakuroDifficulty,
@@ -17,7 +18,8 @@
 	let instructions: any;
 
 	let difficulty = $state<KakuroDifficulty>('easy');
-	let puzzle = $state<KakuroPuzzle>(STARTER_PUZZLE);
+	let puzzleIndex = $state<Record<KakuroDifficulty, number>>({ easy: 0, med: 0, hard: 0 });
+	let puzzle = $state<KakuroPuzzle>(PUZZLE_BANK.easy[0] ?? STARTER_PUZZLE);
 	let board = $state<number[][]>([]);
 	let notes = $state<number[][][]>([]); // bitmask-like array of candidate digits 1..9
 	let selected = $state<[number, number] | null>(null);
@@ -67,7 +69,14 @@
 
 	function startNewPuzzle(diff: KakuroDifficulty = difficulty) {
 		difficulty = diff;
-		initBoardFromPuzzle(generateKakuroPuzzle(diff));
+		const bank = PUZZLE_BANK[diff];
+		const idx = puzzleIndex[diff];
+		if (idx < bank.length) {
+			puzzleIndex[diff] = idx + 1;
+			initBoardFromPuzzle(bank[idx]);
+		} else {
+			initBoardFromPuzzle(generateKakuroPuzzle(diff));
+		}
 	}
 
 	function formatTime(sec: number): string {
@@ -222,7 +231,9 @@
 	}
 
 	onMount(() => {
-		initBoardFromPuzzle(STARTER_PUZZLE);
+		const initial = PUZZLE_BANK.easy[0] ?? STARTER_PUZZLE;
+		puzzleIndex.easy = 1;
+		initBoardFromPuzzle(initial);
 		return () => stopTimer();
 	});
 

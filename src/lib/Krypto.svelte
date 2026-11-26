@@ -56,7 +56,7 @@
 		}
 	}
 
-	type Block = { id: number; val: Fraction; expr: string; used: boolean };
+	type Block = { id: number; val: InstanceType<typeof Fraction>; expr: string; used: boolean };
 	let initialNums = $state<number[]>([]);
 	let blocks = $state<Block[]>([]);
 	let target = $state(0);

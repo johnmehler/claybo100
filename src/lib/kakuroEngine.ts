@@ -1,3 +1,5 @@
+import rawPuzzleBank from './kakuroPuzzles.json';
+
 export type KakuroDifficulty = 'easy' | 'med' | 'hard';
 
 export interface KakuroClue {
@@ -113,6 +115,24 @@ export const STARTER_PUZZLE: KakuroPuzzle = buildPuzzleFromGridAndSol(
 	STARTER_CLUES,
 	STARTER_SOL
 );
+
+type RawPuzzleEntry = {
+	size: number;
+	clues: (KakuroClue | null)[][];
+	sol: number[][];
+};
+
+export const PUZZLE_BANK: Record<KakuroDifficulty, KakuroPuzzle[]> = {
+	easy: (rawPuzzleBank as Record<KakuroDifficulty, RawPuzzleEntry[]>).easy.map((p) =>
+		buildPuzzleFromGridAndSol(p.clues, p.sol)
+	),
+	med: (rawPuzzleBank as Record<KakuroDifficulty, RawPuzzleEntry[]>).med.map((p) =>
+		buildPuzzleFromGridAndSol(p.clues, p.sol)
+	),
+	hard: (rawPuzzleBank as Record<KakuroDifficulty, RawPuzzleEntry[]>).hard.map((p) =>
+		buildPuzzleFromGridAndSol(p.clues, p.sol)
+	)
+};
 
 // Structured Kakuro templates (0 = black, 1 = white) with run lengths 2-4 for fast unique generation
 const TEMPLATES: Record<KakuroDifficulty, number[][][]> = {
@@ -291,12 +311,12 @@ function countSolutions(
 
 /**
  * Generates a uniquely-solvable Kakuro puzzle for the given difficulty.
- * Falls back to STARTER_PUZZLE if no unique assignment is found within the attempt budget.
+ * Falls back to a puzzle from PUZZLE_BANK[difficulty] if the attempt budget is reached.
  */
 export function generateKakuroPuzzle(difficulty: KakuroDifficulty): KakuroPuzzle {
 	const templates = TEMPLATES[difficulty];
 
-	for (let attempt = 0; attempt < 120; attempt++) {
+	for (let attempt = 0; attempt < 3000; attempt++) {
 		const grid = templates[Math.floor(Math.random() * templates.length)];
 		const size = grid.length;
 		const rawRuns = extractRuns(grid);
@@ -365,5 +385,9 @@ export function generateKakuroPuzzle(difficulty: KakuroDifficulty): KakuroPuzzle
 		}
 	}
 
+	const bank = PUZZLE_BANK[difficulty];
+	if (bank.length > 0) {
+		return bank[Math.floor(Math.random() * bank.length)];
+	}
 	return STARTER_PUZZLE;
 }

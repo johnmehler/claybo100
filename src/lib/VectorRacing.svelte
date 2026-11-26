@@ -189,7 +189,6 @@
 		track = t;
 		startCells = startCellsList;
 		finishCells = finishCellsList;
-		optimalPath = [];
 		for (let p of players) {
 			if (p.startCell !== null) updateOptimalMovesForPlayer(p);
 		}
@@ -782,7 +781,7 @@
 
 		// Pre-start highlights
 		if (setupPhase) {
-			for (const sc of starts) {
+			for (const sc of startCells) {
 				const sx = (sc % COLS) * cs;
 				const sy = Math.floor(sc / COLS) * cs;
 				ctx.strokeStyle = "rgba(75, 190, 75, 0.8)";

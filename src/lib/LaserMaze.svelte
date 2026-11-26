@@ -159,7 +159,7 @@
 		level.targets.forEach((t) => {
 			grid[t.y][t.x] = { 
 				type: "target", 
-				requirement: t.requirement || "white",
+				requirement: (t as { requirement?: Color }).requirement || "white",
 				fixed: true 
 			};
 		});
@@ -219,7 +219,7 @@
 					else if (dir === "up") ny--;
 					else if (dir === "down") ny++;
 
-					if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || grid[ny][nx].type !== "empty") {
+					if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || grid[ny][nx]?.type !== "empty") {
 						if (!isInitial || componentsCount > 0) targets.push({ x: cx, y: cy });
 						break;
 					}
@@ -280,7 +280,7 @@
 
 			if (componentsCount >= MIN_COMPONENTS && targets.length > 0) {
 				targets.forEach(t => {
-					if (grid[t.y][t.x].type === "empty") {
+					if (grid[t.y][t.x]?.type === "empty") {
 						grid[t.y][t.x] = { type: "target", requirement: "white", fixed: true };
 					}
 				});
@@ -288,7 +288,7 @@
 				inventory = { ...usedInventory };
 				for (let y = 0; y < GRID_SIZE; y++) {
 					for (let x = 0; x < GRID_SIZE; x++) {
-						if (grid[y][x].type === "mirror" || grid[y][x].type === "splitter") {
+						if (grid[y][x]?.type === "mirror" || grid[y][x]?.type === "splitter") {
 							grid[y][x] = { type: "empty" };
 						}
 					}
@@ -296,7 +296,7 @@
 
 				for (let i = 0; i < 15; i++) {
 					const bx = Math.floor(Math.random() * GRID_SIZE), by = Math.floor(Math.random() * GRID_SIZE);
-					if (grid[by][bx].type === "empty" && !pathCells.has(`${bx},${by}`)) {
+					if (grid[by][bx]?.type === "empty" && !pathCells.has(`${bx},${by}`)) {
 						grid[by][bx] = { type: "blocker", fixed: true };
 					}
 				}
@@ -419,6 +419,7 @@
 	onMount(() => {
 		loadLevel(0);
 		registerActions({
+			restart: () => loadLevel(currentLevel),
 			newShuffle: () => {
 				if (currentLevel === "procedural") {
 					loadLevel("procedural");

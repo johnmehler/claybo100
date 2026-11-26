@@ -282,7 +282,7 @@
 			carAngle = (Math.atan2(dy0, dx0) * 180) / Math.PI;
 		}
 
-		let segments = [];
+		let segments: { p1: { x: number; y: number }; p2: { x: number; y: number } }[] = [];
 		for (let i = 0; i < smoothPoints.length - 1; i++) {
 			segments.push({ p1: smoothPoints[i], p2: smoothPoints[i + 1] });
 		}

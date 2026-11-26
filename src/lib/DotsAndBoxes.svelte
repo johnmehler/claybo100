@@ -8,8 +8,8 @@
 
 	let SIZE = $state(4);
 	let mode = $state<'vs_ai' | 'hotseat'>('vs_ai');
-	let currentTurn = $state(1); // 1 = Red (P1), 2 = Blue (P2/AI)
-	let scores = $state({ 1: 0, 2: 0 });
+	let currentTurn = $state<1 | 2>(1); // 1 = Red (P1), 2 = Blue (P2/AI)
+	let scores = $state<Record<1 | 2, number>>({ 1: 0, 2: 0 });
 	let hLines = $state<boolean[][]>([]);
 	let vLines = $state<boolean[][]>([]);
 	let boxes = $state<number[][]>([]);

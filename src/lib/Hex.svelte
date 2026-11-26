@@ -103,7 +103,7 @@
 
 	function checkWin(p: number) {
 		const visited = new Map<number, number | null>();
-		const queue = [];
+		const queue: number[] = [];
 		for (let i = 0; i < SIZE; i++) {
 			const idx = p === 1 ? i : i * SIZE;
 			if (board[idx] === p) { 
