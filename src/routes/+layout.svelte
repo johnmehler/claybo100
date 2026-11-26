@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Footer from "$lib/Footer.svelte";
+	import { metrics } from "$lib/metrics";
 	import { onMount, tick } from "svelte";
 	import { afterNavigate } from "$app/navigation";
 
@@ -13,8 +14,13 @@
 		localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
 	}
 
-	afterNavigate(async () => {
+	afterNavigate(async ({ to }) => {
 		await tick();
+		const path = window.location.pathname + window.location.search;
+		const gameId =
+			to?.route?.id === "/games/[id]" ? (to.params?.id ?? null) : null;
+		metrics.trackPageView(path, gameId);
+
 		if (
 			typeof window !== "undefined" &&
 			typeof window.gtag === "function"
@@ -22,7 +28,7 @@
 			window.gtag("event", "page_view", {
 				page_title: document.title,
 				page_location: window.location.href,
-				page_path: window.location.pathname + window.location.search,
+				page_path: path,
 			});
 		}
 	});
@@ -31,12 +37,18 @@
 		const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
 		applyTheme(savedTheme === "light" ? "light" : "dark");
 
+		const stopMetricsLifecycle = metrics.initLifecycle();
+
 		// Load Google Fonts asynchronously to avoid render-blocking
 		const fontLink = document.createElement("link");
 		fontLink.rel = "stylesheet";
 		fontLink.href =
 			"https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap";
 		document.head.appendChild(fontLink);
+
+		return () => {
+			stopMetricsLifecycle();
+		};
 	});
 
 	$effect(() => {
