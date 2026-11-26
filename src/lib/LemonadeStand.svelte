@@ -61,7 +61,6 @@
 		| "cold"
 		| "cart"
 		| "clock"
-		| "star"
 		| "skip"
 		| "trophy"
 		| "sparkle"
@@ -104,7 +103,6 @@
 		iceWaste: number;
 		profit: number;
 		tasteScore: number;
-		reputationAfter: number;
 	}
 
 	interface SimCustomer {
@@ -140,7 +138,6 @@
 	let phase = $state<GamePhase>("prep");
 	let currentDay = $state(1);
 	let money = $state(INITIAL_MONEY);
-	let reputation = $state(50); // 10..100
 
 	// Inventory & Weighted Average Unit Costs
 	let cups = $state(0);
@@ -270,8 +267,6 @@
 
 		return { score, label, tone };
 	});
-
-	const starRating = $derived((1 + (reputation / 100) * 4).toFixed(1));
 
 	const selectedTotalCost = $derived(
 		getPackCost("cups", selectedCups) +
@@ -448,8 +443,6 @@
 		else if (currentWeather.temperature < 68) base = 0.9;
 
 		if (currentWeather.type === "rainy") base *= 0.85;
-		// High reputation allows slightly higher prices
-		base *= 0.9 + (reputation / 100) * 0.25;
 		return base;
 	}
 
@@ -478,9 +471,6 @@
 				base *= 0.4;
 				break;
 		}
-
-		// Reputation multiplier (0.75x at 0 rep to 1.25x at 100 rep)
-		base *= 0.75 + (reputation / 100) * 0.5;
 
 		const randomFactor = 0.88 + Math.random() * 0.24;
 		return Math.max(8, Math.round(base * randomFactor));
@@ -740,17 +730,7 @@
 		cogs = roundedCogs;
 		profit = +(revenue - roundedCogs - iceWasteCost).toFixed(2);
 
-		// Update Reputation
 		const tasteScore = calculateTasteScore();
-		let repDelta = 0;
-		if (customersServed > 0) {
-			if (tasteScore >= 85) repDelta += 5;
-			else if (tasteScore >= 65) repDelta += 2;
-			else repDelta -= 4;
-		}
-		if (missedTooExpensive > customersServed * 0.4) repDelta -= 3;
-		if (missedSoldOut > 4) repDelta -= 2;
-		reputation = Math.max(10, Math.min(100, reputation + repDelta));
 
 		dailyHistory = [
 			...dailyHistory,
@@ -765,7 +745,6 @@
 				iceWaste: iceWasteCost,
 				profit,
 				tasteScore,
-				reputationAfter: reputation,
 			},
 		];
 
@@ -790,7 +769,6 @@
 		}
 		currentDay = 1;
 		money = INITIAL_MONEY;
-		reputation = 50;
 		cups = 0;
 		lemons = 0;
 		sugar = 0;
@@ -1042,14 +1020,6 @@
 				stroke-linecap="round"
 				stroke-linejoin="round"
 			/>
-		{:else if name === "star"}
-			<path
-				d="M12 2.5L14.9 8.5L21.5 9.4L16.7 14L17.9 20.5L12 17.4L6.1 20.5L7.3 14L2.5 9.4L9.1 8.5L12 2.5Z"
-				fill="#fbbf24"
-				stroke="#d97706"
-				stroke-width="1.4"
-				stroke-linejoin="round"
-			/>
 		{:else if name === "skip"}
 			<path d="M5 6L13 12L5 18V6Z" fill="currentColor" />
 			<path d="M13 6L19 12L13 18V6Z" fill="currentColor" />
@@ -1167,10 +1137,6 @@
 	<div class="header">
 		<div class="header-top">
 			<span class="day-badge">DAY {currentDay}/{TOTAL_DAYS}</span>
-			<span class="rep-badge" title="Stand Reputation">
-				{@render sprite("star", 13)}
-				{starRating}
-			</span>
 		</div>
 		<h1>{@render sprite("lemon", 28)} Lemonade Stand</h1>
 	</div>
@@ -1932,12 +1898,6 @@
 						).toFixed(2)}</span
 					>
 				</div>
-				<div class="final-stat">
-					<span class="label">Reputation</span>
-					<span class="value label-with-icon-center"
-						>{@render sprite("star", 18)} {starRating}</span
-					>
-				</div>
 			</div>
 
 			<div class="history">
@@ -2079,9 +2039,6 @@
 		--ls-warn: #fde047;
 		--ls-sweet: #f472b6;
 		--ls-cool: #7dd3fc;
-		--ls-rep-bg: rgba(255, 255, 255, 0.08);
-		--ls-rep-border: rgba(255, 255, 255, 0.16);
-		--ls-rep-text: #fde047;
 		--ls-chip-bg: rgba(251, 191, 36, 0.16);
 		--ls-chip-text: #fde047;
 		--ls-forecast-bg: rgba(56, 189, 248, 0.12);
@@ -2124,9 +2081,6 @@
 		--ls-warn: #92400e;
 		--ls-sweet: #9d174d;
 		--ls-cool: #0369a1;
-		--ls-rep-bg: #fef3c7;
-		--ls-rep-border: rgba(146, 64, 14, 0.28);
-		--ls-rep-text: #78350f;
 		--ls-chip-bg: #fef3c7;
 		--ls-chip-text: #78350f;
 		--ls-forecast-bg: #e0f2fe;
@@ -2188,19 +2142,6 @@
 		padding: 0.2rem 0.7rem;
 		border-radius: 4px;
 		letter-spacing: 0.04em;
-	}
-
-	.rep-badge {
-		background: var(--ls-rep-bg);
-		border: 1px solid var(--ls-rep-border);
-		color: var(--ls-rep-text);
-		font-weight: 800;
-		font-size: 0.72rem;
-		padding: 0.18rem 0.6rem;
-		border-radius: 4px;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
 	}
 
 	h1 {
@@ -2891,7 +2832,7 @@
 
 	.final-stats {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(2, 1fr);
 		gap: 0.75rem;
 		margin-bottom: 1rem;
 	}
