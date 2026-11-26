@@ -11,7 +11,10 @@ create table if not exists public.mg_sessions (
     page_views integer not null default 0,
     games_opened integer not null default 0,
     is_mobile boolean not null default false,
-    referrer text
+    referrer text,
+    country text,
+    region text,
+    city text
 );
 
 create index if not exists idx_mg_sessions_started_at on public.mg_sessions (started_at desc);

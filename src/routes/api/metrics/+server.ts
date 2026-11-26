@@ -33,7 +33,32 @@ interface MetricsPayload {
 	durationSeconds?: number;
 }
 
-async function ensureSession(client: SupabaseClient, payload: MetricsPayload): Promise<void> {
+interface GeoInfo {
+	country: string | null;
+	region: string | null;
+	city: string | null;
+}
+
+function extractGeo(headers: Headers): GeoInfo {
+	const decodeHeader = (val: string | null): string | null => {
+		if (!val) return null;
+		const trimmed = val.trim();
+		if (!trimmed) return null;
+		try {
+			return decodeURIComponent(trimmed).slice(0, 128);
+		} catch {
+			return trimmed.slice(0, 128);
+		}
+	};
+
+	return {
+		country: decodeHeader(headers.get('x-vercel-ip-country')),
+		region: decodeHeader(headers.get('x-vercel-ip-country-region')),
+		city: decodeHeader(headers.get('x-vercel-ip-city'))
+	};
+}
+
+async function ensureSession(client: SupabaseClient, payload: MetricsPayload, geo: GeoInfo): Promise<void> {
 	const { sessionId, playerId, isMobile, referrer } = payload;
 	if (!sessionId || !playerId) return;
 
@@ -45,6 +70,9 @@ async function ensureSession(client: SupabaseClient, payload: MetricsPayload): P
 				player_id: String(playerId).slice(0, 64),
 				is_mobile: Boolean(isMobile),
 				referrer: referrer ? String(referrer).slice(0, 255) : null,
+				country: geo.country,
+				region: geo.region,
+				city: geo.city,
 				last_seen_at: new Date().toISOString()
 			},
 			{ onConflict: 'id', ignoreDuplicates: true }
@@ -55,12 +83,12 @@ async function ensureSession(client: SupabaseClient, payload: MetricsPayload): P
 	}
 }
 
-async function handlePageView(client: SupabaseClient, payload: MetricsPayload): Promise<void> {
+async function handlePageView(client: SupabaseClient, payload: MetricsPayload, geo: GeoInfo): Promise<void> {
 	const { visitId, sessionId, playerId, path, gameId } = payload;
 	if (!playerId || !path) return;
 
 	if (sessionId) {
-		await ensureSession(client, payload);
+		await ensureSession(client, payload, geo);
 	}
 
 	const cleanGameId = gameId ? String(gameId).slice(0, 64) : null;
@@ -142,11 +170,12 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const payload = (await request.json().catch(() => ({}))) as MetricsPayload;
 		const op = payload?.op;
+		const geo = extractGeo(request.headers);
 
 		if (op === 'session-start') {
-			await ensureSession(client, payload);
+			await ensureSession(client, payload, geo);
 		} else if (op === 'page-view') {
-			await handlePageView(client, payload);
+			await handlePageView(client, payload, geo);
 		} else if (op === 'visit-end') {
 			await handleVisitEnd(client, payload);
 		} else if (op === 'session-end') {
