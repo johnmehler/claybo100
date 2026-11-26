@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { fade, scale } from 'svelte/transition';
-	import Instructions from './Instructions.svelte';
-	import InGameMenu from './InGameMenu.svelte';
+	import { onMount } from "svelte";
+	import { fade, scale } from "svelte/transition";
+	import Instructions from "./Instructions.svelte";
+	import InGameMenu from "./InGameMenu.svelte";
 
 	let { onBack, registerActions } = $props<{
 		onBack: () => void;
@@ -10,19 +10,19 @@
 	}>();
 	let instructions: any;
 
-	type Difficulty = 'levels' | 'easy' | 'med' | 'hard';
+	type Difficulty = "levels" | "easy" | "med" | "hard";
 
 	const LEVEL_PUZZLES: number[][] = [
 		[1, 2, 3, 4], // Level 1: (1 + 2 + 3) × 4 = 24
 		[4, 4, 4, 4], // Level 2: 4 × 4 + 4 + 4 = 24
 		[2, 3, 4, 6], // Level 3: 4 × 6 × (3 − 2) = 24
-		[2, 5, 5, 10], // Level 4: (5 − 2 ÷ 10) × 5 = 24
-		[1, 4, 5, 6], // Level 5: 4 ÷ (1 − 5 ÷ 6) = 24
-		[1, 3, 4, 6], // Level 6: 6 ÷ (1 − 3 ÷ 4) = 24
-		[4, 4, 7, 7], // Level 7: 7 × (4 − 4 ÷ 7) = 24
+		[5, 6, 7, 8], // Level 4: (5 + 7) × (8 − 6) = 24
+		[2, 7, 8, 9], // Level 5: 2 × (9 + 7) − 8 = 24
+		[1, 5, 5, 5], // Level 6: 5 × (5 − 1 ÷ 5) = 24
+		[2, 5, 5, 10], // Level 7: (5 − 2 ÷ 10) × 5 = 24
 		[3, 3, 7, 7], // Level 8: 7 × (3 + 3 ÷ 7) = 24
-		[1, 5, 5, 5], // Level 9: 5 × (5 − 1 ÷ 5) = 24
-		[23, 23, 23, 23] // Level 10: (23 × 23 + 23) ÷ 23 = 24
+		[1, 4, 5, 6], // Level 9: 4 ÷ (1 − 5 ÷ 6) = 24
+		[23, 23, 23, 23], // Level 10: (23 × 23 + 23) ÷ 23 = 24
 	];
 
 	interface Frac {
@@ -58,10 +58,10 @@
 	}
 
 	function applyOp(a: Frac, b: Frac, op: string): Frac | null {
-		if (op === '+') return makeFrac(a.n * b.d + b.n * a.d, a.d * b.d);
-		if (op === '-') return makeFrac(a.n * b.d - b.n * a.d, a.d * b.d);
-		if (op === '*') return makeFrac(a.n * b.n, a.d * b.d);
-		if (op === '/') {
+		if (op === "+") return makeFrac(a.n * b.d + b.n * a.d, a.d * b.d);
+		if (op === "-") return makeFrac(a.n * b.d - b.n * a.d, a.d * b.d);
+		if (op === "*") return makeFrac(a.n * b.n, a.d * b.d);
+		if (op === "/") {
 			if (b.n === 0) return null;
 			return makeFrac(a.n * b.d, a.d * b.n);
 		}
@@ -82,7 +82,7 @@
 	 */
 	function solve24(
 		items: { val: Frac; expr: string }[],
-		integerOnly: boolean
+		integerOnly: boolean,
 	): string | null {
 		if (items.length === 1) {
 			return isTwentyFour(items[0].val) ? items[0].expr : null;
@@ -95,24 +95,24 @@
 				const rest = items.filter((_, idx) => idx !== i && idx !== j);
 
 				const ops: { val: Frac; expr: string }[] = [];
-				const add = applyOp(a.val, b.val, '+')!;
+				const add = applyOp(a.val, b.val, "+")!;
 				ops.push({ val: add, expr: `(${a.expr} + ${b.expr})` });
 
-				const mul = applyOp(a.val, b.val, '*')!;
+				const mul = applyOp(a.val, b.val, "*")!;
 				ops.push({ val: mul, expr: `(${a.expr} × ${b.expr})` });
 
-				const sub1 = applyOp(a.val, b.val, '-')!;
+				const sub1 = applyOp(a.val, b.val, "-")!;
 				ops.push({ val: sub1, expr: `(${a.expr} − ${b.expr})` });
 
-				const sub2 = applyOp(b.val, a.val, '-')!;
+				const sub2 = applyOp(b.val, a.val, "-")!;
 				ops.push({ val: sub2, expr: `(${b.expr} − ${a.expr})` });
 
-				const div1 = applyOp(a.val, b.val, '/');
+				const div1 = applyOp(a.val, b.val, "/");
 				if (div1 && (!integerOnly || div1.d === 1)) {
 					ops.push({ val: div1, expr: `(${a.expr} ÷ ${b.expr})` });
 				}
 
-				const div2 = applyOp(b.val, a.val, '/');
+				const div2 = applyOp(b.val, a.val, "/");
 				if (div2 && (!integerOnly || div2.d === 1)) {
 					ops.push({ val: div2, expr: `(${b.expr} ÷ ${a.expr})` });
 				}
@@ -127,7 +127,7 @@
 		return null;
 	}
 
-	let difficulty = $state<Difficulty>('levels');
+	let difficulty = $state<Difficulty>("levels");
 	let currentLevel = $state(0);
 	let initialNums = $state<number[]>([]);
 	let blocks = $state<CardBlock[]>([]);
@@ -159,15 +159,15 @@
 	function formatTime(sec: number): string {
 		const m = Math.floor(sec / 60);
 		const s = sec % 60;
-		return `${m}:${s.toString().padStart(2, '0')}`;
+		return `${m}:${s.toString().padStart(2, "0")}`;
 	}
 
 	function loadLevel(idx: number) {
-		difficulty = 'levels';
+		difficulty = "levels";
 		currentLevel = Math.max(0, Math.min(idx, LEVEL_PUZZLES.length - 1));
 		const nums = LEVEL_PUZZLES[currentLevel];
 		const items = nums.map((n) => ({ val: makeFrac(n), expr: String(n) }));
-		const found = solve24(items, false) ?? '';
+		const found = solve24(items, false) ?? "";
 		initialNums = [...nums];
 		solutionHint = found ? found.slice(1, -1) : null;
 		resetHand();
@@ -178,13 +178,13 @@
 	function dealNewHand(diff: Difficulty = difficulty) {
 		difficulty = diff;
 
-		if (diff === 'levels') {
+		if (diff === "levels") {
 			loadLevel(currentLevel);
 			return;
 		}
 
-		const maxVal = diff === 'hard' ? 13 : 9;
-		const integerOnly = diff === 'easy';
+		const maxVal = diff === "hard" ? 13 : 9;
+		const integerOnly = diff === "easy";
 
 		let nums: number[] = [3, 8, 3, 8];
 		let sol: string | null = null;
@@ -192,9 +192,12 @@
 		for (let attempt = 0; attempt < 400; attempt++) {
 			const cand = Array.from(
 				{ length: 4 },
-				() => 1 + Math.floor(Math.random() * maxVal)
+				() => 1 + Math.floor(Math.random() * maxVal),
 			);
-			const items = cand.map((n) => ({ val: makeFrac(n), expr: String(n) }));
+			const items = cand.map((n) => ({
+				val: makeFrac(n),
+				expr: String(n),
+			}));
 			const found = solve24(items, integerOnly);
 			if (found) {
 				// For med/hard, prefer hands that aren't trivial pure-addition if easy failed
@@ -206,7 +209,7 @@
 
 		if (!sol) {
 			nums = [1, 2, 3, 4];
-			sol = '((1 + 2 + 3) × 4)';
+			sol = "((1 + 2 + 3) × 4)";
 		}
 
 		initialNums = nums;
@@ -222,7 +225,7 @@
 			id: nextId++,
 			val: makeFrac(n),
 			expr: String(n),
-			used: false
+			used: false,
 		}));
 		historyStack = [];
 		selectedBlockId = null;
@@ -272,7 +275,13 @@
 		}
 
 		const opSymbol =
-			selectedOp === '*' ? '×' : selectedOp === '/' ? '÷' : selectedOp === '-' ? '−' : '+';
+			selectedOp === "*"
+				? "×"
+				: selectedOp === "/"
+					? "÷"
+					: selectedOp === "-"
+						? "−"
+						: "+";
 		const snapshot = blocks.map((b) => ({ ...b, val: { ...b.val } }));
 		historyStack = [...historyStack, snapshot];
 
@@ -280,14 +289,16 @@
 			id: nextId++,
 			val: res,
 			expr: `(${first.expr} ${opSymbol} ${block.expr})`,
-			used: false
+			used: false,
 		};
 
 		blocks = [
 			...blocks.map((b) =>
-				b.id === first.id || b.id === block.id ? { ...b, used: true } : b
+				b.id === first.id || b.id === block.id
+					? { ...b, used: true }
+					: b,
 			),
-			newBlock
+			newBlock,
 		];
 
 		const active = blocks.filter((b) => !b.used);
@@ -308,11 +319,11 @@
 	}
 
 	function nextChallenge() {
-		if (difficulty === 'levels') {
+		if (difficulty === "levels") {
 			if (currentLevel + 1 < LEVEL_PUZZLES.length) {
 				loadLevel(currentLevel + 1);
 			} else {
-				dealNewHand('hard');
+				dealNewHand("hard");
 			}
 		} else {
 			dealNewHand(difficulty);
@@ -320,28 +331,28 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (solved && (e.key === 'Enter' || e.key === ' ')) {
+		if (solved && (e.key === "Enter" || e.key === " ")) {
 			e.preventDefault();
 			nextChallenge();
 			return;
 		}
 		const active = blocks.filter((b) => !b.used);
-		if (e.key >= '1' && e.key <= '4') {
+		if (e.key >= "1" && e.key <= "4") {
 			const idx = Number(e.key) - 1;
 			if (active[idx]) selectBlock(active[idx].id);
-		} else if (e.key === '+') {
-			selectOp('+');
-		} else if (e.key === '-') {
-			selectOp('-');
-		} else if (e.key === '*' || e.key.toLowerCase() === 'x') {
-			selectOp('*');
-		} else if (e.key === '/') {
+		} else if (e.key === "+") {
+			selectOp("+");
+		} else if (e.key === "-") {
+			selectOp("-");
+		} else if (e.key === "*" || e.key.toLowerCase() === "x") {
+			selectOp("*");
+		} else if (e.key === "/") {
 			e.preventDefault();
-			selectOp('/');
-		} else if (e.key === 'Backspace' || e.key.toLowerCase() === 'z') {
+			selectOp("/");
+		} else if (e.key === "Backspace" || e.key.toLowerCase() === "z") {
 			e.preventDefault();
 			undo();
-		} else if (e.key.toLowerCase() === 'r') {
+		} else if (e.key.toLowerCase() === "r") {
 			resetHand();
 		}
 	}
@@ -355,7 +366,7 @@
 		registerActions({
 			help: () => instructions.open(),
 			restart: resetHand,
-			newShuffle: nextChallenge
+			newShuffle: nextChallenge,
 		});
 	});
 </script>
@@ -363,21 +374,39 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="game-inner">
-	<Instructions bind:this={instructions} gameId="challenge24" title="How to Play Challenge 24">
+	<Instructions
+		bind:this={instructions}
+		gameId="challenge24"
+		title="How to Play Challenge 24"
+	>
 		<p>
-			Combine all <strong>4 numbers</strong> using <strong>+</strong>, <strong>−</strong>,
-			<strong>×</strong>, and <strong>÷</strong> to make <strong>24</strong>.
+			Combine all <strong>4 numbers</strong> using <strong>+</strong>,
+			<strong>−</strong>,
+			<strong>×</strong>, and <strong>÷</strong> to make
+			<strong>24</strong>.
 		</p>
-		<ul style="font-size: 0.9em; opacity: 0.85; margin: 1vmin 0; padding-left: 3vmin;">
-			<li>Each of the four starting numbers must be used <strong>exactly once</strong>.</li>
-			<li>Select a number, choose an operator, then select a second number to combine them.</li>
+		<ul
+			style="font-size: 0.9em; opacity: 0.85; margin: 1vmin 0; padding-left: 3vmin;"
+		>
 			<li>
-				<strong>Easy</strong> uses 1–9 with whole-number steps; <strong>Med</strong> uses
-				1–9 (fractions allowed); <strong>Hard</strong> uses 1–13.
+				Each of the four starting numbers must be used <strong
+					>exactly once</strong
+				>.
+			</li>
+			<li>
+				Select a number, choose an operator, then select a second number
+				to combine them.
+			</li>
+			<li>
+				<strong>Easy</strong> uses 1–9 with whole-number steps;
+				<strong>Med</strong>
+				uses 1–9 (fractions allowed); <strong>Hard</strong> uses 1–13.
 			</li>
 		</ul>
 		<p>
-			Keyboard: <strong>1–4</strong> to pick cards, <strong>+ − * /</strong> for operators,
+			Keyboard: <strong>1–4</strong> to pick cards,
+			<strong>+ − * /</strong>
+			for operators,
 			<strong>Z / Backspace</strong> to undo.
 		</p>
 	</Instructions>
@@ -390,12 +419,14 @@
 	>
 		{#snippet rightControls()}
 			<div class="diff-group" role="group" aria-label="Difficulty">
-				{#each [['levels', 'LEVELS'], ['easy', 'EASY'], ['med', 'MED'], ['hard', 'HARD']] as [key, label]}
+				{#each [["levels", "LEVELS"], ["easy", "EASY"], ["med", "MED"], ["hard", "HARD"]] as [key, label]}
 					<button
-						class="nav-extra-btn {difficulty === key ? 'active' : ''}"
+						class="nav-extra-btn {difficulty === key
+							? 'active'
+							: ''}"
 						onclick={() => {
 							streak = 0;
-							if (key === 'levels') loadLevel(0);
+							if (key === "levels") loadLevel(0);
 							else dealNewHand(key as Difficulty);
 						}}
 					>
@@ -403,8 +434,11 @@
 					</button>
 				{/each}
 			</div>
-			{#if difficulty !== 'levels'}
-				<button class="nav-extra-btn" onclick={() => dealNewHand(difficulty)}>
+			{#if difficulty !== "levels"}
+				<button
+					class="nav-extra-btn"
+					onclick={() => dealNewHand(difficulty)}
+				>
 					NEW HAND
 				</button>
 			{/if}
@@ -412,10 +446,12 @@
 	</InGameMenu>
 
 	<div class="status-bar" in:fade>
-		{#if difficulty === 'levels'}
+		{#if difficulty === "levels"}
 			<div class="stat-pill">
 				<span class="stat-label">LEVEL</span>
-				<span class="stat-val">{currentLevel + 1} / {LEVEL_PUZZLES.length}</span>
+				<span class="stat-val"
+					>{currentLevel + 1} / {LEVEL_PUZZLES.length}</span
+				>
 			</div>
 		{/if}
 		<div class="stat-pill">
@@ -432,7 +468,7 @@
 		</div>
 	</div>
 
-	{#if difficulty === 'levels'}
+	{#if difficulty === "levels"}
 		<div class="level-strip" role="navigation" aria-label="Levels">
 			{#each LEVEL_PUZZLES as _, idx}
 				<button
@@ -466,7 +502,7 @@
 		</div>
 
 		<div class="op-row" role="group" aria-label="Operators">
-			{#each [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷']] as [op, sym]}
+			{#each [["+", "+"], ["-", "−"], ["*", "×"], ["/", "÷"]] as [op, sym]}
 				<button
 					type="button"
 					class="op-btn"
@@ -493,7 +529,7 @@
 				class="util-btn"
 				onclick={() => (showSolution = !showSolution)}
 			>
-				{showSolution ? 'HIDE HINT' : 'HINT'}
+				{showSolution ? "HIDE HINT" : "HINT"}
 			</button>
 		</div>
 
@@ -506,16 +542,13 @@
 		{#if solved}
 			<div class="win-banner" in:scale={{ duration: 220 }}>
 				<span>24! SOLVED IN {formatTime(elapsedSeconds)}</span>
-				<button
-					type="button"
-					class="next-btn"
-					onclick={nextChallenge}
-				>
-					{difficulty === 'levels' && currentLevel + 1 < LEVEL_PUZZLES.length
+				<button type="button" class="next-btn" onclick={nextChallenge}>
+					{difficulty === "levels" &&
+					currentLevel + 1 < LEVEL_PUZZLES.length
 						? `LEVEL ${currentLevel + 2} →`
-						: difficulty === 'levels'
-							? 'RANDOM HARD →'
-							: 'NEXT HAND →'}
+						: difficulty === "levels"
+							? "RANDOM HARD →"
+							: "NEXT HAND →"}
 				</button>
 			</div>
 		{/if}
@@ -668,7 +701,11 @@
 
 	.num-card.selected {
 		border-color: var(--color-bittersweet);
-		background: color-mix(in srgb, var(--color-bittersweet) 18%, transparent);
+		background: color-mix(
+			in srgb,
+			var(--color-bittersweet) 18%,
+			transparent
+		);
 		box-shadow: 0 0 20px rgba(255, 110, 97, 0.25);
 	}
 
@@ -754,7 +791,8 @@
 		padding: 1vmin 2vmin;
 		border-radius: 1vmin;
 		background: color-mix(in srgb, var(--color-golden) 14%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-golden) 45%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--color-golden) 45%, transparent);
 		font-size: clamp(0.85rem, 1.5vmin, 1rem);
 	}
 
