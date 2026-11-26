@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import Instructions from './Instructions.svelte';
 
@@ -69,7 +69,7 @@
 	const mode = $derived<DrillMode>(selectedMode);
 	const meta = $derived(modeMeta[mode]);
 
-	let instructions = $state<{ open: () => void } | null>(null);
+	let instructions = $state<{ open: () => void; isOpen: () => boolean } | null>(null);
 	let inputEl = $state<HTMLInputElement | null>(null);
 
 	let difficulty = $state<Difficulty>('medium');
@@ -190,10 +190,21 @@
 		}
 	}
 
+	function setAnswer(value: string) {
+		answerInput = value;
+		if (inputEl && inputEl.value !== value) {
+			inputEl.value = value;
+		}
+	}
+
 	function focusInput() {
-		setTimeout(() => {
-			inputEl?.focus();
-		}, 10);
+		if (phase !== 'playing' || instructions?.isOpen()) return;
+		inputEl?.focus({ preventScroll: true });
+		tick().then(() => {
+			if (phase === 'playing' && !instructions?.isOpen()) {
+				inputEl?.focus({ preventScroll: true });
+			}
+		});
 	}
 
 	function startDrill() {
@@ -204,7 +215,7 @@
 		streak = 0;
 		bestStreak = 0;
 		missed = [];
-		answerInput = '';
+		setAnswer('');
 		feedback = 'none';
 		isNewBest = false;
 		timeLeft = SPRINT_SECONDS;
@@ -257,7 +268,7 @@
 	}
 
 	function advanceProblem() {
-		answerInput = '';
+		setAnswer('');
 		currentProblem = generateProblem(mode, difficulty, currentProblem);
 		focusInput();
 	}
@@ -270,6 +281,7 @@
 		triggerFeedback('correct');
 
 		if (format === 'twenty' && solved >= TOTAL_TWENTY) {
+			setAnswer('');
 			finishDrill();
 			return;
 		}
@@ -296,7 +308,7 @@
 					correctAnswer: currentProblem.answer
 				}
 			];
-			answerInput = '';
+			setAnswer('');
 			focusInput();
 		}
 	}
@@ -319,7 +331,7 @@
 	function handleInput(value: string) {
 		if (phase !== 'playing') return;
 		const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 4);
-		answerInput = digitsOnly;
+		setAnswer(digitsOnly);
 		if (digitsOnly !== '' && Number(digitsOnly) === currentProblem.answer) {
 			handleCorrect();
 		}
@@ -333,13 +345,13 @@
 
 	function backspace() {
 		if (phase !== 'playing') return;
-		answerInput = answerInput.slice(0, -1);
+		setAnswer(answerInput.slice(0, -1));
 		focusInput();
 	}
 
 	function clearInput() {
 		if (phase !== 'playing') return;
-		answerInput = '';
+		setAnswer('');
 		focusInput();
 	}
 
@@ -350,6 +362,39 @@
 			submitAnswer();
 		} else if (e.key === 'Escape') {
 			clearInput();
+		}
+	}
+
+	function handleWindowKeydown(e: KeyboardEvent) {
+		if (phase !== 'playing' || instructions?.isOpen()) return;
+		if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+		const target = e.target;
+		if (
+			target === inputEl ||
+			target instanceof HTMLInputElement ||
+			target instanceof HTMLTextAreaElement ||
+			target instanceof HTMLSelectElement
+		) {
+			return;
+		}
+
+		if (/^[0-9]$/.test(e.key)) {
+			e.preventDefault();
+			pressKey(e.key);
+		} else if (e.key === 'Backspace') {
+			e.preventDefault();
+			backspace();
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			clearInput();
+		} else if (
+			e.key === 'Enter' &&
+			!(target instanceof HTMLButtonElement) &&
+			!(target instanceof HTMLAnchorElement)
+		) {
+			e.preventDefault();
+			submitAnswer();
 		}
 	}
 
@@ -388,12 +433,25 @@
 		};
 	});
 
+	$effect(() => {
+		if (phase === 'playing' && inputEl && !instructions?.isOpen()) {
+			focusInput();
+		}
+	});
+
 	onDestroy(() => {
 		clearTimers();
 	});
 </script>
 
-<Instructions bind:this={instructions} {gameId} title="{meta.title} — How to Play">
+<svelte:window onkeydown={handleWindowKeydown} />
+
+<Instructions
+	bind:this={instructions}
+	{gameId}
+	title="{meta.title} — How to Play"
+	onclose={focusInput}
+>
 	<p>{meta.subtitle}.</p>
 	<ul>
 		<li><strong>Type your answer</strong> with your keyboard or tap the number pad.</li>

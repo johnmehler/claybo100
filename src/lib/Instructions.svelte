@@ -2,7 +2,12 @@
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
-	let { gameId, title, children } = $props<{ gameId: string, title: string, children: any }>();
+	let { gameId, title, children, onclose } = $props<{
+		gameId: string;
+		title: string;
+		children: any;
+		onclose?: () => void;
+	}>();
 	
 	let show = $state(false);
 
@@ -16,9 +21,14 @@
 		show = true;
 	}
 
+	export function isOpen() {
+		return show;
+	}
+
 	function close() {
 		show = false;
 		localStorage.setItem(`seen_${gameId}`, 'true');
+		onclose?.();
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
