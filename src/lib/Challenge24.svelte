@@ -10,19 +10,24 @@
 	}>();
 	let instructions: any;
 
-	type Difficulty = 'levels' | 'easy' | 'med' | 'hard';
-
 	const LEVEL_PUZZLES: number[][] = [
 		[1, 2, 3, 4], // Level 1: (1 + 2 + 3) × 4 = 24
 		[4, 4, 4, 4], // Level 2: 4 × 4 + 4 + 4 = 24
 		[2, 3, 4, 6], // Level 3: 4 × 6 × (3 − 2) = 24
 		[5, 6, 7, 8], // Level 4: (5 + 7) × (8 − 6) = 24
 		[2, 7, 8, 9], // Level 5: 2 × (9 + 7) − 8 = 24
-		[1, 5, 5, 5], // Level 6: 5 × (5 − 1 ÷ 5) = 24
-		[1, 3, 4, 6], // Level 7: 6 ÷ (1 − 3 ÷ 4) = 24
-		[1, 2, 7, 7], // Level 8: (7 × 7 − 1) ÷ 2 = 24
-		[3, 3, 8, 8], // Level 9: 8 ÷ (3 − 8 ÷ 3) = 24
-		[23, 23, 23, 23] // Level 10: (23 × 23 + 23) ÷ 23 = 24
+		[5, 5, 13, 13], // Level 6: (5 × 5) − (13 ÷ 13) = 24
+		[1, 2, 7, 7], // Level 7: (7 × 7 − 1) ÷ 2 = 24
+		[4, 4, 10, 10], // Level 8: (10 × 10 − 4) ÷ 4 = 24
+		[1, 5, 11, 11], // Level 9: (11 × 11 − 1) ÷ 5 = 24
+		[23, 23, 23, 23], // Level 10: (23 × 23 + 23) ÷ 23 = 24
+		[3, 6, 6, 11], // Level 11: (6 + 6 × 11) ÷ 3 = 24
+		[3, 5, 7, 13], // Level 12: (7 + 5 × 13) ÷ 3 = 24
+		[1, 5, 5, 5], // Level 13: 5 × (5 − 1 ÷ 5) = 24
+		[2, 5, 5, 10], // Level 14: 5 × (5 − 2 ÷ 10) = 24
+		[1, 3, 4, 6], // Level 15: 6 ÷ (1 − 3 ÷ 4) = 24
+		[3, 3, 8, 8], // Level 16: 8 ÷ (3 − 8 ÷ 3) = 24
+		[2, 3, 5, 12] // Level 17: 12 ÷ (3 − 5 ÷ 2) = 24
 	];
 
 	interface Frac {
@@ -143,7 +148,7 @@
 		return null;
 	}
 
-	let difficulty = $state<Difficulty>('levels');
+	let isRandomMode = $state(false);
 	let currentLevel = $state(0);
 	let initialNums = $state<number[]>([]);
 	let blocks = $state<CardBlock[]>([]);
@@ -194,10 +199,9 @@
 		if (hintStage === 3) return;
 
 		const active = blocks.filter((b) => !b.used);
-		const integerOnly = difficulty === 'easy';
 		const found = solve24(
 			active.map((b) => ({ id: b.id, val: b.val, expr: b.expr })),
-			integerOnly
+			false
 		);
 		if (!found || !found.firstStep) {
 			hintDeadEnd = true;
@@ -211,7 +215,7 @@
 	}
 
 	function loadLevel(idx: number) {
-		difficulty = 'levels';
+		isRandomMode = false;
 		currentLevel = Math.max(0, Math.min(idx, LEVEL_PUZZLES.length - 1));
 		const nums = LEVEL_PUZZLES[currentLevel];
 		initialNums = [...nums];
@@ -220,26 +224,17 @@
 		startTimer();
 	}
 
-	function dealNewHand(diff: Difficulty = difficulty) {
-		difficulty = diff;
-
-		if (diff === 'levels') {
-			loadLevel(currentLevel);
-			return;
-		}
-
-		const maxVal = diff === 'hard' ? 13 : 9;
-		const integerOnly = diff === 'easy';
-
+	function dealNewPuzzle() {
+		isRandomMode = true;
 		let nums: number[] = [1, 2, 3, 4];
 
 		for (let attempt = 0; attempt < 400; attempt++) {
 			const cand = Array.from(
 				{ length: 4 },
-				() => 1 + Math.floor(Math.random() * maxVal)
+				() => 1 + Math.floor(Math.random() * 9)
 			);
 			const items = cand.map((n, idx) => ({ id: idx + 1, val: makeFrac(n), expr: String(n) }));
-			const found = solve24(items, integerOnly);
+			const found = solve24(items, false);
 			if (found) {
 				nums = cand;
 				break;
@@ -346,14 +341,14 @@
 	}
 
 	function nextChallenge() {
-		if (difficulty === 'levels') {
+		if (!isRandomMode) {
 			if (currentLevel + 1 < LEVEL_PUZZLES.length) {
 				loadLevel(currentLevel + 1);
 			} else {
-				dealNewHand('hard');
+				dealNewPuzzle();
 			}
 		} else {
-			dealNewHand(difficulty);
+			dealNewPuzzle();
 		}
 	}
 
@@ -410,8 +405,8 @@
 			<li>Each of the four starting numbers must be used <strong>exactly once</strong>.</li>
 			<li>Select a number, choose an operator, then select a second number to combine them.</li>
 			<li>
-				<strong>Easy</strong> uses 1–9 with whole-number steps; <strong>Med</strong> uses
-				1–9 (fractions allowed); <strong>Hard</strong> uses 1–13.
+				Play through the <strong>{LEVEL_PUZZLES.length} ordered levels</strong> or click
+				<strong>NEW PUZZLE</strong> for a fresh random hand.
 			</li>
 		</ul>
 		<p>
@@ -427,35 +422,19 @@
 		restartText="RESET"
 	>
 		{#snippet rightControls()}
-			<div class="diff-group" role="group" aria-label="Difficulty">
-				{#each [['levels', 'LEVELS'], ['easy', 'EASY'], ['med', 'MED'], ['hard', 'HARD']] as [key, label]}
-					<button
-						class="nav-extra-btn {difficulty === key ? 'active' : ''}"
-						onclick={() => {
-							streak = 0;
-							if (key === 'levels') loadLevel(0);
-							else dealNewHand(key as Difficulty);
-						}}
-					>
-						{label}
-					</button>
-				{/each}
-			</div>
-			{#if difficulty !== 'levels'}
-				<button class="nav-extra-btn" onclick={() => dealNewHand(difficulty)}>
-					NEW HAND
-				</button>
-			{/if}
+			<button class="nav-extra-btn" onclick={dealNewPuzzle}>
+				NEW PUZZLE
+			</button>
 		{/snippet}
 	</InGameMenu>
 
 	<div class="status-bar" in:fade>
-		{#if difficulty === 'levels'}
-			<div class="stat-pill">
-				<span class="stat-label">LEVEL</span>
-				<span class="stat-val">{currentLevel + 1} / {LEVEL_PUZZLES.length}</span>
-			</div>
-		{/if}
+		<div class="stat-pill">
+			<span class="stat-label">PUZZLE</span>
+			<span class="stat-val">
+				{isRandomMode ? 'RANDOM' : `${currentLevel + 1} / ${LEVEL_PUZZLES.length}`}
+			</span>
+		</div>
 		<div class="stat-pill">
 			<span class="stat-label">TARGET</span>
 			<span class="stat-val target">24</span>
@@ -470,19 +449,17 @@
 		</div>
 	</div>
 
-	{#if difficulty === 'levels'}
-		<div class="level-strip" role="navigation" aria-label="Levels">
-			{#each LEVEL_PUZZLES as _, idx}
-				<button
-					type="button"
-					class="lvl-btn {currentLevel === idx ? 'active' : ''}"
-					onclick={() => loadLevel(idx)}
-				>
-					{idx + 1}
-				</button>
-			{/each}
-		</div>
-	{/if}
+	<div class="level-strip" role="navigation" aria-label="Levels">
+		{#each LEVEL_PUZZLES as _, idx}
+			<button
+				type="button"
+				class="lvl-btn {!isRandomMode && currentLevel === idx ? 'active' : ''}"
+				onclick={() => loadLevel(idx)}
+			>
+				{idx + 1}
+			</button>
+		{/each}
+	</div>
 
 	<div class="stage">
 		<div class="cards-grid">
@@ -553,11 +530,9 @@
 					class="next-btn"
 					onclick={nextChallenge}
 				>
-					{difficulty === 'levels' && currentLevel + 1 < LEVEL_PUZZLES.length
+					{!isRandomMode && currentLevel + 1 < LEVEL_PUZZLES.length
 						? `LEVEL ${currentLevel + 2} →`
-						: difficulty === 'levels'
-							? 'RANDOM HARD →'
-							: 'NEXT HAND →'}
+						: 'NEW PUZZLE →'}
 				</button>
 			</div>
 		{/if}
@@ -571,11 +546,6 @@
 		width: 100%;
 		height: 100%;
 		color: var(--game-text-primary);
-	}
-
-	.diff-group {
-		display: inline-flex;
-		gap: 0.4vmin;
 	}
 
 	.nav-extra-btn {
@@ -595,12 +565,6 @@
 		background: rgba(255, 255, 255, 0.1);
 		border-color: var(--app-text);
 		color: var(--game-text-primary);
-	}
-
-	.nav-extra-btn.active {
-		background: var(--color-bittersweet);
-		border-color: var(--color-bittersweet);
-		color: var(--game-text-on-accent);
 	}
 
 	.status-bar {

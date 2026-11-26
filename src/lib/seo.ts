@@ -22,7 +22,7 @@ export const gameHowTo: Record<string, { name: string; description: string; step
 		name: 'How to play Challenge 24',
 		description: 'Combine four numbers with +, −, ×, and ÷ to make 24 using each number once.',
 		steps: [
-			{ name: 'Pick a difficulty', text: 'Choose Easy (1–9 integer steps), Med (1–9 with fractions), or Hard (1–13).' },
+			{ name: 'Pick a level or new puzzle', text: 'Work through the 17 ordered levels or click New Puzzle for a random hand.' },
 			{ name: 'Select your first number', text: 'Click a number card or press keys 1–4.' },
 			{ name: 'Choose an operator', text: 'Select +, −, ×, or ÷ to combine two numbers.' },
 			{ name: 'Aim for factor pairs of 24', text: 'Try building 3×8, 4×6, or 2×12 from the remaining numbers.' },
